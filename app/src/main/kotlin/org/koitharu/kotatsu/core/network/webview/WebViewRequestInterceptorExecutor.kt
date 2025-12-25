@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.annotation.MainThread
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -89,6 +91,17 @@ class WebViewRequestInterceptorExecutor @Inject constructor(
                     webView = obtainWebView()
                     val client = RequestInterceptorWebViewClient(callback, adBlock, config, interceptor)
                     webView.webViewClient = client
+                    
+                    webView.webChromeClient = object : WebChromeClient() {
+                        override fun onPermissionRequest(request: PermissionRequest?) {
+                            if (request?.resources?.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID) == true) {
+                                request.grant(request.resources)
+                            } else {
+                                super.onPermissionRequest(request)
+                            }
+                        }
+                    }
+
                     webView.loadUrl(url)
 
                     val timeoutRunnable = Runnable {
