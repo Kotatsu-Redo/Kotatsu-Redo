@@ -47,7 +47,16 @@ class RequestInterceptorWebViewClient(
         return parentResponse
     }
 
-    // kotlin
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        // Capture navigation events (like window.location.href = "...")
+        if (isCapturing.get() && request != null && !isTimeoutReached()) {
+            if (captureRequestIfMatches(request)) {
+                return true // Stop the WebView from loading the intercepted URL
+            }
+        }
+        return super.shouldOverrideUrlLoading(view, request)
+    }
+
     override fun onPageFinished(view: WebView, url: String) {
         super.onPageFinished(view, url)
         val script = config.pageScript
@@ -59,8 +68,10 @@ class RequestInterceptorWebViewClient(
         }
     }
 
-
-    private fun captureRequestIfMatches(request: WebResourceRequest) {
+    /**
+     * @return true if the request was captured
+     */
+    private fun captureRequestIfMatches(request: WebResourceRequest): Boolean {
         try {
             val interceptedRequest = InterceptedRequest(
                 url = request.url.toString(),
@@ -87,12 +98,13 @@ class RequestInterceptorWebViewClient(
                     Log.d(TAG_VRF, "Reached maxRequests (${config.maxRequests}), stopping capture immediately")
                     stopCapturing()
                 }
+                return true
             }
-
         } catch (e: Exception) {
             // Don't let interception errors break the WebView
             interceptor.onInterceptionError(e)
         }
+        return false
     }
 
     private fun isTimeoutReached(): Boolean {
