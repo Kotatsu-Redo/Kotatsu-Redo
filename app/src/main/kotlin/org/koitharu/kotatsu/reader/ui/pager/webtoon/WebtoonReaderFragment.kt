@@ -223,14 +223,14 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 	}
 
 	override fun onPullTriggeredTop() {
-		(viewBinding ?: return).feedbackTop.fadeOut()
+		(viewBinding ?: return).feedbackTop.hideFeedback()
 		if (canGoPrev) {
 			viewModel.switchChapterBy(-1)
 		}
 	}
 
 	override fun onPullTriggeredBottom() {
-		(viewBinding ?: return).feedbackBottom.fadeOut()
+		(viewBinding ?: return).feedbackBottom.hideFeedback()
 		if (canGoNext) {
 			viewModel.switchChapterBy(1)
 		}
@@ -238,8 +238,8 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 
 	override fun onPullCancelled() {
 		viewBinding?.apply {
-			feedbackTop.fadeOut()
-			feedbackBottom.fadeOut()
+			feedbackTop.hideFeedback()
+			feedbackBottom.hideFeedback()
 		}
 	}
 
@@ -255,21 +255,36 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 
 	private fun TextView.updateFeedback(progress: Float) {
 		val clamped = progress.coerceIn(0f, 1.2f)
-		this.alpha = clamped.coerceAtMost(1f)
-		this.scaleX = 0.9f + 0.1f * clamped.coerceAtMost(1f)
-		this.scaleY = this.scaleX
+		val isReady = clamped >= 1f
+		val wasReady = getTag(R.id.tag_pull_feedback_ready) as? Boolean ?: false
+		if (wasReady != isReady) {
+			setTag(R.id.tag_pull_feedback_ready, isReady)
+			setBackgroundResource(
+				if (isReady) {
+					R.drawable.bg_reader_indicator_ready
+				} else {
+					R.drawable.bg_reader_indicator
+				},
+			)
+		}
+		animate().cancel()
+		alpha = if (clamped > 0f) {
+			(0.15f + 0.85f * clamped.coerceAtMost(1f)).coerceAtMost(1f)
+		} else {
+			0f
+		}
+		val scale = 0.9f + 0.1f * clamped.coerceAtMost(1f)
+		scaleX = scale
+		scaleY = scale
 	}
 
-	private fun TextView.fadeOut() {
-		animate().alpha(0f).setDuration(150L).start()
+	private fun TextView.hideFeedback() {
+		animate().cancel()
+		alpha = 0f
 	}
 
 	private fun TextView.setFeedbackText(text: CharSequence) {
-		if (this.alpha <= 0f && text.isNotEmpty()) {
-			this.alpha = 0f
-			this.text = text
-			animate().alpha(1f).setDuration(120L).start()
-		} else {
+		if (this.text != text) {
 			this.text = text
 		}
 	}

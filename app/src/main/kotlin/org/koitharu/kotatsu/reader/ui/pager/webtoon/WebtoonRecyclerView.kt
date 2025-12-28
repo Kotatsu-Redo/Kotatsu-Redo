@@ -3,6 +3,7 @@ package org.koitharu.kotatsu.reader.ui.pager.webtoon
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.widget.EdgeEffect
 import androidx.core.view.ViewCompat.TYPE_TOUCH
@@ -12,8 +13,6 @@ import androidx.core.view.isNotEmpty
 import androidx.core.view.iterator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.EdgeEffectFactory.DIRECTION_BOTTOM
-import androidx.recyclerview.widget.RecyclerView.EdgeEffectFactory.DIRECTION_TOP
 import java.util.Collections
 import java.util.LinkedList
 import java.util.WeakHashMap
@@ -27,17 +26,22 @@ class WebtoonRecyclerView @JvmOverloads constructor(
 	private val detachedViews = Collections.newSetFromMap(WeakHashMap<View, Boolean>())
 	private var isFixingScroll = false
 
+	private val pullGestureTracker = PullGestureTracker()
+
 	var isPullGestureEnabled: Boolean = false
 		set(value) {
 			if (field != value) {
 				field = value
 				setEdgeEffectFactory(
 					if (value) {
-						PullEffect.Factory()
+						NoOpEdgeEffectFactory()
 					} else {
 						EdgeEffectFactory()
 					},
 				)
+				if (!value) {
+					pullGestureTracker.reset(notifyListener = true)
+				}
 			}
 		}
 	var pullThreshold: Float = 0.3f
@@ -55,6 +59,20 @@ class WebtoonRecyclerView @JvmOverloads constructor(
 	override fun onChildAttachedToWindow(child: View) {
 		super.onChildAttachedToWindow(child)
 		detachedViews.remove(child)
+	}
+
+	override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+		if (isPullGestureEnabled && pullListener != null) {
+			pullGestureTracker.onTouchEvent(ev)
+		} else {
+			pullGestureTracker.reset(notifyListener = false)
+		}
+		return super.dispatchTouchEvent(ev)
+	}
+
+	override fun onDetachedFromWindow() {
+		pullGestureTracker.reset(notifyListener = true)
+		super.onDetachedFromWindow()
 	}
 
 	override fun startNestedScroll(axes: Int) = startNestedScroll(axes, TYPE_TOUCH)
@@ -203,66 +221,157 @@ class WebtoonRecyclerView @JvmOverloads constructor(
 		}
 	}
 
-	private class PullEffect(
-		view: RecyclerView,
-		private val direction: Int,
-		private val pullThreshold: Float,
-		private val pullListener: OnPullGestureListener,
-	) : EdgeEffect(view.context) {
+	private class NoOpEdgeEffectFactory : EdgeEffectFactory() {
 
-		private var pullProgressTop: Float = 0f
-		private var pullProgressBottom: Float = 0f
-
-		override fun onPull(deltaDistance: Float) {
-			val sign = if (direction == DIRECTION_TOP) 1f else if (direction == DIRECTION_BOTTOM) 1f else 0f
-			if (sign != 0f) onPull(deltaDistance, 0.5f)
+		override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect = object : EdgeEffect(view.context) {
+			override fun draw(canvas: Canvas): Boolean = false
 		}
+	}
 
-		override fun onPull(deltaDistance: Float, displacement: Float) {
-			if (direction == DIRECTION_TOP) {
-				pullProgressTop = (pullProgressTop + deltaDistance).coerceAtLeast(0f)
-				pullListener.onPullProgressTop(pullProgressTop / pullThreshold)
-			} else if (direction == DIRECTION_BOTTOM) {
-				pullProgressBottom = (pullProgressBottom + deltaDistance).coerceAtLeast(0f)
-				pullListener.onPullProgressBottom(pullProgressBottom / pullThreshold)
+	private inner class PullGestureTracker {
+
+		private var edge = PullEdge.NONE
+		private var lastY = 0f
+		private var distancePx = 0f
+		private var isTracking = false
+
+		fun onTouchEvent(ev: MotionEvent) {
+			val listener = pullListener ?: return
+			if (!isPullGestureEnabled) {
+				return
 			}
-		}
-
-		override fun onRelease() {
-			var triggered = false
-			if (direction == DIRECTION_TOP) {
-				if (pullProgressTop >= pullThreshold) {
-					pullListener.onPullTriggeredTop()
-					triggered = true
+			when (ev.actionMasked) {
+				MotionEvent.ACTION_DOWN -> {
+					reset(notifyListener = false)
+					isTracking = true
+					lastY = ev.y
 				}
-				pullProgressTop = 0f
-				pullListener.onPullProgressTop(0f)
-			} else if (direction == DIRECTION_BOTTOM) {
-				if (pullProgressBottom >= pullThreshold) {
-					pullListener.onPullTriggeredBottom()
-					triggered = true
+
+				MotionEvent.ACTION_MOVE -> {
+					if (!isTracking) {
+						return
+					}
+					val y = ev.y
+					val dy = y - lastY
+					lastY = y
+					if (dy != 0f) {
+						handleMove(dy, listener)
+					}
 				}
-				pullProgressBottom = 0f
-				pullListener.onPullProgressBottom(0f)
-			}
-			if (!triggered) {
-				pullListener.onPullCancelled()
-			}
-		}
 
-		override fun draw(canvas: Canvas?): Boolean = false
+				MotionEvent.ACTION_UP -> {
+					if (isTracking) {
+						finish(listener, cancelled = false)
+					}
+				}
 
-		class Factory : EdgeEffectFactory() {
-
-			override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
-				val pullListener = (view as? WebtoonRecyclerView)?.pullListener
-				return if (pullListener != null) {
-					PullEffect(view, direction, view.pullThreshold, pullListener)
-				} else {
-					super.createEdgeEffect(view, direction)
+				MotionEvent.ACTION_CANCEL -> {
+					if (isTracking) {
+						finish(listener, cancelled = true)
+					}
 				}
 			}
 		}
+
+		fun reset(notifyListener: Boolean) {
+			val listener = pullListener
+			edge = PullEdge.NONE
+			distancePx = 0f
+			lastY = 0f
+			isTracking = false
+			if (notifyListener && listener != null) {
+				listener.onPullProgressTop(0f)
+				listener.onPullProgressBottom(0f)
+				listener.onPullCancelled()
+			}
+		}
+
+		private fun handleMove(dy: Float, listener: OnPullGestureListener) {
+			if (height <= 0) {
+				return
+			}
+			if (edge == PullEdge.NONE) {
+				edge = when {
+					dy > 0f && isAtAbsoluteTop() -> PullEdge.TOP
+					dy < 0f && isAtAbsoluteBottom() -> PullEdge.BOTTOM
+					else -> PullEdge.NONE
+				}
+				if (edge == PullEdge.NONE) {
+					return
+				}
+			}
+
+			val delta = when (edge) {
+				PullEdge.TOP -> dy
+				PullEdge.BOTTOM -> -dy
+				else -> 0f
+			}
+
+			distancePx = (distancePx + delta).coerceAtLeast(0f)
+			val progress = (distancePx / (height * pullThreshold).coerceAtLeast(1f))
+			when (edge) {
+				PullEdge.TOP -> listener.onPullProgressTop(progress)
+				PullEdge.BOTTOM -> listener.onPullProgressBottom(progress)
+				else -> Unit
+			}
+			if (distancePx <= 0f) {
+				edge = PullEdge.NONE
+			}
+		}
+
+		private fun finish(listener: OnPullGestureListener, cancelled: Boolean) {
+			val progress = if (height > 0) (distancePx / (height * pullThreshold).coerceAtLeast(1f)) else 0f
+			val edge = this.edge
+			this.edge = PullEdge.NONE
+			distancePx = 0f
+			lastY = 0f
+			isTracking = false
+
+			listener.onPullProgressTop(0f)
+			listener.onPullProgressBottom(0f)
+
+			when {
+				cancelled -> listener.onPullCancelled()
+				edge == PullEdge.TOP && progress >= 1f -> listener.onPullTriggeredTop()
+				edge == PullEdge.BOTTOM && progress >= 1f -> listener.onPullTriggeredBottom()
+				else -> listener.onPullCancelled()
+			}
+		}
+
+		private fun isAtAbsoluteTop(): Boolean {
+			val lm = layoutManager as? LinearLayoutManager ?: return !canScrollVertically(-1)
+			if (lm.findFirstVisibleItemPosition() != 0) {
+				return false
+			}
+			val child = getChildAt(0) as? WebtoonFrameLayout ?: return false
+			if (child.top < 0) {
+				return false
+			}
+			return child.target.getScroll() <= 0
+		}
+
+		private fun isAtAbsoluteBottom(): Boolean {
+			val adapter = adapter ?: return false
+			val lm = layoutManager as? LinearLayoutManager ?: return !canScrollVertically(1)
+			if (lm.findLastVisibleItemPosition() != adapter.itemCount - 1) {
+				return false
+			}
+			if (childCount <= 0) {
+				return false
+			}
+			val child = getChildAt(childCount - 1) as? WebtoonFrameLayout ?: return false
+			if (child.bottom > height) {
+				return false
+			}
+			val ssiv = child.target
+			return ssiv.getScroll() >= ssiv.getScrollRange()
+		}
+	}
+
+	private enum class PullEdge {
+		NONE,
+		TOP,
+		BOTTOM,
 	}
 
 	interface OnWebtoonScrollListener {

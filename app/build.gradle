@@ -28,8 +28,8 @@ android {
 		applicationId 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 36
-		versionCode = 1090
-		versionName = '9.5.5'
+		versionCode = 1091
+		versionName = '9.5.6'
 		generatedDensities = []
 		testInstrumentationRunner 'org.koitharu.kotatsu.HiltTestRunner'
 		ksp {
