@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.koitharu.kotatsu.core.network.cookies.MutableCookieJar
 import org.koitharu.kotatsu.core.network.webview.adblock.AdBlock
+import java.net.URI
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -19,11 +20,13 @@ private const val TAG = "CFInterceptClient"
  * Filters out sec-ch-ua, sec-ch-ua-full-version-list, and x-requested-with headers
  */
 class CloudFlareInterceptClient(
-	cookieJar: MutableCookieJar,
+	private val cookieJar: MutableCookieJar,
 	callback: CloudFlareCallback,
 	adBlock: AdBlock,
 	targetUrl: String,
 ) : CloudFlareClient(cookieJar, callback, adBlock, targetUrl) {
+
+	private val targetUri = runCatching { URI(targetUrl) }.getOrNull()
 
 	// Headers we want to block
 	private val blockedHeaders = setOf(
@@ -41,15 +44,14 @@ class CloudFlareInterceptClient(
 		if (request == null) return null
 
 		try {
-			// Skip POST requests
-			if (request.method == "POST") {
-				Log.d(TAG, "Skipping POST request: ${request.url}")
+			if (!shouldReplayRequest(request)) {
 				return super.shouldInterceptRequest(view, request)
 			}
 
 			Log.d(TAG, "Intercepting request: ${request.url}")
 
 			val client = OkHttpClient.Builder()
+				.cookieJar(cookieJar)
 				.connectTimeout(15, TimeUnit.SECONDS)
 				.readTimeout(15, TimeUnit.SECONDS)
 				.build()
@@ -96,6 +98,41 @@ class CloudFlareInterceptClient(
 		} catch (e: Exception) {
 			Log.e(TAG, "Error intercepting request: ${request.url}", e)
 			return null
+		}
+	}
+
+	private fun shouldReplayRequest(request: WebResourceRequest): Boolean {
+		if (request.method != "GET") {
+			Log.d(TAG, "Skipping non-GET request: ${request.method} ${request.url}")
+			return false
+		}
+		if (!request.isForMainFrame) {
+			return false
+		}
+		if (!hasBlockedHeaders(request)) {
+			return false
+		}
+		val requestUri = runCatching { URI(request.url.toString()) }.getOrNull() ?: return false
+		val sameOrigin = requestUri.scheme.equals(targetUri?.scheme, ignoreCase = true)
+			&& requestUri.host.equals(targetUri?.host, ignoreCase = true)
+			&& normalizedPort(requestUri) == normalizedPort(targetUri)
+		if (!sameOrigin) {
+			Log.d(TAG, "Skipping off-origin main frame request: ${request.url}")
+		}
+		return sameOrigin
+	}
+
+	private fun hasBlockedHeaders(request: WebResourceRequest): Boolean {
+		return request.requestHeaders.keys.any { it.lowercase(Locale.ROOT) in blockedHeaders }
+	}
+
+	private fun normalizedPort(uri: URI?): Int {
+		if (uri == null) return -1
+		return when {
+			uri.port != -1 -> uri.port
+			uri.scheme.equals("https", ignoreCase = true) -> 443
+			uri.scheme.equals("http", ignoreCase = true) -> 80
+			else -> -1
 		}
 	}
 }
