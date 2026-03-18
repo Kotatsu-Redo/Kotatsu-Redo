@@ -65,6 +65,9 @@ android {
 		buildConfig = true
 	}
 	packagingOptions {
+		jniLibs {
+			useLegacyPackaging = true
+		}
 		resources {
 			excludes += [
 				'META-INF/README.md',
@@ -124,6 +127,41 @@ android {
 		}
 	}
 }
+
+configurations {
+	acraCorePatchSource {
+		canBeConsumed = false
+		canBeResolved = true
+		transitive = false
+	}
+}
+
+def acraVersion = libs.versions.acra.get()
+def patchedAcraCoreAar = layout.buildDirectory.file("patched-libs/acra-core-${acraVersion}-patched.aar")
+
+tasks.register('patchAcraCoreAar') {
+	outputs.file(patchedAcraCoreAar)
+	doLast {
+		def outputFile = patchedAcraCoreAar.get().asFile
+		def tempDir = layout.buildDirectory.dir('tmp/patched-acra-core').get().asFile
+		delete(tempDir, outputFile)
+		copy {
+			from zipTree(configurations.acraCorePatchSource.singleFile)
+			into tempDir
+			filesMatching('AndroidManifest.xml') {
+				filter { line -> line.replace('tools:replace="android:authorities"', '') }
+			}
+		}
+		ant.zip(destfile: outputFile) {
+			fileset(dir: tempDir)
+		}
+	}
+}
+
+tasks.named('preBuild') {
+	dependsOn tasks.named('patchAcraCoreAar')
+}
+
 dependencies {
 	def parsersVersion = libs.versions.parsers.get()
 	if (System.properties.containsKey('parsersVersionOverride')) {
@@ -131,6 +169,7 @@ dependencies {
 		// -DparsersVersionOverride=$(curl -s https://api.github.com/repos/kotatsuapp/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
 		parsersVersion = System.getProperty('parsersVersionOverride')
 	}
+	acraCorePatchSource "ch.acra:acra-core:${acraVersion}"
 	//noinspection UseTomlInstead
 	implementation("com.github.clquwu:kotatsu-parsers-redo:$parsersVersion") {
 		exclude group: 'org.json', module: 'json'
@@ -195,8 +234,13 @@ dependencies {
 	implementation libs.markwon
 	implementation libs.kizzyrpc
 
-	implementation libs.acra.http
-	implementation libs.acra.dialog
+	implementation files(patchedAcraCoreAar)
+	implementation(libs.acra.http) {
+		exclude group: 'ch.acra', module: 'acra-core'
+	}
+	implementation(libs.acra.dialog) {
+		exclude group: 'ch.acra', module: 'acra-core'
+	}
 
 	implementation libs.conscrypt.android
 

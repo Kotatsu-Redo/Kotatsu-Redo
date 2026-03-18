@@ -51,7 +51,6 @@
 		android:backupAgent="org.koitharu.kotatsu.backups.domain.AppBackupAgent"
 		android:dataExtractionRules="@xml/backup_rules"
 		android:enableOnBackInvokedCallback="@bool/is_predictive_back_enabled"
-		android:extractNativeLibs="true"
 		android:fullBackupContent="@xml/backup_content"
 		android:fullBackupOnly="true"
 		android:hasFragileUserData="true"
@@ -414,16 +413,6 @@
 			android:exported="false"
 			android:label="@string/history"
 			android:syncable="true" />
-		<provider
-			android:name="androidx.startup.InitializationProvider"
-			android:authorities="${applicationId}.androidx-startup"
-			android:exported="false"
-			tools:node="remove">
-			<meta-data
-				android:name="androidx.work.WorkManagerInitializer"
-				android:value="androidx.startup"
-				tools:node="remove" />
-		</provider>
 
 		<receiver
 			android:name="org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler$DiscardReceiver"
