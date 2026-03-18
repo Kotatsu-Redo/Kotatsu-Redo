@@ -17,6 +17,7 @@ import org.koitharu.kotatsu.core.db.entity.toMangaTagsList
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.parsers.model.ContentType
+import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
@@ -24,6 +25,7 @@ import org.koitharu.kotatsu.parsers.util.levenshteinDistance
 import org.koitharu.kotatsu.parsers.util.mapToSet
 import org.koitharu.kotatsu.search.ui.MangaSuggestionsProvider
 import javax.inject.Inject
+import org.koitharu.kotatsu.core.model.isNsfw
 
 @Reusable
 class MangaSearchRepository @Inject constructor(
@@ -39,7 +41,7 @@ class MangaSearchRepository @Inject constructor(
 		source != null -> db.getMangaDao().searchByTitle("%$query%", source.name, limit)
 		else -> db.getMangaDao().searchByTitle("%$query%", limit)
 	}.let {
-		if (settings.isNsfwContentDisabled) it.filterNot { x -> x.manga.isNsfw } else it
+		if (settings.isNsfwContentDisabled) it.filterNot { x -> x.manga.contentRating == ContentRating.ADULT.name } else it
 	}.map {
 		it.toManga()
 	}.sortedBy { x ->

@@ -82,7 +82,7 @@ abstract class SuggestionDao : MangaQueryBuilder.ConditionCallback {
 	protected abstract fun observeAllImpl(query: SupportSQLiteQuery): Flow<List<SuggestionWithManga>>
 
 	override fun getCondition(option: ListFilterOption): String? = when (option) {
-		ListFilterOption.Macro.NSFW -> "(SELECT nsfw FROM manga WHERE manga.manga_id = suggestions.manga_id) = 1"
+		ListFilterOption.Macro.NSFW -> "(SELECT (content_rating = 'ADULT') FROM manga WHERE manga.manga_id = suggestions.manga_id) = 1"
 		is ListFilterOption.Tag -> "EXISTS(SELECT * FROM manga_tags WHERE manga_tags.manga_id = suggestions.manga_id AND tag_id = ${option.tagId})"
 		is ListFilterOption.Source -> "(SELECT source FROM manga WHERE manga.manga_id = suggestions.manga_id) = ${
 			sqlEscapeString(

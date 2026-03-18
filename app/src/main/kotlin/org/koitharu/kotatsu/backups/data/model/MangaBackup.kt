@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 import org.koitharu.kotatsu.core.db.entity.MangaEntity
 import org.koitharu.kotatsu.core.db.entity.MangaWithTags
 import org.koitharu.kotatsu.parsers.model.RATING_UNKNOWN
+import org.koitharu.kotatsu.parsers.model.ContentRating
+import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.parsers.util.mapToSet
 
 @Serializable
@@ -34,7 +36,7 @@ class MangaBackup(
 		url = entity.manga.url,
 		publicUrl = entity.manga.publicUrl,
 		rating = entity.manga.rating,
-		isNsfw = entity.manga.isNsfw,
+		isNsfw = entity.manga.contentRating == ContentRating.ADULT.name,
 		contentRating = entity.manga.contentRating,
 		coverUrl = entity.manga.coverUrl,
 		largeCoverUrl = entity.manga.largeCoverUrl,
@@ -51,8 +53,7 @@ class MangaBackup(
 		url = url,
 		publicUrl = publicUrl,
 		rating = rating,
-		isNsfw = isNsfw,
-		contentRating = contentRating,
+		contentRating = contentRating ?: if (isNsfw) ContentRating.ADULT.name else null,
 		coverUrl = coverUrl,
 		largeCoverUrl = largeCoverUrl,
 		state = state,
