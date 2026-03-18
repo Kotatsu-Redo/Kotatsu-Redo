@@ -62,6 +62,7 @@
 		android:layout_marginEnd="4dp"
 		android:contentDescription="@string/check_for_new_chapters"
 		android:tooltipText="@string/check_for_new_chapters"
+		tools:targetApi="o"
 		app:layout_constraintBottom_toBottomOf="@id/textView_subtitle"
 		app:layout_constraintEnd_toStartOf="@id/imageView_hidden"
 		app:layout_constraintStart_toEndOf="@id/textView_subtitle"
@@ -74,6 +75,7 @@
 		android:layout_height="16dp"
 		android:contentDescription="@string/hide_from_main_screen"
 		android:tooltipText="@string/hide_from_main_screen"
+		tools:targetApi="o"
 		app:layout_constraintBottom_toBottomOf="@id/textView_subtitle"
 		app:layout_constraintEnd_toEndOf="@id/textView_title"
 		app:layout_constraintStart_toEndOf="@id/imageView_tracker"
@@ -89,6 +91,7 @@
 		android:padding="@dimen/margin_normal"
 		android:src="@drawable/ic_edit"
 		android:tooltipText="@string/edit"
+		tools:targetApi="o"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toStartOf="@id/imageView_handle"
 		app:layout_constraintTop_toTopOf="parent" />
@@ -103,6 +106,7 @@
 		android:pointerIcon="grab"
 		android:src="@drawable/ic_reorder_handle"
 		android:tooltipText="@string/reorder"
+		tools:targetApi="o"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />

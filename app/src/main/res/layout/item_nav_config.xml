@@ -38,7 +38,8 @@
 			android:padding="@dimen/margin_small"
 			android:scaleType="center"
 			android:src="@drawable/ic_delete"
-			android:tooltipText="@string/remove" />
+			android:tooltipText="@string/remove"
+			tools:targetApi="o" />
 
 		<ImageView
 			android:id="@+id/imageView_reorder"
@@ -50,7 +51,8 @@
 			android:pointerIcon="grab"
 			android:scaleType="center"
 			android:src="@drawable/ic_reorder_handle"
-			android:tooltipText="@string/reorder" />
+			android:tooltipText="@string/reorder"
+			tools:targetApi="o" />
 
 	</LinearLayout>
 

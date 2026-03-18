@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.viewpager2.widget.ViewPager2
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
 	android:id="@+id/pager"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:defaultFocusHighlightEnabled="false" />
+	android:defaultFocusHighlightEnabled="false"
+	tools:targetApi="o" />
