@@ -19,7 +19,6 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.ui.sheet.BaseAdaptiveSheet
-import org.koitharu.kotatsu.core.util.ext.consume
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
@@ -81,7 +80,7 @@ class ScrobblingInfoSheet :
 		viewBinding?.root?.updatePadding(
 			bottom = insets.getInsets(typeMask).bottom,
 		)
-		return insets.consume(v, typeMask, bottom = true)
+		return insets
 	}
 
 
