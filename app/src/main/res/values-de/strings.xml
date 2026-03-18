@@ -614,7 +614,7 @@
     <string name="last_used">Zuletzt verwendet</string>
     <string name="hours_short">%d h</string>
     <string name="minutes_short">%d m</string>
-    <string name="invalid_server_address_message">Ungültige Server-Addresse</string>
+    <string name="invalid_server_address_message">Ungültige Server-Adresse</string>
     <string name="pages_saved">Seiten wurden gespeichert</string>
     <string name="text_empty_holder_secondary_filtered">Es gibt keine Manga, die deinen Filtern entsprechen.</string>
     <string name="too_many_requests_message_retry">Zu viele Anfragen. Versuche es erneut in %s</string>

@@ -76,7 +76,7 @@ class TextDrawable(
 
 	companion object {
 
-		@SuppressLint("RestrictedApi")
+		@SuppressLint("RestrictedApi", "VisibleForTests")
 		fun create(context: Context, text: String, @AttrRes textAppearanceAttr: Int): TextDrawable {
 			val drawable = TextDrawable(text)
 			val textAppearance = TextAppearance(context, context.getThemeResId(textAppearanceAttr, androidx.appcompat.R.style.TextAppearance_AppCompat))

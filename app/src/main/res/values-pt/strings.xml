@@ -144,7 +144,7 @@
     <string name="backup_saved">Backup salvo</string>
     <string name="tracker_warning">Alguns aparelhos têm um comportamento de sistema diferente, o que pode interromper as tarefas em segundo plano.</string>
     <string name="read_more">Leia mais</string>
-    <string name="welcome">Bem vindo</string>
+    <string name="welcome">Bem-vindo</string>
     <string name="queued">Enfileirado</string>
     <string name="about_app_translation_summary">Traduzir esta aplicação</string>
     <string name="chapter_is_missing">O capítulo está em falta</string>

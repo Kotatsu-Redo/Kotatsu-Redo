@@ -240,28 +240,6 @@
     </issue>
 
     <issue
-        id="VisibleForTests"
-        message="This method should only be accessed from tests or within private scope"
-        errorLine1="   drawable.paint.typeface = textAppearance.getFont(context)"
-        errorLine2="                                            ~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/core/ui/image/TextDrawable.kt"
-            line="85"
-            column="45"/>
-    </issue>
-
-    <issue
-        id="VisibleForTests"
-        message="This method should only be accessed from tests or within private scope"
-        errorLine1="   drawable.paint.typeface = textAppearance.getFont(context)"
-        errorLine2="                                            ~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/core/ui/image/TextDrawable.kt"
-            line="85"
-            column="45"/>
-    </issue>
-
-    <issue
         id="Aligned16KB"
         message="The native library `arm64-v8a/libconscrypt_jni.so` (from `org.conscrypt:conscrypt-android:2.5.2`) is not 16 KB aligned">
         <location
@@ -486,17 +464,6 @@
 
     <issue
         id="Typos"
-        message="&quot;Bem vindo&quot; is a common misspelling; did you mean &quot;Bem-vindo&quot;?"
-        errorLine1="    &lt;string name=&quot;welcome&quot;>Bem vindo&lt;/string>"
-        errorLine2="                           ~~~~~~~~~">
-        <location
-            file="src/main/res/values-pt/strings.xml"
-            line="147"
-            column="28"/>
-    </issue>
-
-    <issue
-        id="Typos"
         message="Repeated word &quot;ayrı&quot; in message: possible typo"
         errorLine1="    &lt;string name=&quot;downloads_settings_info&quot;>Sunucu taraflı engelleme ile ilgili sorun yaşıyorsanız, kaynak ayarlarında her manga kaynağı için ayrı ayrı indirme yavaşlatmayı etkinleştirebilirsiniz&lt;/string>"
         errorLine2="                                                                                                                                             ~~~~~~~~~">
@@ -515,17 +482,6 @@
             file="src/main/res/values-tr/strings.xml"
             line="604"
             column="105"/>
-    </issue>
-
-    <issue
-        id="Typos"
-        message="&quot;Addresse&quot; is a common misspelling; did you mean &quot;Adresse&quot;?"
-        errorLine1="    &lt;string name=&quot;invalid_server_address_message&quot;>Ungültige Server-Addresse&lt;/string>"
-        errorLine2="                                                                   ~~~~~~~~">
-        <location
-            file="src/main/res/values-de/strings.xml"
-            line="617"
-            column="68"/>
     </issue>
 
     <issue
