@@ -121,7 +121,6 @@ class LocalListViewModel @Inject constructor(
 
 	override fun onCleared() {
 		settings.unsubscribe(this)
-		super.onCleared()
 	}
 
 	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

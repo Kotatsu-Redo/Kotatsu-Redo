@@ -63,9 +63,9 @@ class MangaDirectoriesActivity : BaseActivity<ActivityMangaDirectoriesBinding>()
 		setContentView(ActivityMangaDirectoriesBinding.inflate(layoutInflater))
 		setDisplayHomeAsUp(isEnabled = true, showUpAsClose = false)
 		val adapter = AsyncListDifferDelegationAdapter(DirectoryConfigDiffCallback(), directoryConfigAD(this))
-        val spacing = resources.getDimensionPixelOffset(R.dimen.list_spacing_large)
-        viewBinding.recyclerView.adapter = adapter
-        viewBinding.recyclerView.addItemDecoration(SpacingItemDecoration(spacing, withBottomPadding = false))
+		val spacing = resources.getDimensionPixelOffset(R.dimen.list_spacing_large)
+		viewBinding.recyclerView.adapter = adapter
+		viewBinding.recyclerView.addItemDecoration(SpacingItemDecoration(spacing, withBottomPadding = false))
 		viewBinding.fabAdd.setOnClickListener(this)
 		viewModel.items.observe(this) { adapter.items = it }
 		viewModel.isLoading.observe(this) { viewBinding.progressBar.isVisible = it }

@@ -2,94 +2,6 @@
 <issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
 
     <issue
-        id="EmptySuperCall"
-        message="No need to call `super.onCleared`; the super method is defined to be empty"
-        errorLine1="  super.onCleared()"
-        errorLine2="        ~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/local/ui/LocalListViewModel.kt"
-            line="124"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="EmptySuperCall"
-        message="No need to call `super.onCleared`; the super method is defined to be empty"
-        errorLine1="  super.onCleared()"
-        errorLine2="        ~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/settings/sources/SourceSettingsViewModel.kt"
-            line="61"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="EmptySuperCall"
-        message="No need to call `super.onCleared`; the super method is defined to be empty"
-        errorLine1="  super.onCleared()"
-        errorLine2="        ~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/settings/sources/manage/SourcesManageViewModel.kt"
-            line="40"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `loadSingleChapter` is not used"
-        errorLine1="   chaptersLoader.loadSingleChapter(initialChapterId)"
-        errorLine2="   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/picker/ui/page/PagePickerViewModel.kt"
-            line="66"
-            column="4"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `loadSingleChapter` is not used"
-        errorLine1="            chaptersLoader.loadSingleChapter(id)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/reader/ui/ReaderViewModel.kt"
-            line="300"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `loadSingleChapter` is not used"
-        errorLine1="            chaptersLoader.loadSingleChapter(newChapterId)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/reader/ui/ReaderViewModel.kt"
-            line="324"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `loadSingleChapter` is not used"
-        errorLine1="                                chaptersLoader.loadSingleChapter(newState.chapterId)"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/reader/ui/ReaderViewModel.kt"
-            line="434"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="CheckResult"
-        message="The result of `handle` is not used"
-        errorLine1="   captchaHandler.handle(e)"
-        errorLine2="   ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/suggestions/ui/SuggestionsWorker.kt"
-            line="288"
-            column="4"/>
-    </issue>
-
-    <issue
         id="InconsistentLayout"
         message="The id &quot;container_side&quot; in layout &quot;activity_details&quot; is missing from the following layout configurations: layout (present in layout-w600dp-land)"
         errorLine1="   android:id=&quot;@+id/container_side&quot;"
@@ -171,38 +83,6 @@
             line="29"
             column="3"
             message="Occurrence in layout-w600dp-land"/>
-    </issue>
-
-    <issue
-        id="SuspiciousIndentation"
-        message="The indentation string here is different from on the previous line (`&quot; &quot;` vs `\t`)"
-        errorLine1="  val isActionModeStarted = actionModeDelegate?.isActionModeStarted == true"
-        errorLine2="~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/details/ui/pager/ChaptersPagesSheet.kt"
-            line="107"
-            column="1"/>
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/details/ui/pager/ChaptersPagesSheet.kt"
-            line="104"
-            column="1"
-            message="Previous line indentation here"/>
-    </issue>
-
-    <issue
-        id="SuspiciousIndentation"
-        message="The indentation string here is different from on the previous line (`&quot; &quot;` vs `\t`)"
-        errorLine1="  viewBinding.fabAdd.setOnClickListener(this)"
-        errorLine2="~~">
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/settings/storage/directories/MangaDirectoriesActivity.kt"
-            line="69"
-            column="1"/>
-        <location
-            file="src/main/kotlin/org/koitharu/kotatsu/settings/storage/directories/MangaDirectoriesActivity.kt"
-            line="68"
-            column="1"
-            message="Previous line indentation here"/>
     </issue>
 
     <issue
