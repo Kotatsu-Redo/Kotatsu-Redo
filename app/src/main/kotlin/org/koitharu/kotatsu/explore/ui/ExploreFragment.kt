@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.view.ActionMode
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -93,7 +94,7 @@ class ExploreFragment :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val basePadding = v.resources.getDimensionPixelOffset(R.dimen.list_spacing_normal)
 		viewBinding?.recyclerView?.setPadding(
 			/* left = */ barsInsets.left + basePadding,
@@ -101,7 +102,9 @@ class ExploreFragment :
 			/* right = */ barsInsets.right + basePadding,
 			/* bottom = */ barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onDestroyView() {
