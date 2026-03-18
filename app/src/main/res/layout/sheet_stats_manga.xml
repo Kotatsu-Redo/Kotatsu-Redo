@@ -50,6 +50,7 @@
 					android:minWidth="?minTouchTargetSize"
 					android:minHeight="?minTouchTargetSize"
 					android:tooltipText="@string/details"
+					tools:targetApi="o"
 					app:srcCompat="@drawable/ic_open_external" />
 
 			</LinearLayout>

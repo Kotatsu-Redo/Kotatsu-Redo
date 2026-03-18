@@ -70,6 +70,7 @@
 		android:padding="@dimen/margin_normal"
 		android:scaleType="center"
 		android:src="@drawable/ic_add"
-		android:tooltipText="@string/add" />
+		android:tooltipText="@string/add"
+		tools:targetApi="o" />
 
 </LinearLayout>

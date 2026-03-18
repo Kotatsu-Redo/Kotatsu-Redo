@@ -6,6 +6,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:clipToOutline="true"
+	tools:targetApi="s"
 	android:outlineProvider="background"
 	android:theme="@style/Theme.Kotatsu.AppWidgetContainer"
 	tools:background="?android:attr/colorBackground">
