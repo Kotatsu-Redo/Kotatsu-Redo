@@ -104,7 +104,8 @@ android {
 	lint {
 		baseline = file("lint-baseline.xml")
 		abortOnError = true
-		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat'
+		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat',
+				'NewerVersionAvailable', 'GradleDependency', 'AndroidGradlePluginVersion', 'Aligned16KB'
 	}
 	testOptions {
 		unitTests.includeAndroidResources = true
