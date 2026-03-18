@@ -160,7 +160,7 @@ class PagesFragment :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(typeBask)
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onItemClick(item: PageThumbnail, view: View) {

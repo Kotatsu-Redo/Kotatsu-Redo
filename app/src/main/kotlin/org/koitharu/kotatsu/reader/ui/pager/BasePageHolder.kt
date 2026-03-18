@@ -158,6 +158,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 
 	override fun onConfigurationChanged(newConfig: Configuration) = Unit
 
+	@Suppress("DEPRECATION")
 	@Deprecated("Deprecated in Java")
 	final override fun onLowMemory() = onTrimMemory(TRIM_MEMORY_COMPLETE)
 

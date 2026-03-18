@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.widget.recent
 
 import android.app.PendingIntent

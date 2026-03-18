@@ -33,9 +33,6 @@ import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.PopupMenuMediator
 import androidx.core.app.ShareCompat
-import org.koitharu.kotatsu.core.util.ext.consumeAll
-import org.koitharu.kotatsu.core.util.ext.end
-import org.koitharu.kotatsu.core.util.ext.enqueueWith
 import org.koitharu.kotatsu.core.util.ext.getDisplayIcon
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.getParcelableExtraCompat
@@ -44,6 +41,8 @@ import org.koitharu.kotatsu.core.util.ext.isAnimatedImage
 import org.koitharu.kotatsu.core.util.ext.mangaSourceExtra
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.core.util.ext.end
+import org.koitharu.kotatsu.core.util.ext.enqueueWith
 import org.koitharu.kotatsu.core.util.ext.start
 import org.koitharu.kotatsu.databinding.ActivityImageBinding
 import org.koitharu.kotatsu.databinding.ItemErrorStateBinding
@@ -122,7 +121,7 @@ class ImageActivity : BaseActivity<ActivityImageBinding>(),
 			marginStart = barsInsets.start(v) + baseMargin
 			topMargin = barsInsets.top + baseMargin
 		}
-		return insets.consumeAll(typeMask)
+		return insets
 	}
 
 	private fun loadImage() {

@@ -43,30 +43,32 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 
 	private val viewModel by viewModels<AlternativesViewModel>()
 
-	super.onCreate(savedInstanceState)
-	setContentView(ActivityAlternativesBinding.inflate(layoutInflater))
-	supportActionBar?.run {
-		setDisplayHomeAsUpEnabled(true)
-		subtitle = viewModel.manga.title
-	}
-	val listAdapter = BaseListAdapter<ListModel>()
-		.addDelegate(ListItemType.MANGA_LIST_DETAILED, alternativeAD(coil, this, this))
-		.addDelegate(ListItemType.STATE_EMPTY, emptyStateListAD(null))
-		.addDelegate(ListItemType.FOOTER_LOADING, loadingFooterAD())
-		.addDelegate(ListItemType.STATE_LOADING, loadingStateAD())
-		.addDelegate(ListItemType.FOOTER_BUTTON, buttonFooterAD(this))
-	with(viewBinding.recyclerView) {
-		setHasFixedSize(true)
-		addItemDecoration(TypedListSpacingDecoration(context, addHorizontalPadding = false))
-		adapter = listAdapter
-	}
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(ActivityAlternativesBinding.inflate(layoutInflater))
+		supportActionBar?.run {
+			setDisplayHomeAsUpEnabled(true)
+			subtitle = viewModel.manga.title
+		}
+		val listAdapter = BaseListAdapter<ListModel>()
+			.addDelegate(ListItemType.MANGA_LIST_DETAILED, alternativeAD(coil, this, this))
+			.addDelegate(ListItemType.STATE_EMPTY, emptyStateListAD(null))
+			.addDelegate(ListItemType.FOOTER_LOADING, loadingFooterAD())
+			.addDelegate(ListItemType.STATE_LOADING, loadingStateAD())
+			.addDelegate(ListItemType.FOOTER_BUTTON, buttonFooterAD(this))
+		with(viewBinding.recyclerView) {
+			setHasFixedSize(true)
+			addItemDecoration(TypedListSpacingDecoration(context, addHorizontalPadding = false))
+			adapter = listAdapter
+		}
 
-	viewModel.onError.observeEvent(this, SnackbarErrorObserver(viewBinding.recyclerView, null))
-	viewModel.list.observe(this, listAdapter)
-	viewModel.onMigrated.observeEvent(this) {
-		Toast.makeText(this, R.string.migration_completed, Toast.LENGTH_SHORT).show()
-		router.openDetails(it)
-		finishAfterTransition()
+		viewModel.onError.observeEvent(this, SnackbarErrorObserver(viewBinding.recyclerView, null))
+		viewModel.list.observe(this, listAdapter)
+		viewModel.onMigrated.observeEvent(this) {
+			Toast.makeText(this, R.string.migration_completed, Toast.LENGTH_SHORT).show()
+			router.openDetails(it)
+			finishAfterTransition()
+		}
 	}
 
 	override fun onApplyWindowInsets(
@@ -108,6 +110,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			setTitle(R.string.manga_migration)
 			setMessage(
 				getString(
+					R.string.migrate_confirmation,
 					viewModel.manga.title,
 					viewModel.manga.source.getTitle(context),
 					target.title,

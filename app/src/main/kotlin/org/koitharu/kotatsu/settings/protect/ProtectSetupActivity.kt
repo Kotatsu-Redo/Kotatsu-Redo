@@ -60,7 +60,7 @@ class ProtectSetupActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val basePadding = resources.getDimensionPixelOffset(R.dimen.screen_padding)
 		viewBinding.root.setPadding(
 			barsInsets.left + basePadding,
@@ -68,7 +68,7 @@ class ProtectSetupActivity :
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onClick(v: View) {

@@ -280,7 +280,7 @@
     <string name="other_cache">Egyéb gyorsítótár</string>
     <string name="storage_usage">Tárhely használat</string>
     <string name="available">Elérhető</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Eltávolítva a kedvencekből</string>
     <string name="options">Opciók</string>
     <string name="not_found_404">A tartalom nem elérhető vagy törölték</string>

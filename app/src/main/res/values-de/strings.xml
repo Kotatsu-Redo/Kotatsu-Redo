@@ -277,7 +277,7 @@
     <string name="other_cache">Anderer Cache</string>
     <string name="storage_usage">Speichernutzung</string>
     <string name="available">Verfügbar</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Aus den Favoriten entfernt</string>
     <string name="options">Optionen</string>
     <string name="automatic_scroll">Automatisches Blättern</string>

@@ -96,7 +96,7 @@ class FeedFragment :
 			right = barsInsets.right,
 			bottom = barsInsets.bottom + paddingVertical,
 		)
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onRefresh() {

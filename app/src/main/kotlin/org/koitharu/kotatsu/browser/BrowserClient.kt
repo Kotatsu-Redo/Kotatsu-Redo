@@ -44,6 +44,7 @@ open class BrowserClient(
 	}
 
 	@WorkerThread
+	@Suppress("DEPRECATION")
 	@Deprecated("Deprecated in Java")
 	override fun shouldInterceptRequest(
 		view: WebView?,

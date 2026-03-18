@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.core.ui
 
 import android.graphics.Color

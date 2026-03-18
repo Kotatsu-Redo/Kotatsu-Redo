@@ -19,11 +19,9 @@ import org.koitharu.kotatsu.core.ui.list.ListSelectionController
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.widgets.TipView
 import androidx.core.app.ShareCompat
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.invalidateNestedItemDecorations
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.ActivitySearchBinding
 import org.koitharu.kotatsu.list.domain.ListFilterOption
 import org.koitharu.kotatsu.list.ui.MangaSelectionDecoration
@@ -101,7 +99,7 @@ class SearchActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.toolbar.updatePadding(
 			top = barsInsets.top,
 			left = barsInsets.left,
@@ -113,7 +111,7 @@ class SearchActivity :
 			right = barsInsets.right,
 			bottom = barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onItemClick(item: MangaListModel, view: View) {

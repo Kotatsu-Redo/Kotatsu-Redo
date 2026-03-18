@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.local.data
 
 import androidx.annotation.WorkerThread
@@ -39,11 +40,11 @@ class MangaIndex(source: String?) {
 		require(!manga.isLocal) { "Local manga information cannot be stored" }
 		json.put(KEY_ID, manga.id)
 		json.put(KEY_TITLE, manga.title)
-		json.put(KEY_TITLE_ALT, manga.altTitle) // for backward compatibility
+		json.put(KEY_TITLE_ALT, manga.altTitles.firstOrNull()) // for backward compatibility
 		json.put(KEY_ALT_TITLES, JSONArray(manga.altTitles))
 		json.put(KEY_URL, manga.url)
 		json.put(KEY_PUBLIC_URL, manga.publicUrl)
-		json.put(KEY_AUTHOR, manga.author) // for backward compatibility
+		json.put(KEY_AUTHOR, manga.authors.firstOrNull()) // for backward compatibility
 		json.put(KEY_AUTHORS, JSONArray(manga.authors))
 		json.put(KEY_COVER, manga.coverUrl)
 		json.put(KEY_DESCRIPTION, manga.description)

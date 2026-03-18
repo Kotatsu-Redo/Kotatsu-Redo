@@ -53,11 +53,7 @@ class TrackingRepository @Inject constructor(
 		return db.getTracksDao().observeNewChapters(mangaId)
 	}
 
-	@Deprecated("")
-	fun observeUpdatedMangaCount(): Flow<Int> {
-		return db.getTracksDao().observeUpdateMangaCount()
-			.onStart { gcIfNotCalled() }
-	}
+	// observeUpdatedMangaCount removed — use `observeUpdatedManga` with limits/filters instead
 
 	fun observeUnreadUpdatesCount(): Flow<Int> {
 		return db.getTrackLogsDao().observeUnreadCount()
@@ -107,16 +103,7 @@ class TrackingRepository @Inject constructor(
 		return disableKey?.defaultValue == true
 	}
 
-	@Deprecated("")
-	suspend fun getTrack(manga: Manga): MangaTracking {
-		return getTrackOrNull(manga) ?: MangaTracking(
-			manga = manga,
-			lastChapterId = NO_ID,
-			lastCheck = null,
-			lastChapterDate = null,
-			newChapters = 0,
-		)
-	}
+	// getTrack(manga) removed — use `getTrackOrNull(manga)` and handle null default locally
 
 	suspend fun getTrackOrNull(manga: Manga): MangaTracking? {
 		val track = db.getTracksDao().find(manga.id) ?: return null

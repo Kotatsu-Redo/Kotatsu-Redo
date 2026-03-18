@@ -226,7 +226,7 @@
     <string name="other_cache">Cache lain-lain</string>
     <string name="storage_usage">Penggunaan storan</string>
     <string name="available">Tersedia</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Dibuang daripada kegemaran</string>
     <string name="options">Pilihan</string>
     <string name="local_storage">Storan tempatan</string>

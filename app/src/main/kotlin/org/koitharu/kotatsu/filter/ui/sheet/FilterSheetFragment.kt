@@ -34,7 +34,6 @@ import org.koitharu.kotatsu.core.ui.model.titleRes
 import org.koitharu.kotatsu.core.ui.sheet.BaseAdaptiveSheet
 import org.koitharu.kotatsu.core.ui.widgets.ChipsView
 import org.koitharu.kotatsu.core.util.AlphanumComparator
-import org.koitharu.kotatsu.core.util.ext.consume
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.getDisplayName
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -146,7 +145,7 @@ class FilterSheetFragment : BaseAdaptiveSheet<SheetFilterBinding>(),
         viewBinding?.layoutBottom?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
             bottomMargin = insets.getInsets(typeMask).bottom
         }
-        return insets.consume(v, typeMask, bottom = true)
+        return WindowInsetsCompat.CONSUMED
     }
 
     override fun onClick(v: View) {

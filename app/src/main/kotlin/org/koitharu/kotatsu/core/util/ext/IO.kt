@@ -42,12 +42,11 @@ fun BufferedSource.readByteBuffer(): ByteBuffer {
 		.rewind() as ByteBuffer
 }
 
-@Deprecated("")
 fun InputStream.toByteBuffer(): ByteBuffer {
-	val outStream = ByteArrayOutputStream(available())
+	val outStream = ByteArrayOutputStream()
 	copyTo(outStream)
 	val bytes = outStream.toByteArray()
-	return ByteBuffer.allocateDirect(bytes.size).put(bytes).position(0) as ByteBuffer
+	return ByteBuffer.allocateDirect(bytes.size).put(bytes).rewind() as ByteBuffer
 }
 
 fun FileSystem.isDirectory(path: Path) = try {

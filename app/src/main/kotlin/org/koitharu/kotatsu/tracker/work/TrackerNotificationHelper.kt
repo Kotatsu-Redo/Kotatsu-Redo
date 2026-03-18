@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.tracker.work
 
 import android.app.Notification

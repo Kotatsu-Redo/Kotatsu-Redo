@@ -108,7 +108,7 @@ class LocalListFragment : MangaListFragment(), FilterCoordinator.Owner {
 
 			R.id.action_share -> {
 				val files = selectedItems.map { it.url.toUri().toFile() }
-				if (files.isEmpty()) return
+				if (files.isEmpty()) return false
 				val intentBuilder = ShareCompat.IntentBuilder(requireContext())
 					.setType("application/x-cbz")
 				for (file in files) {

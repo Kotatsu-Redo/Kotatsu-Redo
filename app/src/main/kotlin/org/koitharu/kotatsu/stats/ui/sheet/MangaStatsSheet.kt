@@ -48,7 +48,7 @@ class MangaStatsSheet : BaseAdaptiveSheet<SheetStatsMangaBinding>(), View.OnClic
 		viewBinding?.scrollView?.updatePadding(
 			bottom = insets.getInsets(typeMask).bottom,
 		)
-		return insets.consume(v, typeMask, bottom = true)
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onClick(v: View) {

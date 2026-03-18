@@ -67,16 +67,16 @@ class NavConfigFragment : BaseFragment<FragmentSettingsSourcesBinding>(), Recycl
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val isTablet = !resources.getBoolean(R.bool.is_tablet)
 		val isMaster = container?.id == R.id.container_master
 		v.setPaddingRelative(
-			if (isTablet && !isMaster) 0 else barsInsets.start(v),
+			if (isTablet && !isMaster) 0 else barsInsets.left,
 			0,
-			if (isTablet && isMaster) 0 else barsInsets.end(v),
+			if (isTablet && isMaster) 0 else barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onResume() {

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.os.bundleOf
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
@@ -31,7 +30,6 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.model.titleRes
 import org.koitharu.kotatsu.core.ui.util.FadingAppbarMediator
 import org.koitharu.kotatsu.core.util.ViewBadge
-import org.koitharu.kotatsu.core.util.ext.consumeSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.getParcelableExtraCompat
 import org.koitharu.kotatsu.core.util.ext.getSerializableExtraCompat
@@ -106,16 +104,16 @@ class MangaListActivity :
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
 		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.cardSide?.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-			marginEnd = barsInsets.end(v) + resources.getDimensionPixelOffset(R.dimen.side_card_offset)
+			marginEnd = barsInsets.right + resources.getDimensionPixelOffset(R.dimen.side_card_offset)
 			topMargin = barsInsets.top + resources.getDimensionPixelOffset(R.dimen.grid_spacing_outer_double)
 			bottomMargin = barsInsets.bottom + resources.getDimensionPixelOffset(R.dimen.side_card_offset)
 		}
 		viewBinding.appbar.updatePaddingRelative(
 			top = barsInsets.top,
-			end = if (viewBinding.cardSide == null) barsInsets.end(v) else 0,
-			start = barsInsets.start(v),
+			end = if (viewBinding.cardSide == null) barsInsets.right else 0,
+			start = barsInsets.left,
 		)
-		return insets.consumeSystemBarsInsets(v, top = true, end = true)
+		return WindowInsetsCompat.CONSUMED
 	}
 
 	override fun onClick(v: View) {
@@ -126,7 +124,7 @@ class MangaListActivity :
 
 	fun showPreview(manga: Manga): Boolean = setSideFragment(
 		PreviewFragment::class.java,
-		bundleOf(AppRouter.KEY_MANGA to ParcelableManga(manga)),
+		Bundle().apply { putParcelable(AppRouter.KEY_MANGA, ParcelableManga(manga)) },
 	)
 
 	fun hidePreview() = setSideFragment(FilterSheetFragment::class.java, null)
