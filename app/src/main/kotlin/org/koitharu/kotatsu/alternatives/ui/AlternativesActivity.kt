@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import coil3.ImageLoader
@@ -42,39 +43,37 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 
 	private val viewModel by viewModels<AlternativesViewModel>()
 
-	override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
-		setContentView(ActivityAlternativesBinding.inflate(layoutInflater))
-		supportActionBar?.run {
-			setDisplayHomeAsUpEnabled(true)
-			subtitle = viewModel.manga.title
-		}
-		val listAdapter = BaseListAdapter<ListModel>()
-			.addDelegate(ListItemType.MANGA_LIST_DETAILED, alternativeAD(coil, this, this))
-			.addDelegate(ListItemType.STATE_EMPTY, emptyStateListAD(null))
-			.addDelegate(ListItemType.FOOTER_LOADING, loadingFooterAD())
-			.addDelegate(ListItemType.STATE_LOADING, loadingStateAD())
-			.addDelegate(ListItemType.FOOTER_BUTTON, buttonFooterAD(this))
-		with(viewBinding.recyclerView) {
-			setHasFixedSize(true)
-			addItemDecoration(TypedListSpacingDecoration(context, addHorizontalPadding = false))
-			adapter = listAdapter
-		}
+	super.onCreate(savedInstanceState)
+	setContentView(ActivityAlternativesBinding.inflate(layoutInflater))
+	supportActionBar?.run {
+		setDisplayHomeAsUpEnabled(true)
+		subtitle = viewModel.manga.title
+	}
+	val listAdapter = BaseListAdapter<ListModel>()
+		.addDelegate(ListItemType.MANGA_LIST_DETAILED, alternativeAD(coil, this, this))
+		.addDelegate(ListItemType.STATE_EMPTY, emptyStateListAD(null))
+		.addDelegate(ListItemType.FOOTER_LOADING, loadingFooterAD())
+		.addDelegate(ListItemType.STATE_LOADING, loadingStateAD())
+		.addDelegate(ListItemType.FOOTER_BUTTON, buttonFooterAD(this))
+	with(viewBinding.recyclerView) {
+		setHasFixedSize(true)
+		addItemDecoration(TypedListSpacingDecoration(context, addHorizontalPadding = false))
+		adapter = listAdapter
+	}
 
-		viewModel.onError.observeEvent(this, SnackbarErrorObserver(viewBinding.recyclerView, null))
-		viewModel.list.observe(this, listAdapter)
-		viewModel.onMigrated.observeEvent(this) {
-			Toast.makeText(this, R.string.migration_completed, Toast.LENGTH_SHORT).show()
-			router.openDetails(it)
-			finishAfterTransition()
-		}
+	viewModel.onError.observeEvent(this, SnackbarErrorObserver(viewBinding.recyclerView, null))
+	viewModel.list.observe(this, listAdapter)
+	viewModel.onMigrated.observeEvent(this) {
+		Toast.makeText(this, R.string.migration_completed, Toast.LENGTH_SHORT).show()
+		router.openDetails(it)
+		finishAfterTransition()
 	}
 
 	override fun onApplyWindowInsets(
 		v: View,
 		insets: WindowInsetsCompat
 	): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.recyclerView.updatePadding(
 			left = barsInsets.left,
 			right = barsInsets.right,
@@ -85,7 +84,9 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: MangaAlternativeModel, view: View) {
@@ -97,7 +98,6 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 	}
 
 	override fun onRetryClick(error: Throwable) = viewModel.retry()
-
 	override fun onEmptyActionClick() = Unit
 
 	override fun onFooterButtonClick() = viewModel.continueSearch()
@@ -108,7 +108,6 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			setTitle(R.string.manga_migration)
 			setMessage(
 				getString(
-					R.string.migrate_confirmation,
 					viewModel.manga.title,
 					viewModel.manga.source.getTitle(context),
 					target.title,
