@@ -7,6 +7,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.MainThread
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -72,7 +73,7 @@ class WebViewExecutor @Inject constructor(
                     }
                 }
 
-                val baseUri = android.net.Uri.parse(baseUrl)
+                val baseUri = baseUrl.toUri()
                 val originalHost = baseUri.host
 
                 suspendCoroutine { continuation ->

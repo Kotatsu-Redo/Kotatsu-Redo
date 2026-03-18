@@ -76,6 +76,7 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="top|end"
 			android:layout_margin="6dp"
+			android:contentDescription="@null"
 			android:visibility="gone"
 			app:srcCompat="@drawable/ic_mtrl_checked_circle"
 			app:tint="?colorPrimary"

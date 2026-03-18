@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StyleRes
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.withStyledAttributes
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.image.PaintDrawable
 import org.koitharu.kotatsu.core.util.ext.hasFocusStateSpecified
@@ -57,24 +58,43 @@ class ReadingProgressDrawable(
 		}
 
 	init {
-		val ta = context.obtainStyledAttributes(styleResId, R.styleable.ProgressDrawable)
-		desiredHeight = ta.getDimensionPixelSize(R.styleable.ProgressDrawable_android_height, -1)
-		desiredWidth = ta.getDimensionPixelSize(R.styleable.ProgressDrawable_android_width, -1)
-		autoFitTextSize = ta.getBoolean(R.styleable.ProgressDrawable_autoFitTextSize, false)
-		lineColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_strokeColor) ?: ColorStateList.valueOf(
-			Color.BLACK,
-		)
-		outlineColor =
-			ta.getColorStateList(R.styleable.ProgressDrawable_outlineColor) ?: ColorStateList.valueOf(Color.TRANSPARENT)
-		backgroundColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_fillColor)?.withAlpha(
-			(255 * ta.getFloat(R.styleable.ProgressDrawable_android_fillAlpha, 0f)).toInt(),
-		) ?: ColorStateList.valueOf(Color.TRANSPARENT)
-		textColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_textColor) ?: lineColor
+		var resolvedDesiredHeight = -1
+		var resolvedDesiredWidth = -1
+		var resolvedAutoFitTextSize = false
+		var resolvedLineColor: ColorStateList = ColorStateList.valueOf(Color.BLACK)
+		var resolvedOutlineColor: ColorStateList = ColorStateList.valueOf(Color.TRANSPARENT)
+		var resolvedBackgroundColor: ColorStateList = ColorStateList.valueOf(Color.TRANSPARENT)
+		var resolvedTextColor: ColorStateList = resolvedLineColor
+		var resolvedTextSize = paint.textSize
+		var resolvedStrokeWidth = 1f
+
+		context.withStyledAttributes(styleResId, R.styleable.ProgressDrawable) {
+			resolvedDesiredHeight = getDimensionPixelSize(R.styleable.ProgressDrawable_android_height, -1)
+			resolvedDesiredWidth = getDimensionPixelSize(R.styleable.ProgressDrawable_android_width, -1)
+			resolvedAutoFitTextSize = getBoolean(R.styleable.ProgressDrawable_autoFitTextSize, false)
+			resolvedLineColor = getColorStateList(R.styleable.ProgressDrawable_android_strokeColor)
+				?: ColorStateList.valueOf(Color.BLACK)
+			resolvedOutlineColor = getColorStateList(R.styleable.ProgressDrawable_outlineColor)
+				?: ColorStateList.valueOf(Color.TRANSPARENT)
+			resolvedBackgroundColor = getColorStateList(R.styleable.ProgressDrawable_android_fillColor)?.withAlpha(
+				(255 * getFloat(R.styleable.ProgressDrawable_android_fillAlpha, 0f)).toInt(),
+			) ?: ColorStateList.valueOf(Color.TRANSPARENT)
+			resolvedTextColor = getColorStateList(R.styleable.ProgressDrawable_android_textColor) ?: resolvedLineColor
+			resolvedTextSize = getDimension(R.styleable.ProgressDrawable_android_textSize, paint.textSize)
+			resolvedStrokeWidth = getDimension(R.styleable.ProgressDrawable_strokeWidth, 1f)
+		}
+
+		desiredHeight = resolvedDesiredHeight
+		desiredWidth = resolvedDesiredWidth
+		autoFitTextSize = resolvedAutoFitTextSize
+		lineColor = resolvedLineColor
+		outlineColor = resolvedOutlineColor
+		backgroundColor = resolvedBackgroundColor
+		textColor = resolvedTextColor
 		paint.strokeCap = Paint.Cap.ROUND
 		paint.textAlign = Paint.Align.CENTER
-		paint.textSize = ta.getDimension(R.styleable.ProgressDrawable_android_textSize, paint.textSize)
-		paint.strokeWidth = ta.getDimension(R.styleable.ProgressDrawable_strokeWidth, 1f)
-		ta.recycle()
+		paint.textSize = resolvedTextSize
+		paint.strokeWidth = resolvedStrokeWidth
 		checkDrawable?.setTintList(textColor)
 		onStateChange(state)
 	}

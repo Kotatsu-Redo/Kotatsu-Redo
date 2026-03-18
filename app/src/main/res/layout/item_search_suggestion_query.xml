@@ -36,6 +36,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:background="?selectableItemBackgroundBorderless"
+		android:contentDescription="@string/search"
 		android:padding="8dp"
 		android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"
 		app:tint="?colorControlNormal" />
