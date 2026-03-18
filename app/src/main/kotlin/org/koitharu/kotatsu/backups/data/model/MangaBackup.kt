@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.koitharu.kotatsu.backups.data.model
 
 import kotlinx.serialization.SerialName

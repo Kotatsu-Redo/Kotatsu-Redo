@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.koitharu.kotatsu.core.db.entity
 
 import androidx.room.ColumnInfo
