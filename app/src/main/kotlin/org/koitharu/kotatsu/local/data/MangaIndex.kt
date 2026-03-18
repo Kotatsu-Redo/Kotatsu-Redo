@@ -12,6 +12,7 @@ import org.json.JSONObject
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.model.isLocal
+import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -50,7 +51,7 @@ class MangaIndex(source: String?) {
 		json.put(KEY_DESCRIPTION, manga.description)
 		json.put(KEY_RATING, manga.rating)
 		json.put(KEY_CONTENT_RATING, manga.contentRating)
-		json.put(KEY_NSFW, manga.isNsfw) // for backward compatibility
+		json.put(KEY_NSFW, manga.isNsfw()) // for backward compatibility
 		json.put(KEY_STATE, manga.state?.name)
 		json.put(KEY_SOURCE, manga.source.name)
 		json.put(KEY_COVER_LARGE, manga.largeCoverUrl)

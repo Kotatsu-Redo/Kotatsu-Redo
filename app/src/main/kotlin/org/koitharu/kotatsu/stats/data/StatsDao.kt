@@ -52,7 +52,7 @@ abstract class StatsDao {
 		}
 		if (isNsfw != null) {
 			val flag = if (isNsfw) 1 else 0
-			conditions.add("manga.nsfw = $flag")
+			conditions.add("(manga.content_rating = 'ADULT') = $flag")
 		}
 		val where = conditions.joinToString(separator = " AND ")
 		val query = SimpleSQLiteQuery(
