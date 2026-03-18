@@ -349,7 +349,7 @@
     <string name="pages_cache">Кэш старонак</string>
     <string name="other_cache">Іншы кэш</string>
     <string name="storage_usage">Выкарыстанне памяці</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Выдалена з абранага</string>
     <string name="options">Параметры</string>
     <string name="user_agent">Загаловак UserAgent</string>

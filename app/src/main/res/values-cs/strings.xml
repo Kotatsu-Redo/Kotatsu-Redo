@@ -233,7 +233,7 @@
     <string name="other_cache">Další mezipamět</string>
     <string name="storage_usage">Využívání uložiště</string>
     <string name="available">Dostupné</string>
-    <string name="memory_usage_pattern">%s -%s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Odstraněno z oblíbených</string>
     <string name="options">Možnosti</string>
     <string name="not_found_404">Kontent nebyl nalezen nebo byl odstraněn</string>
