@@ -12,4 +12,5 @@
 	android:paddingEnd="?android:listPreferredItemPaddingEnd"
 	android:textAppearance="?attr/textAppearanceBodyLarge"
 	tools:checked="true"
+	tools:ignore="Overdraw"
 	tools:text="@tools:sample/lorem[4]" />

@@ -8,7 +8,8 @@
 	android:orientation="vertical"
 	android:paddingVertical="@dimen/margin_small"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd">
+	android:paddingEnd="?listPreferredItemPaddingEnd"
+	tools:ignore="Overdraw">
 
 	<LinearLayout
 		android:layout_width="match_parent"

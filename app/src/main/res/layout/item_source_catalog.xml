@@ -10,7 +10,7 @@
 	android:minHeight="?listPreferredItemHeightSmall"
 	android:orientation="horizontal"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	tools:ignore="RtlSymmetry">
+	tools:ignore="RtlSymmetry,Overdraw">
 
 	<org.koitharu.kotatsu.core.ui.image.FaviconView
 		android:id="@+id/imageView_icon"

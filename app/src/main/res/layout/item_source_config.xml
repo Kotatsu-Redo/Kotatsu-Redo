@@ -11,7 +11,8 @@
 	android:orientation="horizontal"
 	android:paddingVertical="@dimen/margin_small"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd">
+	android:paddingEnd="?listPreferredItemPaddingEnd"
+	tools:ignore="Overdraw">
 
 	<org.koitharu.kotatsu.core.ui.image.FaviconView
 		android:id="@+id/imageView_icon"

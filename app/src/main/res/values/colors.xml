@@ -7,7 +7,6 @@
 	<color name="onErrorContainer">#410001</color>
 
 	<!-- AMOLED Theme -->
-	<color name="surface_amoled">#080808</color>
 	<color name="background_amoled">#000000</color>
 
 	<!-- Other Colors -->
@@ -15,7 +14,6 @@
 	<color name="blue_primary">#1976D2</color>
 	<color name="grey">#424242</color>
 	<color name="dim">#99000000</color>
-	<color name="dim2">#C8FFFFFF</color>
 	<color name="dim_lite">#66000000</color>
 	<color name="warning">#E65100</color>
 	<color name="launcher_background">#FFFFFF</color>
@@ -25,12 +23,4 @@
 	<color name="nsfw_18">#FF8A65</color>
 	<color name="nsfw_16">#FFD54F</color>
 
-	<!-- Color schemes colors -->
-	<color name="background_miku">#F7FAF8</color>
-	<color name="background_asuka">#FFF8F7</color>
-	<color name="background_mion">#F8FAF6</color>
-	<color name="background_rikka">#FCF8FD</color>
-	<color name="background_sakura">#FFF8F8</color>
-	<color name="background_mamimi">#FFF8F7</color>
-	<color name="background_kanade">#F3F3F3</color>
 </resources>

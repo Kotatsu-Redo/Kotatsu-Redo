@@ -9,7 +9,8 @@
 	android:gravity="center_vertical"
 	android:minHeight="?attr/listPreferredItemHeightSmall"
 	android:orientation="horizontal"
-	android:paddingVertical="@dimen/margin_small">
+	android:paddingVertical="@dimen/margin_small"
+	tools:ignore="Overdraw">
 
 	<org.koitharu.kotatsu.core.ui.image.FaviconView
 		android:id="@+id/imageView_cover"

@@ -11,7 +11,8 @@
 	android:orientation="horizontal"
 	android:paddingVertical="12dp"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd">
+	android:paddingEnd="?listPreferredItemPaddingEnd"
+	tools:ignore="Overdraw">
 
 	<LinearLayout
 		android:layout_width="0dp"

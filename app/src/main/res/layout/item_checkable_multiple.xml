@@ -12,4 +12,5 @@
 	android:paddingEnd="?android:listPreferredItemPaddingEnd"
 	android:textAppearance="?attr/textAppearanceBodyMedium"
 	app:drawableStartCompat="?android:listChoiceIndicatorMultiple"
+	tools:ignore="Overdraw"
 	tools:text="@tools:sample/full_names" />

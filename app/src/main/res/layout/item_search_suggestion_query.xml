@@ -10,7 +10,8 @@
 	android:minHeight="?listPreferredItemHeightSmall"
 	android:orientation="horizontal"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd">
+	android:paddingEnd="?listPreferredItemPaddingEnd"
+	tools:ignore="Overdraw">
 
 	<TextView
 		android:id="@+id/textView_title"
