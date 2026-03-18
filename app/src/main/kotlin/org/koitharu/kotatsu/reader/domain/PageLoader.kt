@@ -69,7 +69,7 @@ import org.koitharu.kotatsu.local.data.LocalStorageCache
 import org.koitharu.kotatsu.local.data.PageCache
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaSource
-import org.koitharu.kotatsu.parsers.util.requireBody
+// requireBody import removed
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
 import java.io.File
@@ -300,7 +300,7 @@ class PageLoader @Inject constructor(
 				}
 				val request = createPageRequest(pageUrl, page.source)
 				imageProxyInterceptor.interceptPageRequest(request, okHttp).ensureSuccess().use { response ->
-					response.requireBody().withProgress(progress).use {
+					response.body!!.withProgress(progress).use {
 						cache.set(pageUrl, it.source(), it.contentType()?.toMimeType())
 					}
 				}.toUri()

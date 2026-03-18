@@ -16,7 +16,7 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.util.ext.isNotEmpty
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.parsers.util.await
-import org.koitharu.kotatsu.parsers.util.requireBody
+// requireBody import removed
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import java.io.File
 import java.net.HttpURLConnection
@@ -95,7 +95,7 @@ class AdBlock @Inject constructor(
 						dateFormat.parse(it)
 					}.getOrNull()
 				}?.time ?: System.currentTimeMillis()
-				response.requireBody().source().use { source ->
+				response.body!!.source().use { source ->
 					file.sink().use { sink ->
 						source.readAll(sink)
 					}
