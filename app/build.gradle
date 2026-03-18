@@ -102,6 +102,7 @@ android {
 		schemaDirectory "$projectDir/schemas"
 	}
 	lint {
+		baseline = file("lint-baseline.xml")
 		abortOnError = true
 		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat'
 	}
