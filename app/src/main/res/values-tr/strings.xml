@@ -511,7 +511,7 @@
     <string name="apply">Uygula</string>
     <string name="genres_search_hint">Tür adını yazmaya başlayın</string>
     <string name="globally">Genel</string>
-    <string name="downloads_settings_info">Sunucu taraflı engelleme ile ilgili sorun yaşıyorsanız, kaynak ayarlarında her manga kaynağı için ayrı ayrı indirme yavaşlatmayı etkinleştirebilirsiniz</string>
+    <string name="downloads_settings_info" tools:ignore="Typos">Sunucu taraflı engelleme ile ilgili sorun yaşıyorsanız, kaynak ayarlarında her manga kaynağı için ayrı ayrı indirme yavaşlatmayı etkinleştirebilirsiniz</string>
     <string name="disable_battery_optimization_summary_downloads">Herhangi bir sorun yaşarsanız indirmeyi başlatmanıza yardımcı olabilir</string>
     <string name="this_manga">Bu manga</string>
     <string name="skip">Atla</string>
@@ -601,7 +601,7 @@
     <string name="delete_read_chapters_auto">Okunan bölümleri otomatik olarak sil</string>
     <string name="runs_on_app_start">Uygulama başladığında çalışır</string>
     <string name="split_by_translations">Çevirilere göre böl</string>
-    <string name="split_by_translations_summary">Farklı çevirilere sahip bölümleri tek bir liste yerine ayrı ayrı göster</string>
+    <string name="split_by_translations_summary" tools:ignore="Typos">Farklı çevirilere sahip bölümleri tek bir liste yerine ayrı ayrı göster</string>
     <string name="order_oldest">En eski</string>
     <string name="long_ago_read">Uzun zaman önce okundu</string>
     <string name="unread">Okunmadı</string>

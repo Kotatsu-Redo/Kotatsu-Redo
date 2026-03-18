@@ -463,28 +463,6 @@
     </issue>
 
     <issue
-        id="Typos"
-        message="Repeated word &quot;ayrı&quot; in message: possible typo"
-        errorLine1="    &lt;string name=&quot;downloads_settings_info&quot;>Sunucu taraflı engelleme ile ilgili sorun yaşıyorsanız, kaynak ayarlarında her manga kaynağı için ayrı ayrı indirme yavaşlatmayı etkinleştirebilirsiniz&lt;/string>"
-        errorLine2="                                                                                                                                             ~~~~~~~~~">
-        <location
-            file="src/main/res/values-tr/strings.xml"
-            line="514"
-            column="142"/>
-    </issue>
-
-    <issue
-        id="Typos"
-        message="Repeated word &quot;ayrı&quot; in message: possible typo"
-        errorLine1="    &lt;string name=&quot;split_by_translations_summary&quot;>Farklı çevirilere sahip bölümleri tek bir liste yerine ayrı ayrı göster&lt;/string>"
-        errorLine2="                                                                                                        ~~~~~~~~~">
-        <location
-            file="src/main/res/values-tr/strings.xml"
-            line="604"
-            column="105"/>
-    </issue>
-
-    <issue
         id="Untranslatable"
         message="The resource string &quot;percent_string_pattern&quot; has been marked as translatable=&quot;false&quot; elsewhere (usually in the `values` folder), but is translated to &quot;pl&quot; (Polish) here"
         errorLine1="    &lt;string name=&quot;percent_string_pattern&quot;>%1$s%%&lt;/string>"
@@ -1769,28 +1747,6 @@
             file="src/main/res/values-pt-rBR/strings.xml"
             line="633"
             column="13"/>
-    </issue>
-
-    <issue
-        id="PluralsCandidate"
-        message="Formatting %d followed by words (&quot;seconds&quot;): This should probably be a plural rather than a string"
-        errorLine1="    &lt;string name=&quot;page_switch_timer&quot;>The page will switch every ~%d seconds&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="852"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="StringFormatCount"
-        message="Formatting string &apos;`migrate_confirmation`&apos; is not referencing numbered arguments [1]"
-        errorLine1="    &lt;string name=&quot;migrate_confirmation&quot;>「%2$s」から「%3$s」を「%4$s」に置き換えられます&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ja/strings.xml"
-            line="796"
-            column="5"/>
     </issue>
 
     <issue
