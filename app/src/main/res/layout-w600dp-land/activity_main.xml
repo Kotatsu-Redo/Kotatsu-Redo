@@ -6,6 +6,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="horizontal"
+	tools:ignore="InconsistentLayout"
 	tools:context=".main.ui.MainActivity">
 
 	<com.google.android.material.navigationrail.NavigationRailView
