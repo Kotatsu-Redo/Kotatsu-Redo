@@ -10,7 +10,8 @@
 	android:minHeight="?listPreferredItemHeight"
 	android:orientation="horizontal"
 	android:paddingVertical="12dp"
-	android:paddingStart="?listPreferredItemPaddingStart">
+	android:paddingStart="?listPreferredItemPaddingStart"
+	android:paddingEnd="?listPreferredItemPaddingEnd">
 
 	<LinearLayout
 		android:layout_width="0dp"

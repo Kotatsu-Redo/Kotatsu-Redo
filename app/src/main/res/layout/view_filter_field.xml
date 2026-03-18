@@ -35,6 +35,7 @@
 		android:layout_height="wrap_content"
 		android:layout_alignBaseline="@id/textView_title"
 		android:layout_alignParentEnd="true"
+		android:paddingStart="@dimen/margin_small"
 		android:paddingEnd="@dimen/margin_small"
 		android:singleLine="true"
 		android:textAppearance="?textAppearanceBodyMedium"

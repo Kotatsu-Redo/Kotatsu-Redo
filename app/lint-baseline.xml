@@ -334,7 +334,7 @@
         errorLine2="  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/item_storage_config.xml"
-            line="50"
+            line="51"
             column="3"/>
     </issue>
 
@@ -3551,28 +3551,6 @@
             file="src/main/kotlin/org/koitharu/kotatsu/details/ui/pager/pages/PageThumbnailAD.kt"
             line="32"
             column="11"/>
-    </issue>
-
-    <issue
-        id="RtlSymmetry"
-        message="When you define `paddingStart` you should probably also define `paddingEnd` for right-to-left symmetry"
-        errorLine1=" android:paddingStart=&quot;?listPreferredItemPaddingStart&quot;>"
-        errorLine2=" ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_storage_config.xml"
-            line="13"
-            column="2"/>
-    </issue>
-
-    <issue
-        id="RtlSymmetry"
-        message="When you define `paddingEnd` you should probably also define `paddingStart` for right-to-left symmetry"
-        errorLine1="  android:paddingEnd=&quot;@dimen/margin_small&quot;"
-        errorLine2="  ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/view_filter_field.xml"
-            line="38"
-            column="3"/>
     </issue>
 
 </issues>
