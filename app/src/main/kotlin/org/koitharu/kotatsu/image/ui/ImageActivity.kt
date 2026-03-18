@@ -32,7 +32,7 @@ import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.PopupMenuMediator
-import org.koitharu.kotatsu.core.util.ShareHelper
+import androidx.core.app.ShareCompat
 import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.enqueueWith
@@ -159,7 +159,11 @@ class ImageActivity : BaseActivity<ActivityImageBinding>(),
 	private fun onImageSaved(uri: Uri) {
 		Snackbar.make(viewBinding.root, R.string.page_saved, Snackbar.LENGTH_LONG)
 			.setAction(R.string.share) {
-				ShareHelper(this).shareImage(uri)
+				ShareCompat.IntentBuilder(this)
+					.setStream(uri)
+					.setType(contentResolver.getType(uri) ?: "image/*")
+					.setChooserTitle(org.koitharu.kotatsu.R.string.share_image)
+					.startChooser()
 			}.show()
 	}
 

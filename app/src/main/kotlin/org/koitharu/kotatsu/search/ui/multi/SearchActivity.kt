@@ -18,7 +18,7 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.list.ListSelectionController
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.widgets.TipView
-import org.koitharu.kotatsu.core.util.ShareHelper
+import androidx.core.app.ShareCompat
 import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.invalidateNestedItemDecorations
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -176,7 +176,16 @@ class SearchActivity :
 	override fun onActionItemClicked(controller: ListSelectionController, mode: ActionMode?, item: MenuItem): Boolean {
 		return when (item.itemId) {
 			R.id.action_share -> {
-				ShareHelper(this).shareMangaLinks(collectSelectedItems())
+				val selected = collectSelectedItems()
+				if (selected.isEmpty()) return true
+				val text = selected.joinToString("\n \n") {
+					"${it.title} - ${it.publicUrl}"
+				}
+				ShareCompat.IntentBuilder(this)
+					.setText(text)
+					.setType("text/plain")
+					.setChooserTitle(org.koitharu.kotatsu.R.string.share)
+					.startChooser()
 				mode?.finish()
 				true
 			}

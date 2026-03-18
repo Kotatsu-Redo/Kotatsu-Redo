@@ -19,7 +19,7 @@ import org.koitharu.kotatsu.core.model.LocalMangaSource
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.ui.list.ListSelectionController
 import org.koitharu.kotatsu.core.ui.widgets.TipView
-import org.koitharu.kotatsu.core.util.ShareHelper
+import androidx.core.app.ShareCompat
 import org.koitharu.kotatsu.core.util.ext.addMenuProvider
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.tryLaunch
@@ -108,7 +108,19 @@ class LocalListFragment : MangaListFragment(), FilterCoordinator.Owner {
 
 			R.id.action_share -> {
 				val files = selectedItems.map { it.url.toUri().toFile() }
-				ShareHelper(requireContext()).shareCbz(files)
+				if (files.isEmpty()) return
+				val intentBuilder = ShareCompat.IntentBuilder(requireContext())
+					.setType("application/x-cbz")
+				for (file in files) {
+					val uri = androidx.core.content.FileProvider.getUriForFile(requireContext(), "${org.koitharu.kotatsu.BuildConfig.APPLICATION_ID}.files", file)
+					intentBuilder.addStream(uri)
+				}
+				files.singleOrNull()?.let {
+					intentBuilder.setChooserTitle(requireContext().getString(org.koitharu.kotatsu.R.string.share_s, it.name))
+				} ?: run {
+					intentBuilder.setChooserTitle(org.koitharu.kotatsu.R.string.share)
+				}
+				intentBuilder.startChooser()
 				mode?.finish()
 				true
 			}

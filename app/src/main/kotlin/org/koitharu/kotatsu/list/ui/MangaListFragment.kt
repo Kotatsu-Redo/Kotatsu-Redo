@@ -35,7 +35,7 @@ import org.koitharu.kotatsu.core.ui.list.fastscroll.FastScroller
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
 import org.koitharu.kotatsu.core.ui.widgets.TipView
-import org.koitharu.kotatsu.core.util.ShareHelper
+import androidx.core.app.ShareCompat
 import org.koitharu.kotatsu.core.util.ext.addMenuProvider
 import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.findAppCompatDelegate
@@ -300,7 +300,15 @@ abstract class MangaListFragment :
 			}
 
 			R.id.action_share -> {
-				ShareHelper(requireContext()).shareMangaLinks(selectedItems)
+				if (selectedItems.isEmpty()) return true
+				val text = selectedItems.joinToString("\n \n") {
+					"${it.title} - ${it.publicUrl}"
+				}
+				ShareCompat.IntentBuilder(requireContext())
+					.setText(text)
+					.setType("text/plain")
+					.setChooserTitle(org.koitharu.kotatsu.R.string.share)
+					.startChooser()
 				mode?.finish()
 				true
 			}
