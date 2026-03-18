@@ -169,7 +169,8 @@ class ExternalPluginContentSource(
 				val result = ArraySet<Locale>(cursor.count)
 				if (cursor.moveToFirst()) {
 					do {
-						result += Locale(cursor.getString(COLUMN_NAME))
+						// Use Locale.forLanguageTag instead of deprecated Locale(String) constructor
+						result += Locale.forLanguageTag(cursor.getString(COLUMN_NAME))
 					} while (cursor.moveToNext())
 				}
 				result

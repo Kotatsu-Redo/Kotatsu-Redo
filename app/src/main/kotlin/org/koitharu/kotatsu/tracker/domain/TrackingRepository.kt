@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.koitharu.kotatsu.tracker.domain
 
 import android.content.Context

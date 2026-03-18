@@ -6,7 +6,8 @@ import java.util.Locale
 
 class TagTitleComparator(lc: String?) : Comparator<MangaTag> {
 
-	private val collator = lc?.let { Collator.getInstance(Locale(it)) }
+	// Use Locale.forLanguageTag instead of deprecated Locale(String) constructor
+	private val collator = lc?.let { Collator.getInstance(Locale.forLanguageTag(it)) }
 
 	override fun compare(o1: MangaTag, o2: MangaTag): Int {
 		val t1 = o1.title.lowercase()

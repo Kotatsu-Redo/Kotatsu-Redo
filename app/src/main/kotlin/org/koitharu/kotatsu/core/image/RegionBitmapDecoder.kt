@@ -103,6 +103,7 @@ class RegionBitmapDecoder(
 		)
 
 		// Calculate the image's density scaling multiple.
+		@Suppress("DEPRECATION")
 		var scale = DecodeUtils.computeSizeMultiplier(
 			srcWidth = rect.width() / inSampleSize.toDouble(),
 			srcHeight = rect.height() / inSampleSize.toDouble(),
