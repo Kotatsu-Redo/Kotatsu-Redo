@@ -14,7 +14,7 @@ plugins {
 
 android {
 	compileSdk = 36
-	buildToolsVersion = '35.0.0'
+	buildToolsVersion = '36.1.0'
 	namespace = 'org.koitharu.kotatsu'
 
     dependenciesInfo {
@@ -37,7 +37,7 @@ android {
 		}
 		androidResources {
 			// https://issuetracker.google.com/issues/408030127
-			generateLocaleConfig false
+			generateLocaleConfig = false
 		}
 		def localProperties = new Properties()
 		def localPropertiesFile = rootProject.file('local.properties')
@@ -52,7 +52,7 @@ android {
 		}
 		release {
 			minifyEnabled true
-			shrinkResources true
+			shrinkResources = true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
 		nightly {
@@ -61,8 +61,8 @@ android {
 		}
 	}
 	buildFeatures {
-		viewBinding true
-		buildConfig true
+		viewBinding = true
+		buildConfig = true
 	}
 	packagingOptions {
 		resources {
@@ -77,7 +77,7 @@ android {
 		main.java.srcDirs += 'src/main/kotlin/'
 	}
 	compileOptions {
-		coreLibraryDesugaringEnabled true
+		coreLibraryDesugaringEnabled = true
 		sourceCompatibility JavaVersion.VERSION_17
 		targetCompatibility JavaVersion.VERSION_17
 	}
@@ -99,15 +99,15 @@ android {
 		]
 	}
 	room {
-        schemaDirectory "$projectDir/schemas"
+		schemaDirectory "$projectDir/schemas"
 	}
 	lint {
-		abortOnError true
+		abortOnError = true
 		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat'
 	}
 	testOptions {
-		unitTests.includeAndroidResources true
-		unitTests.returnDefaultValues false
+		unitTests.includeAndroidResources = true
+		unitTests.returnDefaultValues = false
 		kotlinOptions {
 			freeCompilerArgs += ['-opt-in=org.koitharu.kotatsu.parsers.InternalParsersApi']
 		}
