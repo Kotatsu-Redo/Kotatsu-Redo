@@ -65,9 +65,6 @@ android {
 		buildConfig = true
 	}
 	packagingOptions {
-		jniLibs {
-			useLegacyPackaging = true
-		}
 		resources {
 			excludes += [
 				'META-INF/README.md',
@@ -105,10 +102,8 @@ android {
 		schemaDirectory "$projectDir/schemas"
 	}
 	lint {
-		baseline = file("lint-baseline.xml")
 		abortOnError = true
-		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat',
-				'NewerVersionAvailable', 'GradleDependency', 'AndroidGradlePluginVersion', 'Aligned16KB'
+		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat'
 	}
 	testOptions {
 		unitTests.includeAndroidResources = true
@@ -127,47 +122,6 @@ android {
 		}
 	}
 }
-
-configurations {
-	acraCorePatchSource {
-		canBeConsumed = false
-		canBeResolved = true
-		transitive = false
-	}
-}
-
-def acraVersion = libs.versions.acra.get()
-def patchedAcraCoreAar = layout.buildDirectory.file("patched-libs/acra-core-${acraVersion}-patched.aar")
-
-// Unpack the AAR, apply a simple manifest filter and re-zip; use Copy/Zip tasks
-tasks.register('unpackAcraCore', Copy) {
-	from { zipTree(configurations.acraCorePatchSource.singleFile) }
-	into layout.buildDirectory.dir('tmp/patched-acra-core')
-	// filter manifest at copy time
-	eachFile { fileCopyDetails ->
-		if (fileCopyDetails.name == 'AndroidManifest.xml') {
-			// use filter via transform on the path
-			// filesMatching is not available directly here, so use filter when expanding
-		}
-	}
-	// filesMatching allows content filtering
-	filesMatching('AndroidManifest.xml') {
-		filter { line -> line.replace('tools:replace="android:authorities"', '') }
-	}
-}
-
-tasks.register('patchAcraCoreAar', Zip) {
-	dependsOn tasks.named('unpackAcraCore')
-	archiveFileName = "acra-core-${acraVersion}-patched.aar"
-	destinationDirectory = layout.buildDirectory.dir('patched-libs')
-	from(layout.buildDirectory.dir('tmp/patched-acra-core'))
-}
-
-// Ensure preBuild depends on the patched AAR generation
-tasks.named('preBuild') {
-	dependsOn tasks.named('patchAcraCoreAar')
-}
-
 dependencies {
 	def parsersVersion = libs.versions.parsers.get()
 	if (System.properties.containsKey('parsersVersionOverride')) {
@@ -175,7 +129,6 @@ dependencies {
 		// -DparsersVersionOverride=$(curl -s https://api.github.com/repos/kotatsuapp/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
 		parsersVersion = System.getProperty('parsersVersionOverride')
 	}
-	acraCorePatchSource "ch.acra:acra-core:${acraVersion}"
 	//noinspection UseTomlInstead
 	implementation("com.github.clquwu:kotatsu-parsers-redo:$parsersVersion") {
 		exclude group: 'org.json', module: 'json'
@@ -240,13 +193,8 @@ dependencies {
 	implementation libs.markwon
 	implementation libs.kizzyrpc
 
-	implementation files(patchedAcraCoreAar)
-	implementation(libs.acra.http) {
-		exclude group: 'ch.acra', module: 'acra-core'
-	}
-	implementation(libs.acra.dialog) {
-		exclude group: 'ch.acra', module: 'acra-core'
-	}
+	implementation libs.acra.http
+	implementation libs.acra.dialog
 
 	implementation libs.conscrypt.android
 

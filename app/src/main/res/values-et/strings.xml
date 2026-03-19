@@ -357,7 +357,7 @@
     <string name="updated">Uuendatud</string>
     <string name="color_theme">Värvi skeema</string>
     <string name="brightness">Helendus</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="preparing_">Valmistan…</string>
     <string name="share">Jaga</string>
     <string name="computing_">Arvutan…</string>

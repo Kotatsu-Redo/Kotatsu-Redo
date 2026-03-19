@@ -14,7 +14,7 @@ import androidx.core.content.getSystemService
 import androidx.fragment.app.strictmode.FragmentStrictMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import androidx.core.app.ShareCompat
+import org.koitharu.kotatsu.core.util.ShareHelper
 import kotlin.math.absoluteValue
 import androidx.fragment.app.strictmode.Violation as FragmentViolation
 
@@ -56,11 +56,7 @@ class StrictModeNotifier(
 			PendingIntentCompat.getActivity(
 				context,
 				violation.hashCode(),
-				ShareCompat.IntentBuilder(context)
-					.setText(violation.stackTraceToString())
-					.setType("text/plain")
-					.setChooserTitle(R.string.share)
-					.createChooserIntent(),
+				ShareHelper(context).getShareTextIntent(violation.stackTraceToString()),
 				0,
 				false,
 			),

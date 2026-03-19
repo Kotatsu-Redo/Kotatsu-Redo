@@ -307,7 +307,7 @@
     <string name="exit_confirmation_summary">Πάτα Πίσω δύο φορές για να βγεις από την εφαρμογή</string>
     <string name="storage_usage">Χρησιμοποίηση χώρου αποθήκευσης</string>
     <string name="available">Διαθέσιμο</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="options">Επιλογές</string>
     <string name="not_found_404">Το περιεχόμενο δεν βρέθηκε, και πιθανώς να έχει αφαιρεθεί</string>
     <string name="incognito_mode">Λειτουργία Incognito</string>

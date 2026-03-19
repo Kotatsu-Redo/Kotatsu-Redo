@@ -25,6 +25,7 @@
 	<color name="totoro_onSurfaceVariant">#C3C6CF</color>
 	<color name="totoro_outline">#8D9199</color>
 	<color name="totoro_outlineVariant">#43474E</color>
+	<color name="totoro_scrim">#000000</color>
 	<color name="totoro_inverseSurface">#E1E2E9</color>
 	<color name="totoro_inverseOnSurface">#2E3035</color>
 	<color name="totoro_inversePrimary">#3C6090</color>
@@ -72,6 +73,7 @@
 	<color name="asuka_onSurfaceVariant">#D8C2BE</color>
 	<color name="asuka_outline">#A08C89</color>
 	<color name="asuka_outlineVariant">#534341</color>
+	<color name="asuka_scrim">#000000</color>
 	<color name="asuka_inverseSurface">#F1DEDC</color>
 	<color name="asuka_inverseOnSurface">#392E2C</color>
 	<color name="asuka_inversePrimary">#904A40</color>
@@ -119,6 +121,7 @@
 	<color name="itsuka_onSurfaceVariant">#DCC1B3</color>
 	<color name="itsuka_outline">#A48C7F</color>
 	<color name="itsuka_outlineVariant">#554338</color>
+	<color name="itsuka_scrim">#000000</color>
 	<color name="itsuka_inverseSurface">#F1DFD5</color>
 	<color name="itsuka_inverseOnSurface">#392E28</color>
 	<color name="itsuka_inversePrimary">#974800</color>
@@ -166,6 +169,7 @@
 	<color name="kanade_onSurfaceVariant">#DEDBE2</color>
 	<color name="kanade_outline">#B3B1B7</color>
 	<color name="kanade_outlineVariant">#918F96</color>
+	<color name="kanade_scrim">#000000</color>
 	<color name="kanade_inverseSurface">#E5E1E3</color>
 	<color name="kanade_inverseOnSurface">#2A2A2B</color>
 	<color name="kanade_inversePrimary">#474755</color>
@@ -213,6 +217,7 @@
 	<color name="mamimi_onSurfaceVariant">#C5C6D0</color>
 	<color name="mamimi_outline">#8F9099</color>
 	<color name="mamimi_outlineVariant">#44464F</color>
+	<color name="mamimi_scrim">#000000</color>
 	<color name="mamimi_inverseSurface">#E2E2E9</color>
 	<color name="mamimi_inverseOnSurface">#2F3036</color>
 	<color name="mamimi_inversePrimary">#465D91</color>
@@ -260,6 +265,7 @@
 	<color name="miku_onSurfaceVariant">#BCC9C9</color>
 	<color name="miku_outline">#879393</color>
 	<color name="miku_outlineVariant">#3D4949</color>
+	<color name="miku_scrim">#000000</color>
 	<color name="miku_inverseSurface">#DEE3E3</color>
 	<color name="miku_inverseOnSurface">#2C3132</color>
 	<color name="miku_inversePrimary">#00696D</color>
@@ -307,6 +313,7 @@
 	<color name="mion_onSurfaceVariant">#C2C9BD</color>
 	<color name="mion_outline">#8C9388</color>
 	<color name="mion_outlineVariant">#424940</color>
+	<color name="mion_scrim">#000000</color>
 	<color name="mion_inverseSurface">#E0E4DB</color>
 	<color name="mion_inverseOnSurface">#2D322C</color>
 	<color name="mion_inversePrimary">#3B693A</color>
@@ -354,6 +361,7 @@
 	<color name="rikka_onSurfaceVariant">#CBC4CF</color>
 	<color name="rikka_outline">#948F99</color>
 	<color name="rikka_outlineVariant">#49454E</color>
+	<color name="rikka_scrim">#000000</color>
 	<color name="rikka_inverseSurface">#E7E0E8</color>
 	<color name="rikka_inverseOnSurface">#322F35</color>
 	<color name="rikka_inversePrimary">#68548D</color>
@@ -401,6 +409,7 @@
 	<color name="sakura_onSurfaceVariant">#D5C2C6</color>
 	<color name="sakura_outline">#9E8C90</color>
 	<color name="sakura_outlineVariant">#514347</color>
+	<color name="sakura_scrim">#000000</color>
 	<color name="sakura_inverseSurface">#EFDFE1</color>
 	<color name="sakura_inverseOnSurface">#372E30</color>
 	<color name="sakura_inversePrimary">#8C4A60</color>

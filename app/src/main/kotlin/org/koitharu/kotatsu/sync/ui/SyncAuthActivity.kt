@@ -23,10 +23,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.DefaultTextWatcher
+import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.getParcelableExtraCompat
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.ActivitySyncAuthBinding
 import org.koitharu.kotatsu.sync.data.SyncSettings
 import org.koitharu.kotatsu.sync.domain.SyncAuthResult
@@ -81,7 +83,7 @@ class SyncAuthActivity : BaseActivity<ActivitySyncAuthBinding>(), View.OnClickLi
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.root.updatePadding(top = barsInsets.top)
 		viewBinding.dockedToolbarChild.updateLayoutParams<MarginLayoutParams> {
 			leftMargin = barsInsets.left
@@ -93,7 +95,7 @@ class SyncAuthActivity : BaseActivity<ActivitySyncAuthBinding>(), View.OnClickLi
 			left = barsInsets.left + basePadding,
 			right = barsInsets.right + basePadding,
 		)
-		return WindowInsetsCompat.CONSUMED
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onClick(v: View) {

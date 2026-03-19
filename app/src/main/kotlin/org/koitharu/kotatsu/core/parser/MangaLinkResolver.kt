@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.core.parser
 
 import android.net.Uri
@@ -61,23 +60,22 @@ class MangaLinkResolver @Inject constructor(
 		if (!title.isNullOrEmpty()) {
 			val list = getList(0, null, MangaListFilter(query = title))
 			if (url != null) {
-				list.find { it: Manga -> it.url == url }?.let {
+				list.find { it.url == url }?.let {
 					return it
 				}
 			}
-			list.minByOrNull { it: Manga -> it.title.levenshteinDistance(title) }
-				?.takeIf { it: Manga -> it.title.almostEquals(title, 0.2f) }
+			list.minByOrNull { it.title.levenshteinDistance(title) }
+				?.takeIf { it.title.almostEquals(title, 0.2f) }
 				?.let { return it }
 		}
 		val seed = getDetailsNoCache(
 			getSeedManga(source, url ?: return null, title),
 		)
 		return runCatchingCancellable {
-			val seedTitle = when {
-				seed.title.isNotEmpty() -> seed.title
-				!seed.altTitles.isNullOrEmpty() -> seed.altTitles.firstOrNull()
-				!seed.authors.isNullOrEmpty() -> seed.authors.firstOrNull()
-				else -> null
+			val seedTitle = seed.title.ifEmpty {
+				seed.altTitle
+			}.ifNullOrEmpty {
+				seed.author
 			} ?: return@runCatchingCancellable null
 			val seedList = getList(0, null, MangaListFilter(query = seedTitle))
 			seedList.first { x -> x.url == url }

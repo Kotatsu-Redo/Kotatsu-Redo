@@ -303,7 +303,7 @@
     <string name="other_cache">بيانات تخزين مؤقت أخرى</string>
     <string name="storage_usage">استهلاك التخزين</string>
     <string name="available">متوفر</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="options">خيارات</string>
     <string name="incognito_mode">الوضع الخفي</string>
     <string name="automatic_scroll">تمرير تلقائي</string>
@@ -790,7 +790,7 @@
     <string name="backup_restored_background">سوف يتم استعادة النسخة الاحتياطية في الخلفية</string>
     <string name="error_disclaimer_app_outdated">يبدو أن إصدار Kotatsu الخاص بك قديم. يرجى تثبيت أحدث إصدار للحصول على جميع الإصلاحات المتاحة.</string>
     <string name="disable_captcha_notifications">تعطيل اشعارات captcha</string>
-    <string name="disable_captcha_notifications_summary">لن تتلقى إشعارات حول حل CAPTCHA لهذا المصدر ولكن هذا قد يؤدي إلى تعطيل العمليات الخلفية (التحقق من وجود فصول جديدة، الحصول على توصيات، وما إلى ذلك…)</string>
+    <string name="disable_captcha_notifications_summary">لن تتلقى إشعارات حول حل CAPTCHA لهذا المصدر ولكن هذا قد يؤدي إلى تعطيل العمليات الخلفية (التحقق من وجود فصول جديدة، الحصول على توصيات، وما إلى ذلك...)</string>
     <string name="global_search">البحث العالمي</string>
     <string name="search_everywhere">البحث في كل مكان</string>
     <string name="badges_in_lists">الشارات في القوائم</string>

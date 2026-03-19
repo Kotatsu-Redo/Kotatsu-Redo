@@ -8,7 +8,6 @@
 	android:background="?selectableItemBackground"
 	android:orientation="vertical"
 	android:padding="6dp"
-	tools:ignore="Overdraw"
 	tools:theme="@style/ThemeOverlay.Kotatsu.Miku">
 
 	<com.google.android.material.card.MaterialCardView
@@ -77,7 +76,6 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="top|end"
 			android:layout_margin="6dp"
-			android:contentDescription="@null"
 			android:visibility="gone"
 			app:srcCompat="@drawable/ic_mtrl_checked_circle"
 			app:tint="?colorPrimary"

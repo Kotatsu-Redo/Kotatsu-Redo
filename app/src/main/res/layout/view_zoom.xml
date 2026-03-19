@@ -15,7 +15,6 @@
 		android:layout_height="wrap_content"
 		android:contentDescription="@string/zoom_in"
 		android:tooltipText="@string/zoom_in"
-		tools:targetApi="o"
 		app:backgroundTint="@color/bg_floating_button"
 		app:icon="@drawable/ic_zoom_in" />
 
@@ -26,7 +25,6 @@
 		android:layout_height="wrap_content"
 		android:contentDescription="@string/zoom_out"
 		android:tooltipText="@string/zoom_out"
-		tools:targetApi="o"
 		app:backgroundTint="@color/bg_floating_button"
 		app:icon="@drawable/ic_zoom_out" />
 

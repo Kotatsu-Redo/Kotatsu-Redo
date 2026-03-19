@@ -10,8 +10,7 @@
 	android:orientation="horizontal"
 	android:paddingVertical="12dp"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingEnd="?listPreferredItemPaddingEnd">
 
 	<org.koitharu.kotatsu.core.ui.widgets.CheckableImageView
 		android:id="@+id/imageView_indicator"

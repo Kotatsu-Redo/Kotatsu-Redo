@@ -15,6 +15,5 @@
 	android:paddingEnd="?listPreferredItemPaddingEnd"
 	android:singleLine="true"
 	android:textAppearance="?attr/textAppearanceBodyLarge"
-	tools:ignore="Overdraw"
 	tools:drawableStartCompat="@drawable/ic_feed"
 	tools:text="@string/feed" />

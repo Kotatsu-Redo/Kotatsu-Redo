@@ -12,7 +12,6 @@
 		android:layout_height="match_parent"
 		android:defaultFocusHighlightEnabled="false"
 		android:focusable="true"
-		tools:targetApi="o"
 		app:doubleTapZoomStyle="center"
 		app:restoreStrategy="deferred" />
 

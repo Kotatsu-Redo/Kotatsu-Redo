@@ -8,8 +8,7 @@
 	android:orientation="vertical"
 	android:paddingVertical="@dimen/margin_small"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingEnd="?listPreferredItemPaddingEnd">
 
 	<LinearLayout
 		android:layout_width="match_parent"
@@ -39,8 +38,7 @@
 			android:padding="@dimen/margin_small"
 			android:scaleType="center"
 			android:src="@drawable/ic_delete"
-			android:tooltipText="@string/remove"
-			tools:targetApi="o" />
+			android:tooltipText="@string/remove" />
 
 		<ImageView
 			android:id="@+id/imageView_reorder"
@@ -52,8 +50,7 @@
 			android:pointerIcon="grab"
 			android:scaleType="center"
 			android:src="@drawable/ic_reorder_handle"
-			android:tooltipText="@string/reorder"
-			tools:targetApi="o" />
+			android:tooltipText="@string/reorder" />
 
 	</LinearLayout>
 

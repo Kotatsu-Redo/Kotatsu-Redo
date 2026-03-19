@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package org.koitharu.kotatsu.download.ui.list
 
 import androidx.collection.ArrayMap

@@ -13,8 +13,10 @@ import org.koitharu.kotatsu.core.exceptions.resolve.SnackbarErrorObserver
 import org.koitharu.kotatsu.core.prefs.AppWidgetConfig
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
+import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetShelfBinding
 import org.koitharu.kotatsu.widget.shelf.adapter.CategorySelectAdapter
 import org.koitharu.kotatsu.widget.shelf.model.CategoryItem
@@ -54,7 +56,7 @@ class ShelfWidgetConfigActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.recyclerView.updatePadding(
 			left = barsInsets.left,
 			right = barsInsets.right,
@@ -65,7 +67,7 @@ class ShelfWidgetConfigActivity :
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onClick(v: View) {

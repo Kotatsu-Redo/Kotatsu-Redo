@@ -213,7 +213,7 @@
     <string name="pages_cache">Mellominnet for sider</string>
     <string name="other_cache">Mellomminnet for anna</string>
     <string name="available">Tilgjengeleg</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="removed_from_favourites">Teken or likerlista</string>
     <string name="not_found_404">Fann ikkje innhaldet</string>
     <string name="automatic_scroll">Bla sjølvverkande</string>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 	<integer name="config_longAnimTime">1000</integer>
 	<integer name="config_defaultAnimTime">300</integer>
 	<integer name="config_shorterAnimTime">150</integer>
-	<integer name="config_tinyAnimTime" tools:ignore="UnusedResources">50</integer>
+	<integer name="config_tinyAnimTime">50</integer>
 
 	<integer name="manga_badge_max_character_count">3</integer>
 	<integer name="explore_buttons_columns">2</integer>

@@ -28,10 +28,12 @@ import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.util.PagerNestedScrollHelper
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
+import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.findAppCompatDelegate
 import org.koitharu.kotatsu.core.util.ext.findParentCallback
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.FragmentMangaBookmarksBinding
 import org.koitharu.kotatsu.details.ui.pager.ChaptersPagesViewModel
 import org.koitharu.kotatsu.list.ui.GridSpanResolver
@@ -115,14 +117,14 @@ class BookmarksFragment : BaseFragment<FragmentMangaBookmarksBinding>(),
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding?.recyclerView?.setPadding(
 			barsInsets.left,
 			barsInsets.top,
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return WindowInsetsCompat.CONSUMED
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onDestroyView() {

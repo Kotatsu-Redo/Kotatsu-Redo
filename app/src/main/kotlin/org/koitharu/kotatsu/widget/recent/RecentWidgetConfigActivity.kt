@@ -10,6 +10,7 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.prefs.AppWidgetConfig
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetRecentBinding
 
 @AndroidEntryPoint
@@ -37,14 +38,14 @@ class RecentWidgetConfigActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.root.setPadding(
 			barsInsets.left,
 			barsInsets.top,
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onClick(v: View) {

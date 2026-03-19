@@ -419,7 +419,7 @@
     <string name="download_option_all_chapters">所有 %s 翻譯的章節</string>
     <string name="download_option_next_unread_n_chapters">下一個未讀 %s</string>
     <string name="download_option_first_n_chapters">最初 %s</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="allow_unstable_updates_summary">接收不穩定建置的更新通知</string>
     <string name="scrobbling_empty_hint">要追蹤閱讀進度，在漫畫詳細畫面選擇選單 → 追蹤。</string>
     <string name="manga_error_description_pattern">錯誤詳情:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. 嘗試&lt;a href=%2$s&gt;在瀏覽器中開啟漫畫&lt;/a&gt; 以確保它在其來源中是可用的&lt;br&gt;2. 確認您使用的是 &lt;a href=kotatsu://about&gt;最新版的的 Kotatsu&lt;/a&gt;&lt;br&gt;3. 如果可用，請向開發人員發送錯誤報告。</string>

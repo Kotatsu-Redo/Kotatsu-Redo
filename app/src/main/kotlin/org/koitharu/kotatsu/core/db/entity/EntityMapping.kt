@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package org.koitharu.kotatsu.core.db.entity
 
 import org.koitharu.kotatsu.core.model.MangaSource
@@ -35,7 +33,8 @@ fun MangaEntity.toManga(tags: Set<MangaTag>, chapters: List<ChapterEntity>?) = M
 	altTitles = this.altTitles?.split(VALUES_DIVIDER)?.toArraySet().orEmpty(),
 	state = this.state?.let { MangaState(it) },
 	rating = this.rating,
-	contentRating = ContentRating(this.contentRating),
+	contentRating = ContentRating(this.contentRating)
+		?: if (isNsfw) ContentRating.ADULT else null,
 	url = this.url,
 	publicUrl = this.publicUrl,
 	coverUrl = this.coverUrl,
@@ -75,6 +74,7 @@ fun Manga.toEntity() = MangaEntity(
 	coverUrl = coverUrl.orEmpty(),
 	altTitles = altTitles.joinToString(VALUES_DIVIDER.toString()),
 	rating = rating,
+	isNsfw = isNsfw,
 	contentRating = contentRating?.name,
 	state = state?.name,
 	title = title,

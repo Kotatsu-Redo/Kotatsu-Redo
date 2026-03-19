@@ -2,11 +2,9 @@
 <org.koitharu.kotatsu.reader.ui.pager.webtoon.WebtoonFrameLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
-	android:defaultFocusHighlightEnabled="false"
-	tools:targetApi="o">
+	android:defaultFocusHighlightEnabled="false">
 
 	<org.koitharu.kotatsu.reader.ui.pager.webtoon.WebtoonImageView
 		android:id="@+id/ssiv"
@@ -14,7 +12,6 @@
 		android:layout_height="wrap_content"
 		android:defaultFocusHighlightEnabled="false"
 		android:minHeight="1dp"
-		tools:targetApi="o"
 		app:panEnabled="false"
 		app:quickScaleEnabled="false"
 		app:zoomEnabled="false" />

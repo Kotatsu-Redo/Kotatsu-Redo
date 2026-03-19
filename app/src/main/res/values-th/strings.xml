@@ -326,7 +326,7 @@
     <string name="text_unsaved_changes_prompt">บันทึกหรือละทิ้งการเปลี่ยนแปลงที่ยังไม่ได้บันทึก\?</string>
     <string name="color_theme">โทนสี</string>
     <string name="brightness">ความสว่าง</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="exit_confirmation_summary">กดย้อนกลับสองครั้งเพื่อออกจากแอป</string>
     <string name="bookmarks_removed">ลบบุ๊คมาร์กแล้ว</string>
     <string name="error_no_space_left">ไม่มีพื้นที่เหลือบนอุปกรณ์แล้ว</string>

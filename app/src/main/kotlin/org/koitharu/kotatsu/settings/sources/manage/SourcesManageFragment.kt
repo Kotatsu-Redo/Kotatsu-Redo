@@ -88,16 +88,16 @@ class SourcesManageFragment :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		val isTablet = !resources.getBoolean(R.bool.is_tablet)
 		val isMaster = container?.id == R.id.container_master
 		v.setPaddingRelative(
-			if (isTablet && !isMaster) 0 else barsInsets.left,
+			if (isTablet && !isMaster) 0 else barsInsets.start(v),
 			0,
-			if (isTablet && isMaster) 0 else barsInsets.right,
+			if (isTablet && isMaster) 0 else barsInsets.end(v),
 			barsInsets.bottom,
 		)
-		return WindowInsetsCompat.CONSUMED
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onResume() {

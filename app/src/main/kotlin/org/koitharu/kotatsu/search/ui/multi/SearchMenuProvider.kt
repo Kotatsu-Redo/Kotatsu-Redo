@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.search.ui.multi
 
 import android.os.Build

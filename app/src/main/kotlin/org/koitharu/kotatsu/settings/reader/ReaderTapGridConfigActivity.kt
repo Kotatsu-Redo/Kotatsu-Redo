@@ -60,14 +60,14 @@ class ReaderTapGridConfigActivity : BaseActivity<ActivityReaderTapActionsBinding
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.root.setPadding(
 			barsInsets.left,
 			barsInsets.top,
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return WindowInsetsCompat.CONSUMED
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu?): Boolean {

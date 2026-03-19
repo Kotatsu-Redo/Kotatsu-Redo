@@ -10,7 +10,6 @@ import android.view.ViewOutlineProvider
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.annotation.AttrRes
 import androidx.annotation.StyleRes
-import androidx.core.content.withStyledAttributes
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.prefs.ProgressIndicatorMode.CHAPTERS_LEFT
 import org.koitharu.kotatsu.core.prefs.ProgressIndicatorMode.CHAPTERS_READ
@@ -54,11 +53,9 @@ class ReadingProgressView @JvmOverloads constructor(
 		}
 
 	init {
-		var resolvedDrawableStyle = R.style.ProgressDrawable
-		context.withStyledAttributes(attrs, R.styleable.ReadingProgressView, defStyleAttr, 0) {
-			resolvedDrawableStyle = getResourceId(R.styleable.ReadingProgressView_progressStyle, R.style.ProgressDrawable)
-		}
-		drawableStyle = resolvedDrawableStyle
+		val ta = context.obtainStyledAttributes(attrs, R.styleable.ReadingProgressView, defStyleAttr, 0)
+		drawableStyle = ta.getResourceId(R.styleable.ReadingProgressView_progressStyle, R.style.ProgressDrawable)
+		ta.recycle()
 		outlineProvider = OutlineProvider()
 		if (isInEditMode) {
 			progress = ReadingProgress(

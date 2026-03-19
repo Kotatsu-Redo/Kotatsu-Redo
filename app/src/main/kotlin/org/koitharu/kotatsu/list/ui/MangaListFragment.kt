@@ -35,8 +35,9 @@ import org.koitharu.kotatsu.core.ui.list.fastscroll.FastScroller
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
 import org.koitharu.kotatsu.core.ui.widgets.TipView
-import androidx.core.app.ShareCompat
+import org.koitharu.kotatsu.core.util.ShareHelper
 import org.koitharu.kotatsu.core.util.ext.addMenuProvider
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.findAppCompatDelegate
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
@@ -140,7 +141,7 @@ abstract class MangaListFragment :
 			right = barsInsets.right + basePadding,
 			bottom = barsInsets.bottom + basePadding,
 		)
-		return insets
+		return insets.consumeAll(typeMask)
 	}
 
 	override fun onDestroyView() {
@@ -299,15 +300,7 @@ abstract class MangaListFragment :
 			}
 
 			R.id.action_share -> {
-				if (selectedItems.isEmpty()) return true
-				val text = selectedItems.joinToString("\n \n") {
-					"${it.title} - ${it.publicUrl}"
-				}
-				ShareCompat.IntentBuilder(requireContext())
-					.setText(text)
-					.setType("text/plain")
-					.setChooserTitle(org.koitharu.kotatsu.R.string.share)
-					.startChooser()
+				ShareHelper(requireContext()).shareMangaLinks(selectedItems)
 				mode?.finish()
 				true
 			}
