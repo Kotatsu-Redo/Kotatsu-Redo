@@ -58,6 +58,7 @@ class SourceSettingsViewModel @Inject constructor(
 				repository.getConfig().unsubscribe(this)
 			}
 		}
+		super.onCleared()
 	}
 
 	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

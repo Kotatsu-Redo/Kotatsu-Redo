@@ -298,7 +298,7 @@
     <string name="no_manga_sources">マンガのソースがない</string>
     <string name="no_manga_sources_text">マンガのソースを有効にして、オンラインでマンガを読めるようにする</string>
     <string name="confirm_exit">もう一度戻るを押して終了します</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s -%s</string>
     <string name="exit_confirmation">退出確認</string>
     <string name="storage_usage">ストレージの使用状況</string>
     <string name="other_cache">その他のキャッシュ</string>
@@ -793,7 +793,7 @@
     <string name="reading_stats">統計を読む</string>
     <string name="all_time">すべての時間</string>
     <string name="pages_read_s">ページの読み込み: %s</string>
-    <string name="migrate_confirmation" tools:ignore="StringFormatCount">「%2$s」から「%3$s」を「%4$s」に置き換えられます</string>
+    <string name="migrate_confirmation">「%2$s」から「%3$s」を「%4$s」に置き換えられます</string>
     <string name="chapters_deleted_pattern">%1$s を削除し、%2$s をクリア</string>
     <string name="split_by_translations">翻訳によるスプリット</string>
     <string name="order_oldest">最新記事</string>

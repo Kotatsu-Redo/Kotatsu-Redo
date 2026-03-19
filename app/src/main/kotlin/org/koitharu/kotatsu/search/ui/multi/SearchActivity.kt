@@ -18,10 +18,12 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.list.ListSelectionController
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.widgets.TipView
-import androidx.core.app.ShareCompat
+import org.koitharu.kotatsu.core.util.ShareHelper
+import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
 import org.koitharu.kotatsu.core.util.ext.invalidateNestedItemDecorations
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
 import org.koitharu.kotatsu.databinding.ActivitySearchBinding
 import org.koitharu.kotatsu.list.domain.ListFilterOption
 import org.koitharu.kotatsu.list.ui.MangaSelectionDecoration
@@ -99,7 +101,7 @@ class SearchActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.toolbar.updatePadding(
 			top = barsInsets.top,
 			left = barsInsets.left,
@@ -111,7 +113,7 @@ class SearchActivity :
 			right = barsInsets.right,
 			bottom = barsInsets.bottom,
 		)
-		return WindowInsetsCompat.CONSUMED
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onItemClick(item: MangaListModel, view: View) {
@@ -174,16 +176,7 @@ class SearchActivity :
 	override fun onActionItemClicked(controller: ListSelectionController, mode: ActionMode?, item: MenuItem): Boolean {
 		return when (item.itemId) {
 			R.id.action_share -> {
-				val selected = collectSelectedItems()
-				if (selected.isEmpty()) return true
-				val text = selected.joinToString("\n \n") {
-					"${it.title} - ${it.publicUrl}"
-				}
-				ShareCompat.IntentBuilder(this)
-					.setText(text)
-					.setType("text/plain")
-					.setChooserTitle(org.koitharu.kotatsu.R.string.share)
-					.startChooser()
+				ShareHelper(this).shareMangaLinks(collectSelectedItems())
 				mode?.finish()
 				true
 			}

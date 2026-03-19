@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package org.koitharu.kotatsu.settings.sources.catalog
 
 import androidx.annotation.WorkerThread

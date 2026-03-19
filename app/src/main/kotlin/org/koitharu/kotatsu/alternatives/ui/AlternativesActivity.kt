@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import coil3.ImageLoader
@@ -75,7 +74,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 		v: View,
 		insets: WindowInsetsCompat
 	): WindowInsetsCompat {
-		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		val barsInsets = insets.systemBarsInsets
 		viewBinding.recyclerView.updatePadding(
 			left = barsInsets.left,
 			right = barsInsets.right,
@@ -86,9 +85,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return WindowInsetsCompat.Builder(insets)
-			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
-			.build()
+		return insets.consumeAllSystemBarsInsets()
 	}
 
 	override fun onItemClick(item: MangaAlternativeModel, view: View) {
@@ -100,6 +97,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 	}
 
 	override fun onRetryClick(error: Throwable) = viewModel.retry()
+
 	override fun onEmptyActionClick() = Unit
 
 	override fun onFooterButtonClick() = viewModel.continueSearch()

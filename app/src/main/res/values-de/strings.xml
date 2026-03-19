@@ -277,7 +277,7 @@
     <string name="other_cache">Anderer Cache</string>
     <string name="storage_usage">Speichernutzung</string>
     <string name="available">Verfügbar</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="removed_from_favourites">Aus den Favoriten entfernt</string>
     <string name="options">Optionen</string>
     <string name="automatic_scroll">Automatisches Blättern</string>
@@ -614,7 +614,7 @@
     <string name="last_used">Zuletzt verwendet</string>
     <string name="hours_short">%d h</string>
     <string name="minutes_short">%d m</string>
-    <string name="invalid_server_address_message">Ungültige Server-Adresse</string>
+    <string name="invalid_server_address_message">Ungültige Server-Addresse</string>
     <string name="pages_saved">Seiten wurden gespeichert</string>
     <string name="text_empty_holder_secondary_filtered">Es gibt keine Manga, die deinen Filtern entsprechen.</string>
     <string name="too_many_requests_message_retry">Zu viele Anfragen. Versuche es erneut in %s</string>

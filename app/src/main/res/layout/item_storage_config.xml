@@ -10,9 +10,7 @@
 	android:minHeight="?listPreferredItemHeight"
 	android:orientation="horizontal"
 	android:paddingVertical="12dp"
-	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingStart="?listPreferredItemPaddingStart">
 
 	<LinearLayout
 		android:layout_width="0dp"
@@ -50,7 +48,6 @@
 		android:contentDescription="@string/remove"
 		android:padding="?listPreferredItemPaddingEnd"
 		android:tooltipText="@string/remove"
-		tools:targetApi="o"
 		app:srcCompat="@drawable/ic_delete" />
 
 </LinearLayout>

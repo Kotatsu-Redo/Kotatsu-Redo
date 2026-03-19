@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package org.koitharu.kotatsu.tracker.domain
 
 import android.content.Context
@@ -55,7 +53,11 @@ class TrackingRepository @Inject constructor(
 		return db.getTracksDao().observeNewChapters(mangaId)
 	}
 
-	// observeUpdatedMangaCount removed — use `observeUpdatedManga` with limits/filters instead
+	@Deprecated("")
+	fun observeUpdatedMangaCount(): Flow<Int> {
+		return db.getTracksDao().observeUpdateMangaCount()
+			.onStart { gcIfNotCalled() }
+	}
 
 	fun observeUnreadUpdatesCount(): Flow<Int> {
 		return db.getTrackLogsDao().observeUnreadCount()
@@ -105,7 +107,16 @@ class TrackingRepository @Inject constructor(
 		return disableKey?.defaultValue == true
 	}
 
-	// getTrack(manga) removed — use `getTrackOrNull(manga)` and handle null default locally
+	@Deprecated("")
+	suspend fun getTrack(manga: Manga): MangaTracking {
+		return getTrackOrNull(manga) ?: MangaTracking(
+			manga = manga,
+			lastChapterId = NO_ID,
+			lastCheck = null,
+			lastChapterDate = null,
+			newChapters = 0,
+		)
+	}
 
 	suspend fun getTrackOrNull(manga: Manga): MangaTracking? {
 		val track = db.getTracksDao().find(manga.id) ?: return null

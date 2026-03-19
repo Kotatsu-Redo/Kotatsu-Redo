@@ -8,8 +8,7 @@
 	android:gravity="center"
 	android:minHeight="@dimen/list_footer_height_outer"
 	android:orientation="vertical"
-	android:padding="4dp"
-	tools:ignore="Overdraw">
+	android:padding="4dp">
 
 	<TextView
 		android:id="@+id/textView_title"

@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.local.data
 
 import androidx.annotation.WorkerThread
@@ -12,7 +11,6 @@ import org.json.JSONObject
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.model.isLocal
-import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -41,17 +39,17 @@ class MangaIndex(source: String?) {
 		require(!manga.isLocal) { "Local manga information cannot be stored" }
 		json.put(KEY_ID, manga.id)
 		json.put(KEY_TITLE, manga.title)
-		json.put(KEY_TITLE_ALT, manga.altTitles.firstOrNull()) // for backward compatibility
+		json.put(KEY_TITLE_ALT, manga.altTitle) // for backward compatibility
 		json.put(KEY_ALT_TITLES, JSONArray(manga.altTitles))
 		json.put(KEY_URL, manga.url)
 		json.put(KEY_PUBLIC_URL, manga.publicUrl)
-		json.put(KEY_AUTHOR, manga.authors.firstOrNull()) // for backward compatibility
+		json.put(KEY_AUTHOR, manga.author) // for backward compatibility
 		json.put(KEY_AUTHORS, JSONArray(manga.authors))
 		json.put(KEY_COVER, manga.coverUrl)
 		json.put(KEY_DESCRIPTION, manga.description)
 		json.put(KEY_RATING, manga.rating)
 		json.put(KEY_CONTENT_RATING, manga.contentRating)
-		json.put(KEY_NSFW, manga.isNsfw()) // for backward compatibility
+		json.put(KEY_NSFW, manga.isNsfw) // for backward compatibility
 		json.put(KEY_STATE, manga.state?.name)
 		json.put(KEY_SOURCE, manga.source.name)
 		json.put(KEY_COVER_LARGE, manga.largeCoverUrl)

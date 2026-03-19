@@ -46,7 +46,6 @@
 			android:background="?selectableItemBackgroundBorderless"
 			android:contentDescription="@string/close"
 			android:tooltipText="@string/close"
-			tools:targetApi="o"
 			android:padding="16dp"
 			app:srcCompat="?actionModeCloseDrawable"
 			app:tint="?colorControlActivated" />

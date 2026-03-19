@@ -11,8 +11,7 @@
 	android:orientation="vertical"
 	android:padding="4dp"
 	android:paddingStart="?android:attr/listPreferredItemPaddingStart"
-	android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingEnd="?android:attr/listPreferredItemPaddingEnd">
 
 	<TextView
 		android:id="@+id/textView_title"

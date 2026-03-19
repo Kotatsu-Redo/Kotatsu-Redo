@@ -6,7 +6,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	tools:context=".details.ui.DetailsActivity"
-	tools:ignore="ViewBindingType,InconsistentLayout"
+	tools:ignore="ViewBindingType"
 	tools:viewBindingType="android.view.ViewGroup">
 
 	<com.google.android.material.appbar.AppBarLayout

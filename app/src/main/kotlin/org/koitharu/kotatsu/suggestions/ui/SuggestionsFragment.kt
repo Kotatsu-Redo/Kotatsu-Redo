@@ -69,6 +69,13 @@ class SuggestionsFragment : MangaListFragment() {
 
 	companion object {
 
-		// ...existing code...
+		@Deprecated(
+			"",
+			ReplaceWith(
+				"SuggestionsFragment()",
+				"org.koitharu.kotatsu.suggestions.ui.SuggestionsFragment",
+			),
+		)
+		fun newInstance() = SuggestionsFragment()
 	}
 }

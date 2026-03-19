@@ -8,8 +8,7 @@
 	android:minHeight="?listPreferredItemHeightSmall"
 	android:orientation="vertical"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingEnd="?listPreferredItemPaddingEnd">
 
 	<com.google.android.material.checkbox.MaterialCheckBox
 		android:id="@+id/checkBox"

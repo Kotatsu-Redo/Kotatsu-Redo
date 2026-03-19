@@ -86,7 +86,6 @@
 			android:background="@drawable/bg_card"
 			android:clipToOutline="true"
 			android:clipToPadding="false"
-			tools:targetApi="s"
 			android:fadeScrollbars="false"
 			android:nestedScrollingEnabled="false"
 			android:orientation="vertical"

@@ -34,7 +34,7 @@
     <string name="search">Zoeken</string>
     <string name="search_manga">Manga zoeken</string>
     <string name="manga_downloading_">Downloaden</string>
-    <string name="processing_">Verwerken…</string>
+    <string name="processing_">Verwerken...</string>
     <string name="download_complete">Gedownload</string>
     <string name="downloads">Downloads</string>
     <string name="by_name">Naam</string>
@@ -90,7 +90,7 @@
     <string name="vibration">Trilling</string>
     <string name="favourites_categories">Favoriete categorieën</string>
     <string name="remove_category">Verwijderen</string>
-    <string name="text_empty_holder_primary">Het is hier nogal leeg…</string>
+    <string name="text_empty_holder_primary">Het is hier nogal leeg...</string>
     <string name="text_search_holder_secondary">Probeer de zoekopdracht anders te formuleren.</string>
     <string name="text_history_holder_primary">Wat u leest, wordt hier weergegeven.</string>
     <string name="text_history_holder_secondary">Ontdek wat je kunt lezen in de rubriek «Ontdekken»</string>

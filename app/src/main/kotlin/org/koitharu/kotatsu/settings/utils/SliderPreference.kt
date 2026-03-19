@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package org.koitharu.kotatsu.settings.utils
 
 import android.content.Context

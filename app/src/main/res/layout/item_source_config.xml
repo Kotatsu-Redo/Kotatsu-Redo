@@ -11,8 +11,7 @@
 	android:orientation="horizontal"
 	android:paddingVertical="@dimen/margin_small"
 	android:paddingStart="?listPreferredItemPaddingStart"
-	android:paddingEnd="?listPreferredItemPaddingEnd"
-	tools:ignore="Overdraw">
+	android:paddingEnd="?listPreferredItemPaddingEnd">
 
 	<org.koitharu.kotatsu.core.ui.image.FaviconView
 		android:id="@+id/imageView_icon"
@@ -66,7 +65,6 @@
 		android:scaleType="center"
 		android:src="@drawable/abc_ic_menu_overflow_material"
 		android:tooltipText="@string/more"
-		tools:targetApi="o"
 		app:tint="?colorControlNormal" />
 
 	<ImageButton
@@ -78,8 +76,7 @@
 		android:padding="@dimen/margin_small"
 		android:scaleType="center"
 		android:src="@drawable/ic_add"
-		android:tooltipText="@string/add"
-		tools:targetApi="o" />
+		android:tooltipText="@string/add" />
 
 	<ImageButton
 		android:id="@+id/imageView_remove"
@@ -90,7 +87,6 @@
 		android:padding="@dimen/margin_small"
 		android:scaleType="center"
 		android:src="@drawable/ic_disable"
-		android:tooltipText="@string/disable"
-		tools:targetApi="o" />
+		android:tooltipText="@string/disable" />
 
 </LinearLayout>

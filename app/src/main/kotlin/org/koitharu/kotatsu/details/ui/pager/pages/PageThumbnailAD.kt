@@ -8,7 +8,6 @@ import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.util.ext.setTextColorAttr
 import org.koitharu.kotatsu.databinding.ItemPageThumbBinding
 import org.koitharu.kotatsu.list.ui.model.ListModel
-import java.text.NumberFormat
 import com.google.android.material.R as materialR
 
 fun pageThumbnailAD(
@@ -24,14 +23,13 @@ fun pageThumbnailAD(
 	)
 
 	AdapterDelegateClickListenerAdapter(this, clickListener).attach(itemView)
-	val numberFormat = NumberFormat.getIntegerInstance()
 
 	bind {
 		binding.imageViewThumb.setImageAsync(item.page)
 		with(binding.textViewNumber) {
 			setBackgroundResource(if (item.isCurrent) R.drawable.bg_badge_accent else R.drawable.bg_badge_empty)
 			setTextColorAttr(if (item.isCurrent) materialR.attr.colorOnTertiary else android.R.attr.textColorPrimary)
-			text = numberFormat.format(item.number)
+			text = item.number.toString()
 		}
 	}
 }

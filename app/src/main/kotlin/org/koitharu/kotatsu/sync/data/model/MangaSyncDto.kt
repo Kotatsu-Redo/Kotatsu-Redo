@@ -11,7 +11,7 @@ import org.koitharu.kotatsu.core.util.ext.getBoolean
 data class MangaSyncDto(
 	@SerialName("manga_id") val id: Long,
 	@SerialName("title") val title: String,
-	@SerialName("alt_title") val altTitles: String?,
+	@SerialName("alt_title") val altTitle: String?,
 	@SerialName("url") val url: String,
 	@SerialName("public_url") val publicUrl: String,
 	@SerialName("rating") val rating: Float,
@@ -20,7 +20,7 @@ data class MangaSyncDto(
 	@SerialName("large_cover_url") val largeCoverUrl: String?,
 	@SerialName("tags") val tags: Set<MangaTagSyncDto>,
 	@SerialName("state") val state: String?,
-	@SerialName("author") val authors: String?,
+	@SerialName("author") val author: String?,
 	@SerialName("source") val source: String,
 	@SerialName("nsfw") val nsfw: Boolean = false,
 ) {
@@ -28,7 +28,7 @@ data class MangaSyncDto(
 	constructor(cursor: Cursor, tags: Set<MangaTagSyncDto>) : this(
 		id = cursor.getLong(cursor.getColumnIndexOrThrow("manga_id")),
 		title = cursor.getString(cursor.getColumnIndexOrThrow("title")),
-		altTitles = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("alt_title")),
+		altTitle = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("alt_title")),
 		url = cursor.getString(cursor.getColumnIndexOrThrow("url")),
 		publicUrl = cursor.getString(cursor.getColumnIndexOrThrow("public_url")),
 		rating = cursor.getFloat(cursor.getColumnIndexOrThrow("rating")),
@@ -37,7 +37,7 @@ data class MangaSyncDto(
 		largeCoverUrl = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("large_cover_url")),
 		tags = tags,
 		state = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("state")),
-		authors = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("author")),
+		author = cursor.getStringOrNull(cursor.getColumnIndexOrThrow("author")),
 		source = cursor.getString(cursor.getColumnIndexOrThrow("source")),
 		nsfw = cursor.getBoolean(cursor.getColumnIndexOrThrow("nsfw")),
 	)
@@ -45,7 +45,7 @@ data class MangaSyncDto(
 	fun toContentValues() = buildContentValues(12) {
 		put("manga_id", id)
 		put("title", title)
-		put("alt_title", altTitles)
+		put("alt_title", altTitle)
 		put("url", url)
 		put("public_url", publicUrl)
 		put("rating", rating)
@@ -53,7 +53,7 @@ data class MangaSyncDto(
 		put("cover_url", coverUrl)
 		put("large_cover_url", largeCoverUrl)
 		put("state", state)
-		put("author", authors)
+		put("author", author)
 		put("source", source)
 		put("nsfw", nsfw)
 	}

@@ -316,7 +316,7 @@
     <string name="server_error">Kesalahan di sisi server (%1$d). Silakan coba lagi nanti</string>
     <string name="compact">Padat</string>
     <string name="prefetch_content">Pramuat konten</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="nothing_here">Tidak ada apapun di sini</string>
     <string name="reader_control_ltr_summary">Jangan ubah arah pergantian halaman ke mode pembaca, misalnya, menekan tombol kanan selalu beralih ke halaman berikutnya. Opsi ini hanya berlaku untuk perangkat masukan hardware</string>
     <string name="source_disabled">Sumber dinonaktifkan</string>

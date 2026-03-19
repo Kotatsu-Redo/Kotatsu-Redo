@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 
 	<!-- Common dimensions -->
 	<dimen name="margin_normal">16dp</dimen>
@@ -17,7 +17,7 @@
 	<dimen name="grid_spacing_outer_double">4dp</dimen>
 	<dimen name="manga_list_details_item_height">120dp</dimen>
 	<dimen name="recommendation_item_height">90dp</dimen>
-	<dimen name="bookmark_item_height" tools:ignore="UnusedResources">120dp</dimen>
+	<dimen name="bookmark_item_height">120dp</dimen>
 	<dimen name="chapter_list_item_height">48dp</dimen>
 	<dimen name="preferred_grid_width">120dp</dimen>
 	<dimen name="small_grid_width">92dp</dimen>
@@ -73,8 +73,8 @@
 	<dimen name="fastscroll_scrollbar_padding_start">12dp</dimen>
 	<dimen name="fastscroll_scrollbar_padding_end">6dp</dimen>
 
-	<dimen name="m3_side_sheet_width" tools:ignore="UnusedResources">400dp</dimen>
-	<dimen name="m3_card_corner" tools:ignore="UnusedResources">12dp</dimen>
+	<dimen name="m3_side_sheet_width">400dp</dimen>
+	<dimen name="m3_card_corner">12dp</dimen>
 
 	<dimen name="reader_scroll_delta_min">200dp</dimen>
 

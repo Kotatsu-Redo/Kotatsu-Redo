@@ -37,6 +37,7 @@ class SourcesManageViewModel @Inject constructor(
 	}
 
 	override fun onCleared() {
+		super.onCleared()
 		database.invalidationTracker.removeObserverAsync(listProducer)
 	}
 

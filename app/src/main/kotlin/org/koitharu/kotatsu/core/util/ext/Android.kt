@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package org.koitharu.kotatsu.core.util.ext
 
 import android.Manifest

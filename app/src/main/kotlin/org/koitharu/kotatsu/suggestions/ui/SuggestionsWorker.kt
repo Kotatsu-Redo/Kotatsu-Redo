@@ -285,8 +285,7 @@ class SuggestionsWorker @AssistedInject constructor(
 		list.take(MAX_SOURCE_RESULTS)
 	}.onFailure { e ->
 		if (e is CloudFlareException) {
-			val handled = captchaHandler.handle(e)
-			if (handled) return@onFailure
+			captchaHandler.handle(e)
 		}
 		e.printStackTraceDebug()
 	}.getOrDefault(emptyList())

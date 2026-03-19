@@ -5,7 +5,7 @@ import android.view.View
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.FlowCollector
 import org.koitharu.kotatsu.R
-import androidx.core.app.ShareCompat
+import org.koitharu.kotatsu.core.util.ShareHelper
 
 class PagesSavedObserver(
 	private val snackbarHost: View,
@@ -20,11 +20,7 @@ class PagesSavedObserver(
 		val snackbar = Snackbar.make(snackbarHost, msg, Snackbar.LENGTH_LONG)
 		value.singleOrNull()?.let { uri ->
 			snackbar.setAction(R.string.share) {
-				ShareCompat.IntentBuilder(snackbarHost.context)
-					.setStream(uri)
-					.setType(snackbarHost.context.contentResolver.getType(uri) ?: "image/*")
-					.setChooserTitle(org.koitharu.kotatsu.R.string.share_image)
-					.startChooser()
+				ShareHelper(snackbarHost.context).shareImage(uri)
 			}
 		}
 		snackbar.show()

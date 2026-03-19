@@ -42,6 +42,14 @@
 
 	<!-- Widget styles -->
 
+	<style name="Widget.Kotatsu.SearchView" parent="@style/Widget.AppCompat.SearchView">
+		<item name="iconifiedByDefault">false</item>
+		<item name="searchIcon">@null</item>
+		<item name="queryBackground">@null</item>
+		<item name="android:textAppearance">@style/TextAppearance.Kotatsu.SearchView</item>
+		<item name="android:textSize">18sp</item>
+	</style>
+
 	<style name="Widget.Kotatsu.CircularProgressIndicator" parent="Widget.Material3.CircularProgressIndicator">
 		<item name="trackCornerRadius">@dimen/mtrl_progress_indicator_full_rounded_corner_radius</item>
 	</style>
@@ -89,6 +97,12 @@
 		<item name="android:paddingEnd">6dp</item>
 		<item name="android:elegantTextHeight">false</item>
 		<item name="shapeAppearance">?shapeAppearanceCornerMedium</item>
+	</style>
+
+	<style name="Widget.Kotatsu.Slider.Wide" parent="Widget.Material3.Slider">
+		<item name="thumbHeight">48dp</item>
+		<item name="trackCornerSize">12dp</item>
+		<item name="trackHeight">40dp</item>
 	</style>
 
 	<style name="Widget.Kotatsu.RecyclerView" parent="">
@@ -196,7 +210,26 @@
 		<item name="trimImage">true</item>
 	</style>
 
+	<style name="ThemeOverlay.Kotatsu.MainToolbar" parent="">
+		<item name="colorControlHighlight">@color/selector_overlay</item>
+	</style>
+
+	<style name="ThemeOverlay.Kotatsu.ActionMode" parent="">
+		<item name="colorOnSurface">?colorPrimary</item>
+		<item name="colorControlNormal">?colorPrimary</item>
+	</style>
+
 	<!-- TextAppearance -->
+
+	<style name="TextAppearance.Kotatsu.SearchView" parent="TextAppearance.Material3.SearchBar">
+		<item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+	</style>
+
+	<style name="TextAppearance.Widget.Menu" parent="TextAppearance.AppCompat.Menu">
+		<item name="android:textColor">?attr/colorOnBackground</item>
+	</style>
+
+	<style name="TextAppearance.Kotatsu.Preference.Secondary" parent="TextAppearance.Material3.BodySmall" />
 
 	<style name="TextAppearance.Kotatsu.GridTitle" parent="TextAppearance.Material3.TitleSmall" />
 

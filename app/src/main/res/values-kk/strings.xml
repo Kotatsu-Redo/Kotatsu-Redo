@@ -466,7 +466,7 @@
     <string name="invert_colors">Түстерді терістету</string>
     <string name="color_theme">Түс схемасы</string>
     <string name="brightness">Ашықтық</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
+    <string name="memory_usage_pattern">%s - %s</string>
     <string name="exit_confirmation_summary">Шығып кету үшін «Кері» батырмасын екі рет басыңыз</string>
     <string name="bookmarks_removed">Бетбелгілер жойылды</string>
     <string name="theme_name_mion">Мион</string>
