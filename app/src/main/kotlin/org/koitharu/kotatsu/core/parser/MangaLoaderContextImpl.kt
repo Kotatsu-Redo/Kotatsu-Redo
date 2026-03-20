@@ -192,13 +192,6 @@ class MangaLoaderContextImpl @Inject constructor(
         return webViewRequestInterceptorExecutor.captureWebViewUrls(pageUrl, urlPattern, timeout)
     }
 
-    override suspend fun extractVrfToken(
-        pageUrl: String,
-        timeout: Long
-    ): String? {
-        return webViewRequestInterceptorExecutor.extractVrfToken(pageUrl, timeout)
-    }
-
     private fun obtainWebViewUserAgent(): String {
         val mainDispatcher = Dispatchers.Main.immediate
         return if (!mainDispatcher.isDispatchNeeded(EmptyCoroutineContext)) {

@@ -191,27 +191,11 @@ class WebViewRequestInterceptorExecutor @Inject constructor(
         val config = InterceptionConfig(
             timeoutMs = timeout,
             urlPattern = urlPattern,
-            maxRequests = 1              // 🚀 STOP IMMEDIATELY when first VRF found!
+            maxRequests = 1
         )
         return interceptRequests(pageUrl, config)
             .also { Log.d(TAG_VRF, "captureWebViewUrls matched=${it.size}") }
             .map { it.url }
-    }
-
-    suspend fun extractVrfToken(
-        pageUrl: String,
-        timeout: Long = 15000L
-    ): String? {
-        val vrfPattern = Regex("/ajax/read/.*[?&]vrf=([^&]+)")
-        val config = InterceptionConfig(
-            timeoutMs = timeout,
-            urlPattern = vrfPattern,
-            maxRequests = 1              // 🚀 STOP IMMEDIATELY when first VRF found!
-        )
-        val requests = interceptRequests(pageUrl, config)
-        val vrf = requests.firstOrNull()?.getQueryParameter("vrf")
-        Log.d(TAG_VRF, "extractVrfToken result=$vrf")
-        return vrf
     }
 
     @MainThread
