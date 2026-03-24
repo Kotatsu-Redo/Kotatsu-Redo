@@ -52,8 +52,14 @@ class DoublePageHolder(
 			minimumScaleType = SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE
 			setScaleAndCenter(
 				minScale,
-				PointF(if (isEven) 0f else sWidth.toFloat(), sHeight / 2f),
+				PointF(sWidth / 2f, sHeight / 2f),
 			)
+			// Shift pages toward each other so they sit side by side
+			val imageDisplayWidth = sWidth * minScale
+			val offset = (width - imageDisplayWidth) / 2f
+			if (offset > 0f) {
+				translationX = if (isEven) offset else -offset
+			}
 		}
 	}
 }

@@ -10,6 +10,18 @@
 		app:showAsAction="ifRoom|withText" />
 
 	<item
+		android:id="@+id/action_pin"
+		android:icon="@drawable/ic_pin"
+		android:title="@string/pin"
+		app:showAsAction="ifRoom|withText" />
+
+	<item
+		android:id="@+id/action_unpin"
+		android:icon="@drawable/ic_pin"
+		android:title="@string/unpin"
+		app:showAsAction="ifRoom|withText" />
+
+	<item
 		android:id="@+id/action_remove"
 		android:icon="@drawable/ic_delete"
 		android:title="@string/remove"

@@ -3,6 +3,10 @@
 	xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<item
+		android:id="@+id/action_presets"
+		android:title="@string/source_presets" />
+
+	<item
 		android:id="@+id/action_manage"
 		android:title="@string/manage_sources"
 		android:titleCondensed="@string/manage" />

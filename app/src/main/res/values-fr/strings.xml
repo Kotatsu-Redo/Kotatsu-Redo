@@ -718,6 +718,8 @@
     <string name="all_languages">Toutes les langues</string>
     <string name="sources_unpinned">Sources désépinglées</string>
     <string name="sources_pinned">Sources épinglées</string>
+    <string name="manga_pinned">Épinglée</string>
+    <string name="manga_unpinned">Désépinglée</string>
     <string name="percent_left">Pourcentage restant</string>
     <string name="percent_read">Pourcentage lu</string>
     <string name="chapters_read">Chapitres lus</string>
@@ -834,6 +836,8 @@
     <string name="local_storage_cleanup">Nettoyage du stockage local</string>
     <string name="packup_creation_failed">Échec de la création de la sauvegarde</string>
     <string name="main_screen">Écran principal</string>
+    <string name="floating_nav_bar">Barre de navigation flottante</string>
+    <string name="floating_nav_bar_summary">Utiliser une barre de navigation arrondie et flottante</string>
     <string name="main_screen_fab">Afficher le bouton flottant Continuer</string>
     <string name="main_screen_fab_summary">Permet de continuer la lecture en un clic. Ce bouton n’apparaîtra pas en mode navigation privée ou lorsque l’historique est vide</string>
     <string name="error_corrupted_zip">Archive ZIP corrompue (%s)</string>
@@ -862,4 +866,20 @@
     <string name="enable_pull_gesture_title">Activer le geste de glissement</string>
     <string name="enable_pull_gesture_summary">Utilisez le geste de glissement pour changer de chapitre dans un webtoon</string>
     <string name="test_parser">Tester la source manga</string>
+	<string name="source_presets">Préréglages de sources</string>
+	<string name="create_preset">Nouveau préréglage</string>
+	<string name="edit_preset">Modifier le préréglage</string>
+	<string name="preset_name">Nom du préréglage</string>
+	<string name="preset_languages">Langues</string>
+	<string name="preset_sources">Sources</string>
+	<string name="preset_created">Préréglage créé</string>
+	<string name="preset_saved">Préréglage enregistré</string>
+	<string name="preset_deleted">Préréglage supprimé</string>
+	<string name="preset_activated">Préréglage activé</string>
+	<string name="preset_deactivated">Préréglage désactivé</string>
+	<string name="no_presets">Aucun préréglage</string>
+	<string name="no_presets_text">Créez un préréglage pour basculer rapidement entre différentes configurations de sources</string>
+	<string name="select_languages">Sélectionner les langues</string>
+	<string name="manage_preset_sources">Gérer les sources</string>
+	<string name="default_sources">Par défaut</string>
 </resources>

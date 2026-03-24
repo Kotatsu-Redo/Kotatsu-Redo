@@ -10,6 +10,17 @@
 	tools:ignore="ViewBindingType"
 	tools:viewBindingType="android.view.ViewGroup">
 
+	<ImageView
+		android:id="@+id/imageView_cover_bg"
+		android:layout_width="match_parent"
+		android:layout_height="420dp"
+		android:alpha="0.25"
+		android:layout_gravity="top"
+		android:layout_marginTop="12dp"
+		android:scaleType="centerCrop"
+		android:visibility="gone"
+		tools:ignore="ContentDescription" />
+
 	<com.google.android.material.appbar.AppBarLayout
 		android:id="@+id/appbar"
 		android:layout_width="match_parent"

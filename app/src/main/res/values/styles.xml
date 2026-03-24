@@ -96,7 +96,6 @@
 		<item name="android:paddingStart">6dp</item>
 		<item name="android:paddingEnd">6dp</item>
 		<item name="android:elegantTextHeight">false</item>
-		<item name="shapeAppearance">?shapeAppearanceCornerMedium</item>
 	</style>
 
 	<style name="Widget.Kotatsu.Slider.Wide" parent="Widget.Material3.Slider">
@@ -182,6 +181,32 @@
 		<!-- Hack. Removing shadow. For AMOLED -->
 		<item name="android:outlineProvider">none</item>
 		<item name="elevation">24dp</item>
+	</style>
+
+	<style name="Widget.Kotatsu.ExploreButton.SplitStart" parent="Widget.Kotatsu.ExploreButton">
+		<item name="shapeAppearanceOverlay">@style/ShapeAppearance.Kotatsu.SplitStart</item>
+		<item name="android:insetRight">0dp</item>
+	</style>
+
+	<style name="Widget.Kotatsu.ExploreButton.SplitEnd" parent="Widget.Kotatsu.ExploreButton">
+		<item name="shapeAppearanceOverlay">@style/ShapeAppearance.Kotatsu.SplitEnd</item>
+		<item name="android:insetLeft">0dp</item>
+		<item name="android:insetTop">0dp</item>
+		<item name="android:insetBottom">0dp</item>
+		<item name="iconPadding">0dp</item>
+		<item name="android:minWidth">48dp</item>
+		<item name="android:minHeight">0dp</item>
+		<item name="android:gravity">center</item>
+	</style>
+
+	<style name="ShapeAppearance.Kotatsu.SplitStart" parent="">
+		<item name="cornerSizeTopRight">0dp</item>
+		<item name="cornerSizeBottomRight">0dp</item>
+	</style>
+
+	<style name="ShapeAppearance.Kotatsu.SplitEnd" parent="">
+		<item name="cornerSizeTopLeft">0dp</item>
+		<item name="cornerSizeBottomLeft">0dp</item>
 	</style>
 
 	<style name="Widget.Kotatsu.TextView.Indicator" parent="Widget.MaterialComponents.TextView">

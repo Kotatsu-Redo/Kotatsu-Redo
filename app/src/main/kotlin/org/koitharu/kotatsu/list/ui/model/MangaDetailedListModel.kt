@@ -16,6 +16,7 @@ data class MangaDetailedListModel(
 	val isFavorite: Boolean,
 	val isSaved: Boolean,
 	val tags: List<ChipsView.ChipModel>,
+	val isPinned: Boolean = false,
 ) : MangaListModel() {
 
 	override fun getChangePayload(previousState: ListModel): Any? = when {
@@ -23,7 +24,8 @@ data class MangaDetailedListModel(
 
 		previousState.progress != progress -> PAYLOAD_PROGRESS_CHANGED
 		previousState.isFavorite != isFavorite ||
-			previousState.isSaved != isSaved -> PAYLOAD_ANYTHING_CHANGED
+			previousState.isSaved != isSaved ||
+			previousState.isPinned != isPinned -> PAYLOAD_ANYTHING_CHANGED
 
 		else -> super.getChangePayload(previousState)
 	}

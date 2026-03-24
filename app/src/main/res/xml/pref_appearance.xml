@@ -110,6 +110,11 @@
             android:title="@string/show_labels_in_navbar" />
 
         <SwitchPreferenceCompat
+            android:key="floating_nav"
+            android:summary="@string/floating_nav_bar_summary"
+            android:title="@string/floating_nav_bar" />
+
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="nav_pinned"
             android:summary="@string/pin_navigation_ui_summary"

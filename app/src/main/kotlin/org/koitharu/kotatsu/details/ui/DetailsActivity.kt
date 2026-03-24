@@ -2,6 +2,11 @@ package org.koitharu.kotatsu.details.ui
 
 import android.app.assist.AssistContent
 import android.content.Context
+import android.graphics.Color
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.text.SpannedString
 import android.view.Gravity
@@ -10,6 +15,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.graphics.ColorUtils
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.core.text.method.LinkMovementMethodCompat
@@ -28,6 +34,7 @@ import coil3.request.crossfade
 import coil3.request.lifecycle
 import coil3.request.transformations
 import coil3.size.Precision
+import coil3.target.ImageViewTarget
 import coil3.transform.RoundedCornersTransformation
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.chip.Chip
@@ -70,6 +77,7 @@ import org.koitharu.kotatsu.core.util.ext.copyToClipboard
 import org.koitharu.kotatsu.core.util.ext.drawableStart
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.enqueueWith
+import org.koitharu.kotatsu.core.util.ext.getThemeColor
 import org.koitharu.kotatsu.core.util.ext.getQuantityStringSafe
 import org.koitharu.kotatsu.core.util.ext.isAnimationsEnabled
 import org.koitharu.kotatsu.core.util.ext.isTextTruncated
@@ -521,6 +529,40 @@ class DetailsActivity :
 
 	private fun loadCover(imageUrl: String?) {
 		viewBinding.imageViewCover.setImageAsync(imageUrl, viewModel.getMangaOrNull())
+		loadCoverBackground(imageUrl)
+	}
+
+	private fun loadCoverBackground(imageUrl: String?) {
+		val bgView = viewBinding.imageViewCoverBg
+		if (imageUrl == null) {
+			bgView.isVisible = false
+			return
+		}
+		val manga = viewModel.getMangaOrNull()
+		ImageRequest.Builder(this)
+			.data(imageUrl)
+			.lifecycle(this)
+			.crossfade(true)
+			.allowRgb565(true)
+			.target(ImageViewTarget(bgView))
+			.mangaSourceExtra(manga?.source)
+			.enqueueWith(coil)
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			bgView.setRenderEffect(
+				RenderEffect.createBlurEffect(16f, 16f, Shader.TileMode.CLAMP),
+			)
+		}
+		val surfaceColor = getThemeColor(materialR.attr.colorSurface)
+		val halfAlpha = ColorUtils.setAlphaComponent(surfaceColor, 128)
+		bgView.foreground = GradientDrawable(
+			GradientDrawable.Orientation.TOP_BOTTOM,
+			intArrayOf(surfaceColor, halfAlpha, Color.TRANSPARENT, Color.TRANSPARENT, halfAlpha, surfaceColor),
+		)
+		viewBinding.appbar.setBackgroundColor(ColorUtils.setAlphaComponent(surfaceColor, 180))
+		viewBinding.scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+			bgView.translationY = -scrollY.toFloat()
+		}
+		bgView.isVisible = true
 	}
 
 	private fun String.withEstimatedTime(time: ReadingTime?): String {

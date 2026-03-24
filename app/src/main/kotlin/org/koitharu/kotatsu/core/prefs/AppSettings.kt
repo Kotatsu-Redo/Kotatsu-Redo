@@ -87,6 +87,13 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 	val isNavBarPinned: Boolean
 		get() = prefs.getBoolean(KEY_NAV_PINNED, false)
 
+	val isFloatingNavBar: Boolean
+		get() = if (prefs.contains(KEY_FLOATING_NAV)) {
+			prefs.getBoolean(KEY_FLOATING_NAV, false)
+		} else {
+			colorScheme == ColorScheme.EXPRESSIVE
+		}
+
 	val isMainFabEnabled: Boolean
 		get() = prefs.getBoolean(KEY_MAIN_FAB, true)
 
@@ -337,6 +344,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 	var isAllSourcesEnabled: Boolean
 		get() = prefs.getBoolean(KEY_SOURCES_ENABLED_ALL, false)
 		set(value) = prefs.edit { putBoolean(KEY_SOURCES_ENABLED_ALL, value) }
+
+	var activeSourcePresetId: Long
+		get() = prefs.getLong(KEY_ACTIVE_SOURCE_PRESET, 0L)
+		set(value) = prefs.edit { putLong(KEY_ACTIVE_SOURCE_PRESET, value) }
 
 	val isPagesNumbersEnabled: Boolean
 		get() = prefs.getBoolean(KEY_PAGES_NUMBERS, false)
@@ -787,6 +798,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_NAV_MAIN = "nav_main"
 		const val KEY_NAV_LABELS = "nav_labels"
 		const val KEY_NAV_PINNED = "nav_pinned"
+		const val KEY_FLOATING_NAV = "floating_nav"
 		const val KEY_MAIN_FAB = "main_fab"
 		const val KEY_32BIT_COLOR = "enhanced_colors"
 		const val KEY_SOURCES_ORDER = "sources_sort_order"
@@ -815,6 +827,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_DISCORD_RPC = "discord_rpc"
 		const val KEY_DISCORD_RPC_SKIP_NSFW = "discord_rpc_skip_nsfw"
 		const val KEY_DISCORD_TOKEN = "discord_token"
+		const val KEY_ACTIVE_SOURCE_PRESET = "active_source_preset"
 
 		// keys for non-persistent preferences
 		const val KEY_APP_VERSION = "app_version"

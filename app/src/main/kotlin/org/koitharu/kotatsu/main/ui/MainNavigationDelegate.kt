@@ -257,11 +257,17 @@ class MainNavigationDelegate(
 	}
 
 	private fun observeSettings(lifecycleOwner: LifecycleOwner) {
-		settings.observe(AppSettings.KEY_TRACKER_ENABLED, AppSettings.KEY_SUGGESTIONS, AppSettings.KEY_NAV_LABELS)
-			.onEach {
+		settings.observe(
+			AppSettings.KEY_TRACKER_ENABLED,
+			AppSettings.KEY_SUGGESTIONS,
+			AppSettings.KEY_NAV_LABELS,
+			AppSettings.KEY_FLOATING_NAV,
+		).onEach {
 				setItemVisibility(R.id.nav_suggestions, settings.isSuggestionsEnabled)
 				setItemVisibility(R.id.nav_feed, settings.isTrackerEnabled)
-				setNavbarIsLabeled(settings.isNavLabelsVisible)
+				val isFloating = settings.isFloatingNavBar
+				setNavbarIsLabeled(if (isFloating) false else settings.isNavLabelsVisible)
+				(navBar as? SlidingBottomNavigationView)?.isFloating = isFloating
 			}.launchIn(lifecycleOwner.lifecycleScope)
 	}
 

@@ -49,6 +49,9 @@ fun sourceCatalogItemSourceAD(
 		}
 		FaviconDrawable(context, R.style.FaviconDrawable_Small, item.source.name)
 		binding.imageViewIcon.setImageAsync(item.source)
+		binding.imageViewAdd.setImageResource(
+			if (item.isInPreset) R.drawable.ic_check else R.drawable.ic_add,
+		)
 	}
 }
 

@@ -65,6 +65,18 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
 
 	override fun onActionItemClicked(controller: ListSelectionController, mode: ActionMode?, item: MenuItem): Boolean {
 		return when (item.itemId) {
+			R.id.action_pin -> {
+				viewModel.setPinned(selectedItemsIds, isPinned = true)
+				mode?.finish()
+				true
+			}
+
+			R.id.action_unpin -> {
+				viewModel.setPinned(selectedItemsIds, isPinned = false)
+				mode?.finish()
+				true
+			}
+
 			R.id.action_remove -> {
 				viewModel.removeFromFavourites(selectedItemsIds)
 				mode?.finish()

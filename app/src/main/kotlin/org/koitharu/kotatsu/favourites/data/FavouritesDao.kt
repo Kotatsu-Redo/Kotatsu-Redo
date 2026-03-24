@@ -214,7 +214,19 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 	@Query("UPDATE favourites SET deleted_at = :deletedAt WHERE category_id = :categoryId AND deleted_at = 0")
 	protected abstract suspend fun setDeletedAtAll(categoryId: Long, deletedAt: Long)
 
-	private fun getOrderBy(sortOrder: ListSortOrder) = when (sortOrder) {
+	@Query("UPDATE favourites SET pinned = :isPinned WHERE manga_id = :mangaId AND category_id = :categoryId AND deleted_at = 0")
+	abstract suspend fun setPinned(mangaId: Long, categoryId: Long, isPinned: Boolean)
+
+	@Query("UPDATE favourites SET pinned = :isPinned WHERE manga_id = :mangaId AND deleted_at = 0")
+	abstract suspend fun setPinned(mangaId: Long, isPinned: Boolean)
+
+	@Query("SELECT DISTINCT manga_id FROM favourites WHERE category_id = :categoryId AND pinned = 1 AND deleted_at = 0")
+	abstract suspend fun findPinnedIds(categoryId: Long): List<Long>
+
+	@Query("SELECT DISTINCT manga_id FROM favourites WHERE pinned = 1 AND deleted_at = 0")
+	abstract suspend fun findAllPinnedIds(): List<Long>
+
+	private fun getOrderBy(sortOrder: ListSortOrder) = "favourites.pinned DESC, " + when (sortOrder) {
 		ListSortOrder.RATING -> "manga.rating DESC"
 		ListSortOrder.NEWEST -> "favourites.created_at DESC"
 		ListSortOrder.OLDEST -> "favourites.created_at ASC"

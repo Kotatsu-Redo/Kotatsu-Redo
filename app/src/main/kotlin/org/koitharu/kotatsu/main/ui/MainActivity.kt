@@ -41,6 +41,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -152,6 +154,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewModel.appUpdate.observe(this, MenuInvalidator(this))
 		viewModel.onFirstStart.observeEvent(this) { router.showWelcomeSheet() }
 		viewModel.isBottomNavPinned.observe(this, ::setNavbarPinned)
+		settings.observe(AppSettings.KEY_FLOATING_NAV).onEach {
+			viewBinding.root.requestApplyInsets()
+			setNavbarPinned(settings.isNavBarPinned)
+		}.launchIn(lifecycleScope)
 		searchSuggestionViewModel.isIncognitoModeEnabled.observe(this, this::onIncognitoModeChanged)
 		viewBinding.bottomNav?.addOnLayoutChangeListener(this)
 		viewBinding.searchView.addTransitionListener(this)
@@ -198,11 +204,26 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				searchBarDefaultMargin + barsInsets.start(v)
 			}
 		}
-		viewBinding.bottomNav?.updatePadding(
-			left = barsInsets.left,
-			right = barsInsets.right,
-			bottom = barsInsets.bottom,
-		)
+		viewBinding.bottomNav?.let { nav ->
+			val isFloating = settings.isFloatingNavBar
+			if (isFloating) {
+				nav.updatePadding(left = barsInsets.left, right = barsInsets.right, bottom = 0)
+				nav.updateLayoutParams<MarginLayoutParams> {
+					marginStart = resources.getDimensionPixelOffset(R.dimen.margin_normal)
+					marginEnd = resources.getDimensionPixelOffset(R.dimen.margin_normal)
+					bottomMargin = barsInsets.bottom + resources.getDimensionPixelOffset(R.dimen.margin_normal)
+				}
+				nav.elevation = 6f * resources.displayMetrics.density
+			} else {
+				nav.updatePadding(left = barsInsets.left, right = barsInsets.right, bottom = barsInsets.bottom)
+				nav.updateLayoutParams<MarginLayoutParams> {
+					marginStart = 0
+					marginEnd = 0
+					bottomMargin = 0
+				}
+				nav.elevation = 0f
+			}
+		}
 		viewBinding.navRail?.updateLayoutParams<MarginLayoutParams> {
 			marginStart = barsInsets.start(v)
 			topMargin = barsInsets.top
@@ -402,7 +423,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	private fun setNavbarPinned(isPinned: Boolean) {
 		val bottomNavBar = viewBinding.bottomNav
-		bottomNavBar?.isPinned = isPinned
+		bottomNavBar?.isPinned = isPinned || settings.isFloatingNavBar
 		for (view in viewBinding.appbar.children) {
 			val lp = view.layoutParams as? AppBarLayout.LayoutParams ?: continue
 			val scrollFlags = if (isPinned) {

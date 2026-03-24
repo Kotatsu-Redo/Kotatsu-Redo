@@ -22,13 +22,16 @@ import kotlinx.coroutines.sync.withPermit
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.model.LocalMangaSource
 import org.koitharu.kotatsu.core.model.UnknownMangaSource
+import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.prefs.ListMode
 import org.koitharu.kotatsu.core.ui.BaseViewModel
 import org.koitharu.kotatsu.core.util.ext.append
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.toLocale
+import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
+import org.koitharu.kotatsu.explore.data.SourcePresetsRepository
 import org.koitharu.kotatsu.favourites.domain.FavouritesRepository
 import org.koitharu.kotatsu.history.data.HistoryRepository
 import org.koitharu.kotatsu.list.domain.MangaListMapper
@@ -56,6 +59,8 @@ class SearchViewModel @Inject constructor(
 	private val sourcesRepository: MangaSourcesRepository,
 	private val historyRepository: HistoryRepository,
 	private val favouritesRepository: FavouritesRepository,
+	private val settings: AppSettings,
+	private val presetsRepository: SourcePresetsRepository,
 ) : BaseViewModel() {
 
 	val query = savedStateHandle.get<String>(AppRouter.KEY_QUERY).orEmpty()
@@ -165,11 +170,7 @@ class SearchViewModel @Inject constructor(
 			appendResult(searchHistory())
 			appendResult(searchFavorites())
 			appendResult(searchLocal())
-			val sources = if (pinnedOnly.value) {
-				sourcesRepository.getPinnedSources().toList()
-			} else {
-				sourcesRepository.getEnabledSources()
-			}
+			val sources = getPresetSourcesOrDefault()
 			val semaphore = Semaphore(MAX_PARALLELISM)
 			sources.map { source ->
 				launch {
@@ -322,5 +323,24 @@ class SearchViewModel @Inject constructor(
 			if (locale.toLocale() == Locale.getDefault()) res += 2
 		}
 		return res
+	}
+
+	private suspend fun getPresetSourcesOrDefault(): List<MangaSource> {
+		val presetId = settings.activeSourcePresetId
+		if (presetId != 0L) {
+			val preset = presetsRepository.getById(presetId)
+			if (preset != null) {
+				if (preset.sources.isEmpty()) return emptyList()
+				val skipNsfw = settings.isNsfwContentDisabled
+				return sourcesRepository.allMangaSources.filter { source ->
+					source.name in preset.sources && (!skipNsfw || !source.isNsfw())
+				}
+			}
+		}
+		return if (pinnedOnly.value) {
+			sourcesRepository.getPinnedSources().toList()
+		} else {
+			sourcesRepository.getEnabledSources()
+		}
 	}
 }

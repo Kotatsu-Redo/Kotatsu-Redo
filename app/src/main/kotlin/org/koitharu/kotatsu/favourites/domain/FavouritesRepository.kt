@@ -271,6 +271,28 @@ class FavouritesRepository @Inject constructor(
 		return ReversibleHandle { recoverToCategory(categoryId, ids) }
 	}
 
+	suspend fun setPinned(mangaIds: Collection<Long>, categoryId: Long, isPinned: Boolean) {
+		db.withTransaction {
+			val dao = db.getFavouritesDao()
+			for (id in mangaIds) {
+				if (categoryId == 0L) {
+					dao.setPinned(id, isPinned)
+				} else {
+					dao.setPinned(id, categoryId, isPinned)
+				}
+			}
+		}
+	}
+
+	suspend fun getPinnedIds(categoryId: Long): Set<Long> {
+		val dao = db.getFavouritesDao()
+		return if (categoryId == 0L) {
+			dao.findAllPinnedIds().toSet()
+		} else {
+			dao.findPinnedIds(categoryId).toSet()
+		}
+	}
+
 	private fun observeOrder(categoryId: Long): Flow<ListSortOrder> {
 		return db.getFavouriteCategoriesDao().observe(categoryId)
 			.filterNotNull()

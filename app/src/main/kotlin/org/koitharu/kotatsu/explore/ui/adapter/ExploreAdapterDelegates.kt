@@ -39,6 +39,8 @@ fun exploreButtonsAD(
 	binding.buttonDownloads.setOnClickListener(clickListener)
 	binding.buttonLocal.setOnClickListener(clickListener)
 	binding.buttonRandom.setOnClickListener(clickListener)
+	binding.buttonPresets.setOnClickListener(clickListener)
+	binding.buttonPresetsDropdown.setOnClickListener(clickListener)
 
 	bind {
 		if (item.isRandomLoading) {
@@ -47,6 +49,12 @@ fun exploreButtonsAD(
 			binding.buttonRandom.setIconResource(R.drawable.ic_dice)
 		}
 		binding.buttonRandom.isClickable = !item.isRandomLoading
+		val presetName = item.activePresetName
+		if (presetName != null) {
+			binding.buttonPresets.text = presetName
+		} else {
+			binding.buttonPresets.setText(R.string.source_presets)
+		}
 	}
 }
 

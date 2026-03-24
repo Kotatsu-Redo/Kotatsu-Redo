@@ -215,6 +215,10 @@
 			android:launchMode="singleTop" />
 		<activity android:name="org.koitharu.kotatsu.image.ui.ImageActivity" />
 		<activity android:name="org.koitharu.kotatsu.favourites.ui.categories.edit.FavouritesCategoryEditActivity" />
+		<activity android:name="org.koitharu.kotatsu.explore.ui.preset.SourcePresetEditActivity" />
+		<activity
+			android:name="org.koitharu.kotatsu.explore.ui.preset.SourcePresetListActivity"
+			android:label="@string/source_presets" />
 		<activity
 			android:name="org.koitharu.kotatsu.settings.override.OverrideConfigActivity"
 			android:label="@string/edit" />

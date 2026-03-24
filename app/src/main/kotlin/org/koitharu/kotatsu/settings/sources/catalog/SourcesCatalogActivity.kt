@@ -32,6 +32,7 @@ import org.koitharu.kotatsu.databinding.ActivitySourcesCatalogBinding
 import org.koitharu.kotatsu.list.ui.adapter.TypedListSpacingDecoration
 import org.koitharu.kotatsu.main.ui.owners.AppBarOwner
 import org.koitharu.kotatsu.parsers.model.ContentType
+import org.koitharu.kotatsu.parsers.model.MangaParserSource
 
 @AndroidEntryPoint
 class SourcesCatalogActivity : BaseActivity<ActivitySourcesCatalogBinding>(),
@@ -94,11 +95,19 @@ class SourcesCatalogActivity : BaseActivity<ActivitySourcesCatalogBinding>(),
 	}
 
 	override fun onItemClick(item: SourceCatalogItem.Source, view: View) {
-		router.openList(item.source, null, null)
+		if (viewModel.isPresetMode) {
+			viewModel.togglePresetSource(item.source)
+		} else {
+			router.openList(item.source, null, null)
+		}
 	}
 
 	override fun onItemLongClick(item: SourceCatalogItem.Source, view: View): Boolean {
-		viewModel.addSource(item.source)
+		if (viewModel.isPresetMode) {
+			viewModel.togglePresetSource(item.source)
+		} else {
+			viewModel.addSource(item.source)
+		}
 		return false
 	}
 

@@ -9,6 +9,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
 import androidx.annotation.AttrRes
 import androidx.annotation.StyleRes
@@ -19,6 +20,8 @@ import androidx.interpolator.view.animation.FastOutLinearInInterpolator
 import androidx.interpolator.view.animation.LinearOutSlowInInterpolator
 import com.google.android.material.bottomnavigation.BottomNavigationMenuView
 import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.shape.MaterialShapeDrawable
+import com.google.android.material.shape.ShapeAppearanceModel
 import org.koitharu.kotatsu.core.util.ext.applySystemAnimatorScale
 import org.koitharu.kotatsu.core.util.ext.measureHeight
 import kotlin.math.max
@@ -44,6 +47,14 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 
 	private var currentState = STATE_UP
 	private var behavior = HideBottomNavigationOnScrollBehavior()
+
+	var isFloating: Boolean = false
+		set(value) {
+			if (field != value) {
+				field = value
+				applyFloatingStyle(value)
+			}
+		}
 
 	var isPinned: Boolean
 		get() = behavior.isPinned
@@ -158,8 +169,9 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 		if (target == 0) {
 			return
 		}
+		val bottomMargin = (layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 0
 		animateTranslation(
-			target.toFloat(),
+			(target + bottomMargin).toFloat(),
 			SLIDE_DOWN_ANIMATION_DURATION,
 			FastOutLinearInInterpolator(),
 		)
@@ -170,6 +182,21 @@ class SlidingBottomNavigationView @JvmOverloads constructor(
 			show()
 		} else {
 			hide()
+		}
+	}
+
+	private fun applyFloatingStyle(floating: Boolean) {
+		if (floating) {
+			val radius = 28f * resources.displayMetrics.density
+			(background as? MaterialShapeDrawable)?.shapeAppearanceModel =
+				ShapeAppearanceModel.builder()
+					.setAllCornerSizes(radius)
+					.build()
+		} else {
+			(background as? MaterialShapeDrawable)?.shapeAppearanceModel =
+				ShapeAppearanceModel.builder()
+					.setAllCornerSizes(0f)
+					.build()
 		}
 	}
 

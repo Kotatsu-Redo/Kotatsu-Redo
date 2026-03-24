@@ -21,10 +21,12 @@ import org.koitharu.kotatsu.core.util.ext.MutableEventFlow
 import org.koitharu.kotatsu.core.util.ext.call
 import org.koitharu.kotatsu.core.util.ext.mapSortedByCount
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
+import org.koitharu.kotatsu.explore.data.SourcePresetsRepository
 import org.koitharu.kotatsu.explore.data.SourcesSortOrder
 import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.LoadingState
 import org.koitharu.kotatsu.parsers.model.ContentType
+import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import java.util.EnumSet
 import java.util.Locale
@@ -34,7 +36,8 @@ import javax.inject.Inject
 class SourcesCatalogViewModel @Inject constructor(
 	private val repository: MangaSourcesRepository,
 	db: MangaDatabase,
-	settings: AppSettings,
+	private val settings: AppSettings,
+	private val presetsRepository: SourcePresetsRepository,
 ) : BaseViewModel() {
 
 	val onActionDone = MutableEventFlow<ReversibleAction>()
@@ -56,18 +59,26 @@ class SourcesCatalogViewModel @Inject constructor(
 
 	val contentTypes = MutableStateFlow<List<ContentType>>(emptyList())
 
+	private val activePresetId = settings.activeSourcePresetId
+	private val presetSources = MutableStateFlow<Set<String>>(emptySet())
+
+	val isPresetMode: Boolean
+		get() = activePresetId != 0L
+
 	val content: StateFlow<List<ListModel>> = combine(
 		searchQuery,
 		appliedFilter,
+		presetSources,
 		db.invalidationTrackerFlow(TABLE_SOURCES),
-	) { q, f, _ ->
-		buildSourcesList(f, q)
+	) { q, f, ps, _ ->
+		buildSourcesList(f, q, ps)
 	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
 
 	init {
 		repository.clearNewSourcesBadge()
 		launchJob(Dispatchers.Default) {
 			contentTypes.value = getContentTypes(settings.isNsfwContentDisabled)
+			loadActivePreset()
 		}
 	}
 
@@ -83,6 +94,21 @@ class SourcesCatalogViewModel @Inject constructor(
 		launchJob(Dispatchers.Default) {
 			val rollback = repository.setSourcesEnabled(setOf(source), true)
 			onActionDone.call(ReversibleAction(R.string.source_enabled, rollback))
+		}
+	}
+
+	fun togglePresetSource(source: MangaParserSource) {
+		if (activePresetId == 0L) return
+		launchJob(Dispatchers.Default) {
+			val current = presetSources.value.toMutableSet()
+			val name = source.name
+			if (name in current) {
+				current.remove(name)
+			} else {
+				current.add(name)
+			}
+			presetsRepository.updatePresetSources(activePresetId, current)
+			presetSources.value = current
 		}
 	}
 
@@ -102,11 +128,16 @@ class SourcesCatalogViewModel @Inject constructor(
 		appliedFilter.value = appliedFilter.value.copy(isNewOnly = value)
 	}
 
-	private suspend fun buildSourcesList(filter: SourcesCatalogFilter, query: String?): List<SourceCatalogItem> {
+	private suspend fun buildSourcesList(
+		filter: SourcesCatalogFilter,
+		query: String?,
+		presetSourceNames: Set<String>,
+	): List<SourceCatalogItem> {
+		val isPreset = activePresetId != 0L
 		val sources = repository.queryParserSources(
-			isDisabledOnly = true,
+			isDisabledOnly = !isPreset,
 			isNewOnly = filter.isNewOnly,
-			excludeBroken = false,
+			excludeBroken = isPreset,
 			types = filter.types,
 			query = query,
 			locale = filter.locale,
@@ -130,7 +161,10 @@ class SourcesCatalogViewModel @Inject constructor(
 			)
 		} else {
 			sources.map {
-				SourceCatalogItem.Source(source = it)
+				SourceCatalogItem.Source(
+					source = it,
+					isInPreset = isPreset && it.name in presetSourceNames,
+				)
 			}
 		}
 	}
@@ -142,6 +176,19 @@ class SourcesCatalogViewModel @Inject constructor(
 			result.filterNot { it == ContentType.HENTAI }
 		} else {
 			result
+		}
+	}
+
+	private suspend fun loadActivePreset() {
+		if (activePresetId != 0L) {
+			val preset = presetsRepository.getById(activePresetId)
+			if (preset != null) {
+				presetSources.value = preset.sources
+				val presetLocale = preset.languages.firstOrNull()
+				if (presetLocale != null && presetLocale in locales) {
+					appliedFilter.value = appliedFilter.value.copy(locale = presetLocale)
+				}
+			}
 		}
 	}
 }

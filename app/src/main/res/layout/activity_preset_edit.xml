@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+
+	<com.google.android.material.appbar.MaterialToolbar
+		android:id="@+id/toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize">
+
+		<Button
+			android:id="@+id/button_done"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="end"
+			android:layout_marginHorizontal="@dimen/toolbar_button_margin"
+			android:text="@string/save" />
+
+	</com.google.android.material.appbar.MaterialToolbar>
+
+	<ScrollView
+		android:id="@+id/scrollView"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:clipToPadding="false"
+		android:overScrollMode="ifContentScrolls">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:padding="16dp">
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/layout_name"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@+id/edit_name"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:hint="@string/preset_name"
+					android:imeOptions="actionDone"
+					android:inputType="textCapSentences"
+					android:maxLength="120" />
+
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="16dp"
+				android:text="@string/preset_languages"
+				android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+			<com.google.android.material.chip.ChipGroup
+				android:id="@+id/chipGroup_languages"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp" />
+
+			<TextView
+				android:id="@+id/textView_error"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="16dp"
+				android:textColor="?colorError"
+				android:visibility="gone"
+				tools:text="@tools:sample/lorem[4]"
+				tools:visibility="visible" />
+
+		</LinearLayout>
+
+	</ScrollView>
+
+</LinearLayout>

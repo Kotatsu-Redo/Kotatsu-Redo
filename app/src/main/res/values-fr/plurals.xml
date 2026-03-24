@@ -45,4 +45,9 @@
         <item quantity="many">%1$d minutes</item>
         <item quantity="other">%1$d minutes</item>
     </plurals>
+    <plurals name="sources_count">
+        <item quantity="one">%1$d source</item>
+        <item quantity="many">%1$d sources</item>
+        <item quantity="other">%1$d sources</item>
+    </plurals>
 </resources>
