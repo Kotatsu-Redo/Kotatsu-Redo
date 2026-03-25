@@ -18,7 +18,15 @@ fun Response.parseJsonOrNull(): JSONObject? {
 		when {
 			!isSuccessful -> throw IOException(body?.string())
 			code == HttpURLConnection.HTTP_NO_CONTENT -> null
-			else -> JSONObject(body?.string() ?: return null)
+			else -> {
+				val raw = body?.string() ?: return null
+				val trimmed = raw.trimStart()
+				if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+					println("WARN: parseJsonOrNull: response body is not JSON; snippet=\"${trimmed.take(200)}\"")
+					return null
+				}
+				JSONObject(trimmed)
+			}
 		}
 	} finally {
 		closeQuietly()
