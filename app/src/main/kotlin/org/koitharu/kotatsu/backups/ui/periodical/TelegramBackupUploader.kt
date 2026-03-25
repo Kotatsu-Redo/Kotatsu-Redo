@@ -19,6 +19,7 @@ import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.json.getBooleanOrDefault
 import org.koitharu.kotatsu.parsers.util.json.getStringOrNull
 import org.koitharu.kotatsu.parsers.util.parseJson
+import org.koitharu.kotatsu.core.util.ext.parseJsonOrNull
 import java.io.File
 import javax.inject.Inject
 
@@ -87,7 +88,7 @@ class TelegramBackupUploader @Inject constructor(
 			closeQuietly()
 			return
 		}
-		val jo = parseJson()
+		val jo = parseJsonOrNull() ?: throw RuntimeException("Invalid JSON response from Telegram API")
 		if (!jo.getBooleanOrDefault("ok", true)) {
 			throw RuntimeException(jo.getStringOrNull("description"))
 		}
