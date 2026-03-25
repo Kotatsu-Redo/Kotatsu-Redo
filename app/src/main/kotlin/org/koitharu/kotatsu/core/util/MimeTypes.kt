@@ -30,9 +30,10 @@ object MimeTypes {
 	@Blocking
 	fun probeMimeType(file: File): MimeType? {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			runCatchingCancellable {
+			val probed = runCatchingCancellable {
 				Files.probeContentType(file.toPath())?.toMimeTypeOrNull()
-			}.getOrNull()?.let { return it }
+			}.getOrNull()
+			if (probed != null) return probed
 		}
 		return getMimeTypeFromExtension(file.name)
 	}

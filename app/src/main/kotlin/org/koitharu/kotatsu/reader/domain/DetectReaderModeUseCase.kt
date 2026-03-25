@@ -34,7 +34,8 @@ class DetectReaderModeUseCase @Inject constructor(
 ) {
 
 	suspend operator fun invoke(manga: Manga, state: ReaderState?): ReaderMode {
-		dataRepository.getReaderMode(manga.id)?.let { return it }
+		val detectedMode = dataRepository.getReaderMode(manga.id)
+		if (detectedMode != null) return detectedMode
 		val defaultMode = settings.defaultReaderMode
 		if (!settings.isReaderModeDetectionEnabled || defaultMode == ReaderMode.WEBTOON) {
 			return defaultMode

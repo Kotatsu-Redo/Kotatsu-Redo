@@ -50,9 +50,8 @@ class MangaLinkResolver @Inject constructor(
 	}
 
 	private suspend fun resolveExternalLink(uri: String): Manga? {
-		dataRepository.findMangaByPublicUrl(uri)?.let {
-			return it
-		}
+		val found = dataRepository.findMangaByPublicUrl(uri)
+		if (found != null) return found
 		return context.newLinkResolver(uri).getManga()
 	}
 

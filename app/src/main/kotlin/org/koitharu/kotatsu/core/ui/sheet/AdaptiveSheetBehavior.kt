@@ -113,10 +113,12 @@ sealed class AdaptiveSheetBehavior {
 		const val STATE_HIDDEN = SideSheetBehavior.STATE_HIDDEN
 
 		fun from(fragment: DialogFragment): AdaptiveSheetBehavior? {
-			from(fragment.dialog)?.let { return it }
+			val fromDialog = from(fragment.dialog)
+			if (fromDialog != null) return fromDialog
 			val rootView = fragment.view ?: return null
 			for (parent in rootView.ancestors) {
-				from(parent)?.let { return it }
+				val fromParent = from(parent)
+				if (fromParent != null) return fromParent
 			}
 			return null
 		}

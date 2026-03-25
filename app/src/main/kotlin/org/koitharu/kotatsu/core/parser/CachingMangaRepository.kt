@@ -30,7 +30,8 @@ abstract class CachingMangaRepository(
 	final override suspend fun getDetails(manga: Manga): Manga = getDetails(manga, CachePolicy.ENABLED)
 
 	final override suspend fun getPages(chapter: MangaChapter): List<MangaPage> = pagesMutex.withLock(chapter.id) {
-		cache.getPages(source, chapter.url)?.let { return it }
+		val cachedPages = cache.getPages(source, chapter.url)
+		if (cachedPages != null) return cachedPages
 		val pages = asyncSafe {
 			getPagesImpl(chapter).distinctById()
 		}
@@ -39,7 +40,8 @@ abstract class CachingMangaRepository(
 	}.await()
 
 	final override suspend fun getRelated(seed: Manga): List<Manga> = relatedMangaMutex.withLock(seed.id) {
-		cache.getRelatedManga(source, seed.url)?.let { return it }
+		val cachedRelated = cache.getRelatedManga(source, seed.url)
+		if (cachedRelated != null) return cachedRelated
 		val related = asyncSafe {
 			getRelatedMangaImpl(seed).filterNot { it.id == seed.id }
 		}
@@ -49,7 +51,8 @@ abstract class CachingMangaRepository(
 
 	suspend fun getDetails(manga: Manga, cachePolicy: CachePolicy): Manga = detailsMutex.withLock(manga.id) {
 		if (cachePolicy.readEnabled) {
-			cache.getDetails(source, manga.url)?.let { return it }
+			val cachedDetails = cache.getDetails(source, manga.url)
+			if (cachedDetails != null) return cachedDetails
 		}
 		val details = asyncSafe {
 			getDetailsImpl(manga)

@@ -224,7 +224,8 @@ class CoverImageView @JvmOverloads constructor(
 
 		override suspend fun size(): Size {
 			// Fast path: the view is already measured.
-			getSize()?.let { return it }
+			val s = getSize()
+			if (s != null) return s
 
 			// Slow path: wait for the view to be measured.
 			return suspendCancellableCoroutine { continuation ->

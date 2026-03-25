@@ -283,7 +283,8 @@ class PageLoader @Inject constructor(
 		val pageUrl = getPageUrl(page)
 		check(pageUrl.isNotBlank()) { "Cannot obtain full image url for $page" }
 		if (!skipCache) {
-			cache.get(pageUrl)?.let { return it.toUri() }
+			val cached = cache.get(pageUrl)
+			if (cached != null) return cached.toUri()
 		}
 		val uri = pageUrl.toUri()
 		return when {

@@ -141,7 +141,8 @@ class FavouritesCategoryEditActivity :
 	}
 
 	private fun getSelectedSortOrder(): ListSortOrder {
-		selectedSortOrder?.let { return it }
+		val so = selectedSortOrder
+		if (so != null) return so
 		val entries = sortOrders.map { getString(it.titleResId) }
 		val index = entries.indexOf(viewBinding.editSort.text.toString())
 		return sortOrders.getOrNull(index) ?: ListSortOrder.NEWEST
