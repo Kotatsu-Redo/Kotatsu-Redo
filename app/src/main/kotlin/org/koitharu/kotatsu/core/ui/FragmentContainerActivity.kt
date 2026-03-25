@@ -10,7 +10,7 @@ import androidx.fragment.app.commit
 import com.google.android.material.appbar.AppBarLayout
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
-import org.koitharu.kotatsu.core.util.ext.consumeSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consume
 import org.koitharu.kotatsu.databinding.ActivityContainerBinding
 import org.koitharu.kotatsu.main.ui.owners.AppBarOwner
 import org.koitharu.kotatsu.main.ui.owners.SnackbarOwner
@@ -47,7 +47,7 @@ abstract class FragmentContainerActivity(private val fragmentClass: Class<out Fr
 			right = bars.right,
 			top = bars.top,
 		)
-		return insets.consumeSystemBarsInsets(top = true)
+		return insets.consume(v, WindowInsetsCompat.Type.systemBars(), top = true)
 	}
 
 	protected open fun getFragmentExtras(): Bundle? = intent.extras
