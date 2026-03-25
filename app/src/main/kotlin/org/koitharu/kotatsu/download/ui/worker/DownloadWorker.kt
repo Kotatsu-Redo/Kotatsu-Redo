@@ -407,7 +407,8 @@ class DownloadWorker @AssistedInject constructor(
 					response.requireBody().use { body ->
 						file = destination.createTempFile(
 							ext = MimeTypes.getExtension(body.contentType()?.toMimeType())
-						).also { tempFiles += it }
+						)
+						tempFiles += checkNotNull(file)
 						file.sink(append = false).buffer().use {
 							it.writeAllCancellable(body.source())
 						}
