@@ -221,7 +221,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 			'-opt-in=kotlinx.serialization.ExperimentalSerializationApi',
 			'-Xjspecify-annotations=strict',
 			'-Xannotation-default-target=first-only',
-			'-Xtype-enhancement-improvements-strict-mode',
 			'-opt-in=org.koitharu.kotatsu.parsers.InternalParsersApi'
 		]
 	}

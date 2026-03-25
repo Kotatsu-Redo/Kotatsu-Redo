@@ -19,10 +19,11 @@ class DebugSettingsFragment : BasePreferenceFragment(R.string.debug), Preference
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		addPreferencesFromResource(R.xml.pref_debug)
-		findPreference<SplitSwitchPreference>(KEY_LEAK_CANARY)?.let { pref ->
-			pref.isChecked = application.isLeakCanaryEnabled
-			pref.onPreferenceChangeListener = this
-			pref.onContainerClickListener = this
+		val leakPref = findPreference<SplitSwitchPreference>(KEY_LEAK_CANARY)
+		if (leakPref != null) {
+			leakPref.isChecked = application.isLeakCanaryEnabled
+			leakPref.onPreferenceChangeListener = this
+			leakPref.onContainerClickListener = this
 		}
 	}
 

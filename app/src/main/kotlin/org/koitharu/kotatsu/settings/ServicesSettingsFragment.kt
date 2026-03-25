@@ -36,8 +36,9 @@ class ServicesSettingsFragment : BasePreferenceFragment(R.string.services),
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		addPreferencesFromResource(R.xml.pref_services)
-		findPreference<SplitSwitchPreference>(AppSettings.KEY_STATS_ENABLED)?.let {
-			it.onContainerClickListener = Preference.OnPreferenceClickListener {
+		val statsPref = findPreference<SplitSwitchPreference>(AppSettings.KEY_STATS_ENABLED)
+		if (statsPref != null) {
+			statsPref.onContainerClickListener = Preference.OnPreferenceClickListener {
 				router.openStatistic()
 				true
 			}

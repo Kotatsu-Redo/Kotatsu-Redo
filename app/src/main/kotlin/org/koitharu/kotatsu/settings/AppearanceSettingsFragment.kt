@@ -86,11 +86,12 @@ class AppearanceSettingsFragment :
             entryValues = ScreenshotsPolicy.entries.names()
             setDefaultValueCompat(ScreenshotsPolicy.ALLOW.name)
         }
-        findPreference<MultiSelectListPreference>(AppSettings.KEY_SEARCH_SUGGESTION_TYPES)?.let { pref ->
-            pref.entryValues = SearchSuggestionType.entries.names()
-            pref.entries = SearchSuggestionType.entries.map { pref.context.getString(it.titleResId) }.toTypedArray()
-            pref.summaryProvider = MultiSummaryProvider(R.string.none)
-            pref.values = settings.searchSuggestionTypes.mapToSet { it.name }
+        val searchSuggestionPref = findPreference<MultiSelectListPreference>(AppSettings.KEY_SEARCH_SUGGESTION_TYPES)
+        if (searchSuggestionPref != null) {
+            searchSuggestionPref.entryValues = SearchSuggestionType.entries.names()
+            searchSuggestionPref.entries = SearchSuggestionType.entries.map { searchSuggestionPref.context.getString(it.titleResId) }.toTypedArray()
+            searchSuggestionPref.summaryProvider = MultiSummaryProvider(R.string.none)
+            searchSuggestionPref.values = settings.searchSuggestionTypes.mapToSet { it.name }
         }
         bindNavSummary()
     }

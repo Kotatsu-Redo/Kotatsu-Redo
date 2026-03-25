@@ -59,16 +59,17 @@ class ProxySettingsFragment : BasePreferenceFragment(R.string.proxy),
 				validator = PortNumberValidator(),
 			),
 		)
-		findPreference<EditTextPreference>(AppSettings.KEY_PROXY_PASSWORD)?.let { pref ->
+		val proxyPasswordPref = findPreference<EditTextPreference>(AppSettings.KEY_PROXY_PASSWORD)
+		if (proxyPasswordPref != null) {
 			@Suppress("UsePropertyAccessSyntax")
-			pref.setOnBindEditTextListener(
+			proxyPasswordPref.setOnBindEditTextListener(
 				EditTextBindListener(
 					inputType = EditorInfo.TYPE_CLASS_TEXT or EditorInfo.TYPE_TEXT_VARIATION_PASSWORD,
 					hint = null,
 					validator = null,
 				),
 			)
-			pref.summaryProvider = PasswordSummaryProvider()
+			proxyPasswordPref.summaryProvider = PasswordSummaryProvider()
 		}
 		updateDependencies()
 	}
