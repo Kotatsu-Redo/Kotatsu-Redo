@@ -298,7 +298,7 @@
     <string name="no_manga_sources">マンガのソースがない</string>
     <string name="no_manga_sources_text">マンガのソースを有効にして、オンラインでマンガを読めるようにする</string>
     <string name="confirm_exit">もう一度戻るを押して終了します</string>
-    <string name="memory_usage_pattern">%s -%s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="exit_confirmation">退出確認</string>
     <string name="storage_usage">ストレージの使用状況</string>
     <string name="other_cache">その他のキャッシュ</string>

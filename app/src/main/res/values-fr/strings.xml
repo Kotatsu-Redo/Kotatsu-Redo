@@ -275,7 +275,7 @@
     <string name="exit_confirmation_summary">Appuyez deux fois sur la touche Retour pour quitter l\'appli</string>
     <string name="available">Disponible</string>
     <string name="exit_confirmation">Confirmation de sortie</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="feed">Flux</string>
     <string name="importing_manga">Importation de mangas</string>
     <string name="removed_from_favourites">Supprimé des favoris</string>

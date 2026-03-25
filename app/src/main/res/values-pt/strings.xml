@@ -316,7 +316,7 @@
     <string name="other_cache">Outros cache</string>
     <string name="storage_usage">Armazenamento usado</string>
     <string name="available">Disponível</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Removido dos favoritos</string>
     <string name="options">Opções</string>
     <string name="not_found_404">Conteúdo não encontrado ou removido</string>

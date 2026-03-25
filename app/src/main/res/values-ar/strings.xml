@@ -303,7 +303,7 @@
     <string name="other_cache">بيانات تخزين مؤقت أخرى</string>
     <string name="storage_usage">استهلاك التخزين</string>
     <string name="available">متوفر</string>
-    <string name="memory_usage_pattern">%s - %s</string>
+    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="options">خيارات</string>
     <string name="incognito_mode">الوضع الخفي</string>
     <string name="automatic_scroll">تمرير تلقائي</string>

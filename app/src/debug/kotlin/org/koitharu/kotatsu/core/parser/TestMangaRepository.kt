@@ -17,41 +17,41 @@ import java.util.EnumSet
  You can open it in the app via Settings -> Debug
  */
 class TestMangaRepository(
-	@Suppress("unused") private val loaderContext: MangaLoaderContext,
-	cache: MemoryContentCache
+    @Suppress("unused") private val loaderContext: MangaLoaderContext,
+    cache: MemoryContentCache
 ) : CachingMangaRepository(cache) {
 
-	override val source = TestMangaSource
+    override val source = TestMangaSource
 
-	override val sortOrders: Set<SortOrder> = EnumSet.allOf(SortOrder::class.java)
+    override val sortOrders: Set<SortOrder> = EnumSet.allOf(SortOrder::class.java)
 
-	override var defaultSortOrder: SortOrder
-		get() = sortOrders.first()
-		set(value) = Unit
+    override var defaultSortOrder: SortOrder
+        get() = sortOrders.first()
+        set(value) = Unit
 
-	override val filterCapabilities = MangaListFilterCapabilities()
+    override val filterCapabilities = MangaListFilterCapabilities()
 
-	override suspend fun getFilterOptions() = MangaListFilterOptions()
+    override suspend fun getFilterOptions() = MangaListFilterOptions()
 
-	override suspend fun getList(
-		offset: Int,
-		order: SortOrder?,
-		filter: MangaListFilter?
-	): List<Manga> = TODO("Get manga list by filter")
+    override suspend fun getList(
+        offset: Int,
+        order: SortOrder?,
+        filter: MangaListFilter?
+    ): List<Manga> = emptyList()
 
-	override suspend fun getDetailsImpl(
-		manga: Manga
-	): Manga = TODO("Fetch manga details")
+    override suspend fun getDetailsImpl(
+        manga: Manga
+    ): Manga = manga
 
-	override suspend fun getPagesImpl(
-		chapter: MangaChapter
-	): List<MangaPage> = TODO("Get pages for specific chapter")
+    override suspend fun getPagesImpl(
+        chapter: MangaChapter
+    ): List<MangaPage> = emptyList()
 
-	override suspend fun getPageUrl(
-		page: MangaPage
-	): String = TODO("Return direct url of page image or page.url if it is already a direct url")
+    override suspend fun getPageUrl(
+        page: MangaPage
+    ): String = page.url ?: ""
 
-	override suspend fun getRelatedMangaImpl(
-		seed: Manga
-	): List<Manga> = TODO("Get list of related manga. This method is optional and parser library has a default implementation")
+    override suspend fun getRelatedMangaImpl(
+        seed: Manga
+    ): List<Manga> = emptyList()
 }
