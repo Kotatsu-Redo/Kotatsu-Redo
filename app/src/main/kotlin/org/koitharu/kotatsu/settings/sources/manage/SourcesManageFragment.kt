@@ -24,7 +24,7 @@ import org.koitharu.kotatsu.core.ui.BaseFragment
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
 import org.koitharu.kotatsu.core.util.ext.addMenuProvider
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.container
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.getItem
@@ -96,7 +96,7 @@ class SourcesManageFragment :
 			if (isTablet && isMaster) 0 else barsInsets.end(v),
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onResume() {

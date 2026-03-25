@@ -25,7 +25,7 @@ import org.koitharu.kotatsu.core.ui.list.ListSelectionController
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.list.fastscroll.FastScroller
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.findAppCompatDelegate
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
@@ -120,7 +120,7 @@ class AllBookmarksFragment :
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onDestroyView() {

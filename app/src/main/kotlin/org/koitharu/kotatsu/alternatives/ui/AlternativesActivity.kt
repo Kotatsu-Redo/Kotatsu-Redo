@@ -16,10 +16,10 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.BaseListAdapter
 import org.koitharu.kotatsu.core.ui.dialog.buildAlertDialog
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.databinding.ActivityAlternativesBinding
 import org.koitharu.kotatsu.list.ui.adapter.ListItemType
 import org.koitharu.kotatsu.list.ui.adapter.ListStateHolderListener
@@ -74,7 +74,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 		v: View,
 		insets: WindowInsetsCompat
 	): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.recyclerView.updatePadding(
 			left = barsInsets.left,
 			right = barsInsets.right,
@@ -85,7 +85,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onItemClick(item: MangaAlternativeModel, view: View) {

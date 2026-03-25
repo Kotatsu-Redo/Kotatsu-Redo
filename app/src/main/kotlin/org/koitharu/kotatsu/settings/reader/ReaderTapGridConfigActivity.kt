@@ -18,11 +18,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseActivity
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.findKeyByValue
 import org.koitharu.kotatsu.core.util.ext.getThemeDrawable
 import org.koitharu.kotatsu.core.util.ext.observe
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.databinding.ActivityReaderTapActionsBinding
 import org.koitharu.kotatsu.reader.domain.TapGridArea
 import org.koitharu.kotatsu.reader.ui.tapgrid.TapAction
@@ -60,14 +60,14 @@ class ReaderTapGridConfigActivity : BaseActivity<ActivityReaderTapActionsBinding
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.root.setPadding(
 			barsInsets.left,
 			barsInsets.top,
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu?): Boolean {

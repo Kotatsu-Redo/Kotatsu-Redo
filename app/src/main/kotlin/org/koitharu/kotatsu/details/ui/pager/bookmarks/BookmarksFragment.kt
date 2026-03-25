@@ -28,7 +28,7 @@ import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.util.PagerNestedScrollHelper
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.findAppCompatDelegate
 import org.koitharu.kotatsu.core.util.ext.findParentCallback
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -124,7 +124,7 @@ class BookmarksFragment : BaseFragment<FragmentMangaBookmarksBinding>(),
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onDestroyView() {

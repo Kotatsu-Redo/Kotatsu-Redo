@@ -18,12 +18,12 @@ import org.koitharu.kotatsu.core.ui.dialog.buildAlertDialog
 import org.koitharu.kotatsu.core.ui.dialog.setRecyclerViewList
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.container
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.start
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.databinding.FragmentSettingsSourcesBinding
 import org.koitharu.kotatsu.list.ui.adapter.ListItemType
 import org.koitharu.kotatsu.list.ui.model.ListModel
@@ -67,7 +67,7 @@ class NavConfigFragment : BaseFragment<FragmentSettingsSourcesBinding>(), Recycl
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val isTablet = !resources.getBoolean(R.bool.is_tablet)
 		val isMaster = container?.id == R.id.container_master
 		v.setPaddingRelative(
@@ -76,7 +76,7 @@ class NavConfigFragment : BaseFragment<FragmentSettingsSourcesBinding>(), Recycl
 			if (isTablet && isMaster) 0 else barsInsets.end(v),
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onResume() {

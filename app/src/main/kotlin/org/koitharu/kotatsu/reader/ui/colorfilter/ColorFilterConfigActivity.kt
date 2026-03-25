@@ -18,12 +18,12 @@ import com.google.android.material.slider.Slider
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseActivity
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.setChecked
 import org.koitharu.kotatsu.core.util.ext.setValueRounded
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.core.util.progress.ImageRequestIndicatorListener
 import org.koitharu.kotatsu.databinding.ActivityColorFilterBinding
 import org.koitharu.kotatsu.parsers.model.MangaPage
@@ -71,14 +71,14 @@ class ColorFilterConfigActivity :
 		v: View,
 		insets: WindowInsetsCompat
 	): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.root.setPadding(
 			barsInsets.left,
 			barsInsets.top,
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onValueChange(slider: Slider, value: Float, fromUser: Boolean) {

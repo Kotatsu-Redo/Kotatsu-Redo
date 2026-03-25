@@ -18,7 +18,7 @@ import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.showOrHide
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.databinding.ActivityScrobblerConfigBinding
 import org.koitharu.kotatsu.list.ui.adapter.TypedListSpacingDecoration
 import org.koitharu.kotatsu.scrobbling.common.domain.model.ScrobblerUser
@@ -65,7 +65,7 @@ class ScrobblerConfigActivity : BaseActivity<ActivityScrobblerConfigBinding>(),
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val basePadding = v.resources.getDimensionPixelOffset(R.dimen.list_spacing_normal)
 		viewBinding.appbar.updatePadding(
 			top = barsInsets.top,

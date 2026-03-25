@@ -17,10 +17,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.DefaultTextWatcher
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.databinding.ActivitySetupProtectBinding
 
 private const val MIN_PASSWORD_LENGTH = 4
@@ -60,7 +60,7 @@ class ProtectSetupActivity :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val basePadding = resources.getDimensionPixelOffset(R.dimen.screen_padding)
 		viewBinding.root.setPadding(
 			barsInsets.left + basePadding,
@@ -68,7 +68,7 @@ class ProtectSetupActivity :
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onClick(v: View) {

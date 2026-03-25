@@ -29,14 +29,14 @@ import org.koitharu.kotatsu.core.github.AppVersion
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.util.FileSize
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.setTextAndVisible
 import org.koitharu.kotatsu.core.util.ext.showOrHide
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.core.util.ext.textAndVisible
 import org.koitharu.kotatsu.databinding.ActivityAppUpdateBinding
 
@@ -92,7 +92,7 @@ class AppUpdateActivity : BaseActivity<ActivityAppUpdateBinding>(), View.OnClick
 		v: View,
 		insets: WindowInsetsCompat
 	): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		viewBinding.root.updatePadding(top = barsInsets.top)
 		viewBinding.dockedToolbarChild.updateLayoutParams<MarginLayoutParams> {
 			leftMargin = barsInsets.left
@@ -103,7 +103,7 @@ class AppUpdateActivity : BaseActivity<ActivityAppUpdateBinding>(), View.OnClick
 			left = barsInsets.left,
 			right = barsInsets.right,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onClick(v: View) {

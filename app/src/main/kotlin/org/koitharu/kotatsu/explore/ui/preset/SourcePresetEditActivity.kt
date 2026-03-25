@@ -14,7 +14,7 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.DefaultTextWatcher
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.getDisplayName
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -56,7 +56,7 @@ class SourcePresetEditActivity :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onClick(v: View) {

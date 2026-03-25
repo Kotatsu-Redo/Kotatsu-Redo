@@ -20,14 +20,14 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.resolve.ExceptionResolver
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.container
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.getThemeColor
 import org.koitharu.kotatsu.core.util.ext.getThemeDrawable
 import org.koitharu.kotatsu.core.util.ext.parentView
 import org.koitharu.kotatsu.core.util.ext.start
-import org.koitharu.kotatsu.core.util.ext.systemBarsInsets
+// use WindowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars()) directly
 import org.koitharu.kotatsu.settings.SettingsActivity
 import javax.inject.Inject
 import com.google.android.material.R as materialR
@@ -62,7 +62,7 @@ abstract class BasePreferenceFragment(@StringRes private val titleId: Int) :
 	}
 
 	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-		val barsInsets = insets.systemBarsInsets
+		val barsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 		val isTablet = !resources.getBoolean(R.bool.is_tablet)
 		val isMaster = container?.id == R.id.container_master
 		listView.setPaddingRelative(
@@ -71,7 +71,7 @@ abstract class BasePreferenceFragment(@StringRes private val titleId: Int) :
 			if (isTablet && isMaster) 0 else barsInsets.end(v),
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onResume() {
