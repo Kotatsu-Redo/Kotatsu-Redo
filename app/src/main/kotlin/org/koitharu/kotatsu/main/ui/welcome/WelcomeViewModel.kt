@@ -60,9 +60,12 @@ class WelcomeViewModel @Inject constructor(
 			)
 			val languages = localesGroups.keys.associateBy { x -> x.language }
 			val selectedLocales = HashSet<Locale>(2)
-			ConfigurationCompat.getLocales(context.resources.configuration).toList()
+			val firstLocaleMatch = ConfigurationCompat.getLocales(context.resources.configuration)
+				.toList()
 				.firstNotNullOfOrNull { lc -> languages[lc.language] }
-				?.let { selectedLocales += it }
+			if (firstLocaleMatch != null) {
+				selectedLocales += firstLocaleMatch
+			}
 			selectedLocales += Locale.ROOT
 			locales.value = locales.value.copy(
 				availableItems = localesGroups.keys.sortedWithSafe(LocaleComparator()),
