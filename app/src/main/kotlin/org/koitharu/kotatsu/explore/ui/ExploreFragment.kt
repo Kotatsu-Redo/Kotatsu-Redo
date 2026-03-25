@@ -226,7 +226,8 @@ class ExploreFragment :
 
 			R.id.action_delete -> {
 				selectedSources.forEach {
-					(it.mangaSource as? ExternalMangaSource)?.let { uninstallExternalSource(it) }
+					val src = it.mangaSource as? ExternalMangaSource
+					if (src != null) uninstallExternalSource(src)
 				}
 				mode?.finish()
 			}

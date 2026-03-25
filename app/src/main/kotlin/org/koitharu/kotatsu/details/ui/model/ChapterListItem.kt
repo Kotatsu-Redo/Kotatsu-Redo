@@ -61,9 +61,8 @@ data class ChapterListItem(
 	}
 
 	fun getTitle(resources: Resources): String {
-		cachedTitle?.let {
-			return it
-		}
+		val ct = cachedTitle
+		if (ct != null) return ct
 		return chapter.getLocalizedTitle(resources).also {
 			cachedTitle = it
 		}
@@ -71,16 +70,17 @@ data class ChapterListItem(
 
 	private fun buildDescription(): String {
 		val joiner = StringJoiner(" • ")
-		chapter.numberString()?.let {
-			joiner.add("#").append(it)
+		val num = chapter.numberString()
+		if (num != null) {
+			joiner.add("#").append(num)
 		}
-		uploadDate?.let { date ->
-			joiner.add(date.toString())
+		val ud = uploadDate
+		if (ud != null) {
+			joiner.add(ud.toString())
 		}
-		chapter.scanlator?.let { scanlator ->
-			if (scanlator.isNotBlank()) {
-				joiner.add(scanlator)
-			}
+		val scanlator = chapter.scanlator
+		if (scanlator != null && scanlator.isNotBlank()) {
+			joiner.add(scanlator)
 		}
 		return joiner.complete()
 	}

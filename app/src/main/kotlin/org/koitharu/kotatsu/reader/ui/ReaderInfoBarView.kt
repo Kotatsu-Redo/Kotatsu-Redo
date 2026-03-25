@@ -271,17 +271,20 @@ class ReaderInfoBarView @JvmOverloads constructor(
 		insetTop = insetTopFallback
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && insetsCompat != null) {
 			val nativeInsets = insetsCompat.toWindowInsets()
-			nativeInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)?.let { corner ->
-				insetLeft += corner.radius
+			val cornerLeft = nativeInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)
+			if (cornerLeft != null) {
+				insetLeft += cornerLeft.radius
 			}
-			nativeInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_RIGHT)?.let { corner ->
-				insetRight += corner.radius
+			val cornerRight = nativeInsets?.getRoundedCorner(RoundedCorner.POSITION_TOP_RIGHT)
+			if (cornerRight != null) {
+				insetRight += cornerRight.radius
 			}
 		} else {
 			insetLeft += insetCornerFallback
 			insetRight += insetCornerFallback
 		}
-		insetsCompat?.displayCutout?.let { cutout ->
+		val cutout = insetsCompat?.displayCutout
+		if (cutout != null) {
 			for (rect in cutout.boundingRects) {
 				if (rect.left <= paddingLeft) {
 					insetLeft += rect.width()

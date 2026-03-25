@@ -102,15 +102,16 @@ class UpdatesViewModel @Inject constructor(
 		quickFilter.filterItem(filters)?.let(result::add)
 		var prevHeader: DateTimeAgo? = null
 		for (item in this) {
-			if (grouped) {
-				val header = item.lastChapterDate?.let { calculateTimeAgo(it) }
-				if (header != prevHeader) {
-					if (header != null) {
-						result += ListHeader(header)
+				if (grouped) {
+					val last = item.lastChapterDate
+					val header = if (last != null) calculateTimeAgo(last) else null
+					if (header != prevHeader) {
+						if (header != null) {
+							result += ListHeader(header)
+						}
+						prevHeader = header
 					}
-					prevHeader = header
 				}
-			}
 			result += mangaListMapper.toListModel(item.manga, mode)
 		}
 		return result

@@ -73,9 +73,10 @@ class RelatedListViewModel @Inject constructor(
 	}
 
 	private fun loadList(): Job {
-		loadingJob?.let {
-			if (it.isActive) return it
-		}
+ 		val job = loadingJob
+ 		if (job != null) {
+ 			if (job.isActive) return job
+ 		}
 		return launchLoadingJob(Dispatchers.Default) {
 			try {
 				listError.value = null

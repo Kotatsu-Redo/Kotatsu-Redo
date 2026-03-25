@@ -56,7 +56,8 @@ class PageSaveHelper @AssistedInject constructor(
 	private var continuation: CancellableContinuation<Uri>? = null
 
 	override fun onActivityResult(result: Uri?) {
-		continuation?.also { cont ->
+		val cont = continuation
+		if (cont != null) {
 			if (result != null) {
 				cont.resume(result)
 			} else {
@@ -194,7 +195,8 @@ class PageSaveHelper @AssistedInject constructor(
 
 		fun getFileBaseName() = buildString {
 			append(manga.title.toFileNameSafe().take(MAX_BASENAME_LENGTH))
-			manga.findChapterById(chapterId)?.let { chapter ->
+			val chapter = manga.findChapterById(chapterId)
+			if (chapter != null) {
 				append('-')
 				append(chapter.number)
 			}

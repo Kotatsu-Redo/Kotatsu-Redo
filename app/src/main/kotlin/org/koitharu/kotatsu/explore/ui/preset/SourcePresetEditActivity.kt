@@ -108,7 +108,8 @@ class SourcePresetEditActivity :
 		for (i in 0 until chipGroup.childCount) {
 			val chip = chipGroup.getChildAt(i) as? Chip ?: continue
 			if (chip.isChecked) {
-				(chip.tag as? String)?.let { result.add(it) }
+				val tag = chip.tag as? String
+				if (tag != null) result.add(tag)
 			}
 		}
 		return result

@@ -127,7 +127,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		)
 		navigationDelegate.addOnFragmentChangedListener(this)
 		navigationDelegate.onCreate(this, savedInstanceState)
-		viewBinding.textViewTitle?.let { tv ->
+		val tv = viewBinding.textViewTitle
+		if (tv != null) {
 			navigationDelegate.observeTitle().observe(this) { tv.text = it }
 		}
 

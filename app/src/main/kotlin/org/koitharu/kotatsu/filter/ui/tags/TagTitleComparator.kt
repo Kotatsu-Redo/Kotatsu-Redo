@@ -4,9 +4,10 @@ import org.koitharu.kotatsu.parsers.model.MangaTag
 import java.text.Collator
 import java.util.Locale
 
+
 class TagTitleComparator(lc: String?) : Comparator<MangaTag> {
 
-	private val collator = lc?.let { Collator.getInstance(Locale(it)) }
+	private val collator = if (lc != null) Collator.getInstance(Locale(lc)) else null
 
 	override fun compare(o1: MangaTag, o2: MangaTag): Int {
 		val t1 = o1.title.lowercase()
