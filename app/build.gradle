@@ -83,8 +83,8 @@ android {
 	}
 	compileOptions {
 		coreLibraryDesugaringEnabled = true
-		sourceCompatibility JavaVersion.VERSION_17
-		targetCompatibility JavaVersion.VERSION_17
+		sourceCompatibility JavaVersion.toVersion(25)
+		targetCompatibility JavaVersion.toVersion(25)
 	}
 
 	room {
@@ -208,7 +208,7 @@ dependencies {
 // Configure Kotlin compiler options for all Kotlin compile tasks (AGP built-in Kotlin)
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 	kotlinOptions {
-		jvmTarget = JavaVersion.VERSION_17.toString()
+		jvmTarget = '25'
 		freeCompilerArgs += [
 			'-opt-in=kotlin.ExperimentalStdlibApi',
 			'-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
