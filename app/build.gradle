@@ -2,7 +2,6 @@ import java.time.LocalDateTime
 
 plugins {
 	id 'com.android.application'
-	id 'kotlin-android'
 	id 'com.google.devtools.ksp'
 	id 'kotlin-parcelize'
 	id 'dagger.hilt.android.plugin'
@@ -13,8 +12,8 @@ plugins {
 }
 
 android {
-	compileSdk = 36
-	buildToolsVersion = '35.0.0'
+    compileSdk = 36
+    buildToolsVersion = '36.1.0'
 	namespace = 'org.koitharu.kotatsu'
 
     dependenciesInfo {
@@ -25,19 +24,19 @@ android {
     }
 
     defaultConfig {
-		applicationId 'io.github.kotatsuredo.kotatsu'
+		applicationId = 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 36
 		versionCode = 2019
         versionName = '9.7.0'
 		generatedDensities = []
-		testInstrumentationRunner 'org.koitharu.kotatsu.HiltTestRunner'
+		testInstrumentationRunner = 'org.koitharu.kotatsu.HiltTestRunner'
 		ksp {
 			arg('room.generateKotlin', 'true')
 		}
 		androidResources {
 			// https://issuetracker.google.com/issues/408030127
-			generateLocaleConfig false
+			generateLocaleConfig = false
 		}
 		def localProperties = new Properties()
 		def localPropertiesFile = rootProject.file('local.properties')
@@ -51,8 +50,8 @@ android {
 			applicationIdSuffix = '.debug'
 		}
 		release {
-			minifyEnabled true
-			shrinkResources true
+			minifyEnabled = true
+			shrinkResources = true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
 		nightly {
@@ -61,8 +60,8 @@ android {
 		}
 	}
 	buildFeatures {
-		viewBinding true
-		buildConfig true
+		viewBinding = true
+		buildConfig = true
 	}
 	packagingOptions {
 		resources {
@@ -71,57 +70,40 @@ android {
 				'META-INF/NOTICE.md'
 			]
 		}
-	}
+        jniLibs {
+			useLegacyPackaging = true
+        }
+    }
 	sourceSets {
 		androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
 		main.java.srcDirs += 'src/main/kotlin/'
 	}
 	compileOptions {
-		coreLibraryDesugaringEnabled true
+		coreLibraryDesugaringEnabled = true
 		sourceCompatibility JavaVersion.VERSION_17
 		targetCompatibility JavaVersion.VERSION_17
 	}
-	kotlinOptions {
-		jvmTarget = JavaVersion.VERSION_17.toString()
-		freeCompilerArgs += [
-			'-opt-in=kotlin.ExperimentalStdlibApi',
-			'-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-			'-opt-in=kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi',
-			'-opt-in=kotlinx.coroutines.InternalForInheritanceCoroutinesApi',
-			'-opt-in=kotlinx.coroutines.FlowPreview',
-			'-opt-in=kotlin.contracts.ExperimentalContracts',
-			'-opt-in=coil3.annotation.ExperimentalCoilApi',
-			'-opt-in=coil3.annotation.InternalCoilApi',
-			'-opt-in=kotlinx.serialization.ExperimentalSerializationApi',
-			'-Xjspecify-annotations=strict',
-			'-Xannotation-default-target=first-only',
-			'-Xtype-enhancement-improvements-strict-mode'
-		]
-	}
+
 	room {
         schemaDirectory "$projectDir/schemas"
 	}
 	lint {
-		abortOnError true
+		abortOnError = true
 		disable 'MissingTranslation', 'PrivateResource', 'SetJavaScriptEnabled', 'SimpleDateFormat'
 	}
 	testOptions {
-		unitTests.includeAndroidResources true
-		unitTests.returnDefaultValues false
-		kotlinOptions {
-			freeCompilerArgs += ['-opt-in=org.koitharu.kotatsu.parsers.InternalParsersApi']
-		}
+		unitTests.includeAndroidResources = true
+		unitTests.returnDefaultValues = false
 	}
-	applicationVariants.configureEach { variant ->
-		if (variant.name == 'nightly') {
-			variant.outputs.each { output ->
-				def now = LocalDateTime.now()
-				output.versionCodeOverride = now.format("yyMMdd").toInteger()
-				output.versionNameOverride = 'N' + now.format("yyyyMMdd")
-			}
-		}
-	}
+	compileSdkMinor = 1
+	// nightly variant versioning removed to use default versioning; reintroduce with
+	// androidComponents.onVariants if needed for AGP 9+.
 }
+
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-android-extensions-runtime'
+}
+
 dependencies {
 	def parsersVersion = libs.versions.parsers.get()
 	if (System.properties.containsKey('parsersVersionOverride')) {
@@ -219,3 +201,26 @@ dependencies {
 	androidTestImplementation libs.hilt.android.testing
 	kspAndroidTest libs.hilt.android.compiler
 }
+
+// Configure Kotlin compiler options for all Kotlin compile tasks (AGP built-in Kotlin)
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+	kotlinOptions {
+		jvmTarget = JavaVersion.VERSION_17.toString()
+		freeCompilerArgs += [
+			'-opt-in=kotlin.ExperimentalStdlibApi',
+			'-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+			'-opt-in=kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi',
+			'-opt-in=kotlinx.coroutines.InternalForInheritanceCoroutinesApi',
+			'-opt-in=kotlinx.coroutines.FlowPreview',
+			'-opt-in=kotlin.contracts.ExperimentalContracts',
+			'-opt-in=coil3.annotation.ExperimentalCoilApi',
+			'-opt-in=coil3.annotation.InternalCoilApi',
+			'-opt-in=kotlinx.serialization.ExperimentalSerializationApi',
+			'-Xjspecify-annotations=strict',
+			'-Xannotation-default-target=first-only',
+			'-Xtype-enhancement-improvements-strict-mode',
+			'-opt-in=org.koitharu.kotatsu.parsers.InternalParsersApi'
+		]
+	}
+}
+

@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.ArrayAdapter
-import androidx.core.os.bundleOf
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -71,7 +70,9 @@ class SyncHostDialogFragment : AlertDialogFragment<PreferenceDialogAutocompletet
 					scheme = "http://"
 				}
 				syncSettings.syncUrl = "$scheme$result"
-				parentFragmentManager.setFragmentResult(REQUEST_KEY, bundleOf(KEY_SYNC_URL to "$scheme$result"))
+				parentFragmentManager.setFragmentResult(REQUEST_KEY, Bundle().apply {
+					putString(KEY_SYNC_URL, "$scheme$result")
+				})
 			}
 		}
 		dialog.dismiss()

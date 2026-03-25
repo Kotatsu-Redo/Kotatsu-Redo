@@ -14,10 +14,10 @@ fun Insets.start(view: View): Int {
 }
 
 @Deprecated("")
+@Suppress("DEPRECATION")
 val WindowInsetsCompat.systemBarsInsets: Insets
 	get() = getInsets(WindowInsetsCompat.Type.systemBars())
-
-@Deprecated("")
+@Suppress("DEPRECATION")
 fun WindowInsetsCompat.consumeSystemBarsInsets(
 	left: Boolean = false,
 	top: Boolean = false,
@@ -63,6 +63,7 @@ fun WindowInsetsCompat.consumeAll(
 	.build()
 
 @Deprecated("")
+@Suppress("DEPRECATION")
 fun WindowInsetsCompat.consumeSystemBarsInsets(
 	view: View,
 	start: Boolean = false,
@@ -71,7 +72,7 @@ fun WindowInsetsCompat.consumeSystemBarsInsets(
 	bottom: Boolean = false,
 ): WindowInsetsCompat = consume(view, WindowInsetsCompat.Type.systemBars(), start, top, end, bottom)
 
-@Deprecated("")
+@Suppress("DEPRECATION")
 fun WindowInsetsCompat.consumeAllSystemBarsInsets() = consumeAll(WindowInsetsCompat.Type.systemBars())
 
 @Deprecated("")

@@ -10,12 +10,23 @@ pluginManagement {
 		mavenCentral()
 		gradlePluginPortal()
 		maven {
-			url 'https://jitpack.io'
+			url = 'https://jitpack.io'
 			content {
 				includeGroupByRegex("com\\.github.*")
 			}
 		}
+		// Explicit Google Maven for plugin resolution
+		maven {
+			url = 'https://dl.google.com/dl/android/maven2/'
+			content {
+				includeGroupByRegex("com\\.android.*")
+				includeGroupByRegex("com\\.google.*")
+			}
+		}
 	}
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -23,7 +34,7 @@ dependencyResolutionManagement {
 		google()
 		mavenCentral()
 		maven {
-			url 'https://jitpack.io'
+				url = 'https://jitpack.io'
 		}
 	}
 }

@@ -1,10 +1,9 @@
 package org.koitharu.kotatsu.search.ui
 
-import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
@@ -31,7 +30,7 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.model.titleRes
 import org.koitharu.kotatsu.core.ui.util.FadingAppbarMediator
 import org.koitharu.kotatsu.core.util.ViewBadge
-import org.koitharu.kotatsu.core.util.ext.consumeSystemBarsInsets
+import org.koitharu.kotatsu.core.util.ext.consume
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.getParcelableExtraCompat
 import org.koitharu.kotatsu.core.util.ext.getSerializableExtraCompat
@@ -115,7 +114,7 @@ class MangaListActivity :
 			end = if (viewBinding.cardSide == null) barsInsets.end(v) else 0,
 			start = barsInsets.start(v),
 		)
-		return insets.consumeSystemBarsInsets(v, top = true, end = true)
+		return insets.consume(v, WindowInsetsCompat.Type.systemBars(), start = false, top = true, end = true, bottom = false)
 	}
 
 	override fun onClick(v: View) {
@@ -126,7 +125,7 @@ class MangaListActivity :
 
 	fun showPreview(manga: Manga): Boolean = setSideFragment(
 		PreviewFragment::class.java,
-		bundleOf(AppRouter.KEY_MANGA to ParcelableManga(manga)),
+		Bundle().apply { putParcelable(AppRouter.KEY_MANGA, ParcelableManga(manga)) },
 	)
 
 	fun hidePreview() = setSideFragment(FilterSheetFragment::class.java, null)

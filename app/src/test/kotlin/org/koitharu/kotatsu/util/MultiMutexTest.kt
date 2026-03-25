@@ -27,11 +27,10 @@ class MultiMutexTest {
 	}
 
 	@Test
-	@Ignore("Cannot delay in test")
 	fun doubleLock() = runTest {
 		val mutex = MultiMutex<Int>()
 		repeat(2) {
-			launch(Dispatchers.Default) {
+			launch {
 				mutex.lock(1)
 			}
 		}

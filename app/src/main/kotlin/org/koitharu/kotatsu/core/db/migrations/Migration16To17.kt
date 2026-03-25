@@ -5,6 +5,7 @@ import androidx.preference.PreferenceManager
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.core.util.ext.toInt
 
 class Migration16To17(context: Context) : Migration(16, 17) {
 
@@ -29,10 +30,10 @@ class Migration16To17(context: Context) : Migration(16, 17) {
 			}
 			db.execSQL(
 				"INSERT INTO `sources` (`source`, `enabled`, `sort_key`) VALUES (?, ?, ?)",
-				arrayOf(name, (!isHidden).toInt(), sortKey),
+				arrayOf<Any>(name, (!isHidden).toInt(), sortKey),
 			)
 		}
 	}
 
-	private fun Boolean.toInt() = if (this) 1 else 0
+	// use shared extension `Boolean.toInt()` from `core.util.ext.BooleanExt`
 }
