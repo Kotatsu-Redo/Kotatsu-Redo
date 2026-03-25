@@ -13,10 +13,6 @@ fun Insets.start(view: View): Int {
 	return if (view.isRtl) right else left
 }
 
-@Deprecated("")
-@Suppress("DEPRECATION")
-val WindowInsetsCompat.systemBarsInsets: Insets
-	get() = getInsets(WindowInsetsCompat.Type.systemBars())
 @Suppress("DEPRECATION")
 fun WindowInsetsCompat.consumeSystemBarsInsets(
 	left: Boolean = false,
@@ -24,7 +20,7 @@ fun WindowInsetsCompat.consumeSystemBarsInsets(
 	right: Boolean = false,
 	bottom: Boolean = false,
 ): WindowInsetsCompat {
-	val barsInsets = systemBarsInsets
+	val barsInsets = getInsets(WindowInsetsCompat.Type.systemBars())
 	val insets = Insets.of(
 		if (left) 0 else barsInsets.left,
 		if (top) 0 else barsInsets.top,
@@ -62,29 +58,5 @@ fun WindowInsetsCompat.consumeAll(
 	.setInsets(typeMask, Insets.NONE)
 	.build()
 
-@Deprecated("")
-@Suppress("DEPRECATION")
-fun WindowInsetsCompat.consumeSystemBarsInsets(
-	view: View,
-	start: Boolean = false,
-	top: Boolean = false,
-	end: Boolean = false,
-	bottom: Boolean = false,
-): WindowInsetsCompat = consume(view, WindowInsetsCompat.Type.systemBars(), start, top, end, bottom)
-
 @Suppress("DEPRECATION")
 fun WindowInsetsCompat.consumeAllSystemBarsInsets() = consumeAll(WindowInsetsCompat.Type.systemBars())
-
-@Deprecated("")
-fun Insets.consume(
-	view: View,
-	start: Boolean = false,
-	top: Boolean = false,
-	end: Boolean = false,
-	bottom: Boolean = false,
-): Insets = Insets.of(
-	/* left = */ if (if (view.isRtl) end else start) 0 else this.left,
-	/* top = */ if (top) 0 else this.top,
-	/* right = */ if (if (view.isRtl) start else end) 0 else this.right,
-	/* bottom = */ if (bottom) 0 else this.bottom,
-)
