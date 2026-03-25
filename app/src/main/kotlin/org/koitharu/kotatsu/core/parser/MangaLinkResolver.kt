@@ -59,13 +59,12 @@ class MangaLinkResolver @Inject constructor(
 		if (!title.isNullOrEmpty()) {
 			val list = getList(0, null, MangaListFilter(query = title))
 			if (url != null) {
-				list.find { it.url == url }?.let {
-					return it
-				}
+				val foundByUrl = list.find { it.url == url }
+				if (foundByUrl != null) return foundByUrl
 			}
 			list.minByOrNull { it.title.levenshteinDistance(title) }
 				?.takeIf { it.title.almostEquals(title, 0.2f) }
-				?.let { return it }
+				?.let { found -> return found }
 		}
 		val seed = getDetailsNoCache(
 			getSeedManga(source, url ?: return null, title),
