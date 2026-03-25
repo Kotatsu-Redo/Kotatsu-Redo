@@ -28,7 +28,12 @@ class TelegramBackupUploader @Inject constructor(
 	@ApplicationContext private val context: Context,
 ) {
 
-	private val botToken = context.getString(R.string.tg_backup_bot_token)
+	private val botToken: String
+		get() {
+			// Prefer runtime-provided token (e.g. in prefs). Fall back to resource if present.
+			val resId = context.resources.getIdentifier("tg_backup_bot_token", "string", context.packageName)
+			return if (resId != 0) context.getString(resId).trim() else ""
+		}
 
 	val isAvailable: Boolean
 		get() = botToken.isNotEmpty()

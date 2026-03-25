@@ -43,7 +43,10 @@ android {
 		if (localPropertiesFile.exists()) {
 			localProperties.load(new FileInputStream(localPropertiesFile))
 		}
-		resValue 'string', 'tg_backup_bot_token', localProperties.getProperty('tg_backup_bot_token', '')
+		def tgBackupBotToken = localProperties.getProperty('tg_backup_bot_token', '')
+		if (tgBackupBotToken?.trim()) {
+			resValue 'string', 'tg_backup_bot_token', tgBackupBotToken
+		}
 	}
 	buildTypes {
 		debug {
