@@ -14,6 +14,7 @@ import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.json.getStringOrNull
 import org.koitharu.kotatsu.parsers.util.json.mapJSON
 import org.koitharu.kotatsu.parsers.util.parseJson
+import org.koitharu.kotatsu.core.util.ext.parseJsonOrNull
 import org.koitharu.kotatsu.parsers.util.parseJsonArray
 import org.koitharu.kotatsu.parsers.util.toAbsoluteUrl
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblerRepository
@@ -65,7 +66,8 @@ class ShikimoriRepository @Inject constructor(
 		val request = Request.Builder()
 			.post(body.build())
 			.url("${BASE_URL}oauth/token")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		storage.accessToken = response.getString("access_token")
 		storage.refreshToken = response.getString("refresh_token")
 	}
@@ -74,7 +76,8 @@ class ShikimoriRepository @Inject constructor(
 		val request = Request.Builder()
 			.get()
 			.url("${BASE_URL}api/users/whoami")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		return ShikimoriUser(response).also { storage.user = it }
 	}
 
@@ -125,7 +128,8 @@ class ShikimoriRepository @Inject constructor(
 			.addPathSegment("user_rates")
 			.build()
 		val request = Request.Builder().url(url).post(payload.toRequestBody()).build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		saveRate(response, mangaId)
 	}
 
@@ -144,7 +148,8 @@ class ShikimoriRepository @Inject constructor(
 			.addPathSegment(rateId.toString())
 			.build()
 		val request = Request.Builder().url(url).patch(payload.toRequestBody()).build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		saveRate(response, mangaId)
 	}
 
@@ -169,7 +174,8 @@ class ShikimoriRepository @Inject constructor(
 			.addPathSegment(rateId.toString())
 			.build()
 		val request = Request.Builder().url(url).patch(payload.toRequestBody()).build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		saveRate(response, mangaId)
 	}
 
@@ -177,7 +183,8 @@ class ShikimoriRepository @Inject constructor(
 		val request = Request.Builder()
 			.get()
 			.url("${BASE_URL}api/mangas/$id")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Shikimori")
 		return ScrobblerMangaInfo(response)
 	}
 

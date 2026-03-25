@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.updatePadding
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
@@ -15,8 +16,7 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
-// replaced deprecated helper: use consumeAll with explicit type
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+// removed deprecated helper import
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetShelfBinding
 import org.koitharu.kotatsu.widget.shelf.adapter.CategorySelectAdapter
 import org.koitharu.kotatsu.widget.shelf.model.CategoryItem
@@ -67,7 +67,9 @@ class ShelfWidgetConfigActivity :
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onClick(v: View) {

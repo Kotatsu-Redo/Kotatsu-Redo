@@ -124,7 +124,9 @@ class BookmarksFragment : BaseFragment<FragmentMangaBookmarksBinding>(),
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onDestroyView() {

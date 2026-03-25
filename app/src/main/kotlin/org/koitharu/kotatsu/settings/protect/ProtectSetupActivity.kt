@@ -68,7 +68,9 @@ class ProtectSetupActivity :
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onClick(v: View) {

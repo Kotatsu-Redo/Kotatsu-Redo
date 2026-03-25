@@ -9,6 +9,7 @@ import org.koitharu.kotatsu.core.network.BaseHttpClient
 import org.koitharu.kotatsu.core.util.ext.toRequestBody
 import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.parseJson
+import org.koitharu.kotatsu.core.util.ext.parseJsonOrNull
 import org.koitharu.kotatsu.parsers.util.parseRaw
 import org.koitharu.kotatsu.parsers.util.removeSurrounding
 import javax.inject.Inject
@@ -28,7 +29,8 @@ class SyncAuthApi @Inject constructor(
 			.build()
 		val response = okHttpClient.newCall(request).await()
 		if (response.isSuccessful) {
-			return response.parseJson().getString("token")
+			return response.parseJsonOrNull()?.getString("token")
+				?: throw SyncApiException("Invalid JSON response", response.code)
 		} else {
 			val code = response.code
 			val message = response.parseRaw().removeSurrounding('"')

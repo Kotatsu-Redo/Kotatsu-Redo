@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -24,7 +26,7 @@ import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ReaderMode
 import org.koitharu.kotatsu.core.ui.sheet.BaseAdaptiveSheet
-import org.koitharu.kotatsu.core.util.ext.consume
+ 
 import org.koitharu.kotatsu.core.util.ext.findParentCallback
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.setValueRounded
@@ -130,7 +132,17 @@ class ReaderConfigSheet :
         viewBinding?.scrollView?.updatePadding(
             bottom = insets.getInsets(typeMask).bottom,
         )
-        return insets.consume(v, typeMask, bottom = true)
+        val src = insets.getInsets(typeMask)
+        val start = false
+        val top = false
+        val end = false
+        val bottom = true
+        val left = if (if (v.isRtl) end else start) 0 else src.left
+        val topVal = if (top) 0 else src.top
+        val right = if (if (v.isRtl) start else end) 0 else src.right
+        val bottomVal = if (bottom) 0 else src.bottom
+        val newInsets = Insets.of(left, topVal, right, bottomVal)
+        return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
     }
 
     override fun onClick(v: View) {

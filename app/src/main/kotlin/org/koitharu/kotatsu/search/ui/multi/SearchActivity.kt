@@ -114,7 +114,9 @@ class SearchActivity :
 			right = barsInsets.right,
 			bottom = barsInsets.bottom,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: MangaListModel, view: View) {

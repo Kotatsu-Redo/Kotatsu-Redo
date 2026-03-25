@@ -75,7 +75,9 @@ abstract class BaseBrowserActivity : BaseActivity<ActivityBrowserBinding>(), Bro
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAll(type)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(type, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onPause() {

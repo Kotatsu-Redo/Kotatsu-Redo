@@ -15,6 +15,7 @@ import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.json.getStringOrNull
 import org.koitharu.kotatsu.parsers.util.json.mapJSON
 import org.koitharu.kotatsu.parsers.util.parseJson
+import org.koitharu.kotatsu.core.util.ext.parseJsonOrNull
 import org.koitharu.kotatsu.parsers.util.toIntUp
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblerRepository
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblerStorage
@@ -71,7 +72,8 @@ class AniListRepository @Inject constructor(
 		val request = Request.Builder()
 			.post(body.build())
 			.url("${BASE_URL}oauth/token")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from AniList")
 		storage.accessToken = response.getString("access_token")
 		storage.refreshToken = response.getString("refresh_token")
 	}
@@ -268,7 +270,8 @@ class AniListRepository @Inject constructor(
 		val request = Request.Builder()
 			.post(requestBody)
 			.url(ENDPOINT)
-		val json = okHttp.newCall(request.build()).await().parseJson()
+		val json = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from AniList")
 		json.optJSONArray("errors")?.let {
 			if (it.length() != 0) {
 				throw GraphQLException(it)

@@ -175,7 +175,7 @@ class ReaderInfoBarView @JvmOverloads constructor(
 	}
 
 	override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
-		updateCutoutInsets(WindowInsetsCompat.toWindowInsetsCompat(insets))
+		updateCutoutInsets(WindowInsetsCompat.toWindowInsetsCompat(insets, this))
 		return super.onApplyWindowInsets(insets)
 	}
 

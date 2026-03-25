@@ -78,7 +78,9 @@ class ScrobblerConfigActivity : BaseActivity<ActivityScrobblerConfigBinding>(),
 			barsInsets.right + basePadding,
 			barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: ScrobblingInfo, view: View) {

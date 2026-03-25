@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter
 import android.widget.Filter
 import androidx.activity.viewModels
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
@@ -67,7 +68,9 @@ class FavouritesCategoryEditActivity :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onSaveInstanceState(outState: Bundle) {

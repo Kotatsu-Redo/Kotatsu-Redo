@@ -27,6 +27,7 @@ import androidx.core.view.updatePadding
 import androidx.core.view.updatePaddingRelative
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.transition.TransitionManager
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowRgb565
@@ -72,7 +73,7 @@ import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
 import org.koitharu.kotatsu.core.ui.widgets.ChipsView
 import org.koitharu.kotatsu.core.util.FileSize
 import org.koitharu.kotatsu.core.util.LocaleUtils
-import org.koitharu.kotatsu.core.util.ext.consume
+import androidx.core.graphics.Insets
 import org.koitharu.kotatsu.core.util.ext.copyToClipboard
 import org.koitharu.kotatsu.core.util.ext.drawableStart
 import org.koitharu.kotatsu.core.util.ext.end
@@ -350,7 +351,17 @@ class DetailsActivity :
 			viewBinding.appbar.updatePaddingRelative(
 				start = barsInsets.start(v),
 			)
-			return insets.consume(v, typeMask, bottom = true, end = true)
+			val src = insets.getInsets(typeMask)
+			val start = false
+			val top = false
+			val end = true
+			val bottom = true
+			val left = if (if (v.isRtl) end else start) 0 else src.left
+			val topVal = if (top) 0 else src.top
+			val right = if (if (v.isRtl) start else end) 0 else src.right
+			val bottomVal = if (bottom) 0 else src.bottom
+			val newInsets = androidx.core.graphics.Insets.of(left, topVal, right, bottomVal)
+			return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
 		} else {
 			viewBinding.navbarDim?.updateLayoutParams {
 				height = barsInsets.bottom

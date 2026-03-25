@@ -18,7 +18,7 @@ import org.koitharu.kotatsu.core.ui.sheet.AdaptiveSheetBehavior
 import org.koitharu.kotatsu.core.ui.sheet.AdaptiveSheetCallback
 import org.koitharu.kotatsu.core.ui.sheet.BaseAdaptiveSheet
 import org.koitharu.kotatsu.core.ui.util.DefaultTextWatcher
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+import androidx.core.graphics.Insets
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.databinding.SheetTagsBinding
 import org.koitharu.kotatsu.filter.ui.FilterCoordinator
@@ -70,7 +70,9 @@ class TagsCatalogSheet : BaseAdaptiveSheet<SheetTagsBinding>(),
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(typeBask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeBask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: TagCatalogItem, view: View) {

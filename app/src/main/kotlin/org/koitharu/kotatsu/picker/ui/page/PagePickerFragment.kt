@@ -19,7 +19,7 @@ import org.koitharu.kotatsu.core.ui.BaseFragment
 import org.koitharu.kotatsu.core.ui.list.BoundsScrollListener
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.ui.util.PagerNestedScrollHelper
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+import androidx.core.graphics.Insets
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.showOrHide
@@ -100,7 +100,9 @@ class PagePickerFragment :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(typeBask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeBask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: PageThumbnail, view: View) {

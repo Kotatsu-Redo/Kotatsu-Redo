@@ -59,7 +59,9 @@ class OverrideConfigActivity : BaseActivity<ActivityOverrideEditBinding>(), View
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onActivityResult(result: Uri?) {

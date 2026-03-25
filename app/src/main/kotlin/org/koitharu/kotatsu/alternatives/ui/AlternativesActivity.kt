@@ -85,7 +85,9 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: MangaAlternativeModel, view: View) {

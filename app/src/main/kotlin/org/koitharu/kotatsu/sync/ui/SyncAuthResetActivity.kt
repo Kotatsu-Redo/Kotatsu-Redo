@@ -8,6 +8,8 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.isInvisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -75,7 +77,9 @@ class SyncAuthResetActivity : BaseActivity<ActivitySyncAuthResetBinding>(), View
 			left = barsInsets.left + basePadding,
 			right = barsInsets.right + basePadding,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onClick(v: View) {

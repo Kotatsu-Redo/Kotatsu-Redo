@@ -141,7 +141,9 @@ abstract class MangaListFragment :
 			right = barsInsets.right + basePadding,
 			bottom = barsInsets.bottom + basePadding,
 		)
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onDestroyView() {

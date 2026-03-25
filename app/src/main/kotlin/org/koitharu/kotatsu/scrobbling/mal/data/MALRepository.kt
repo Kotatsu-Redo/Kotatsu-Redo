@@ -14,6 +14,7 @@ import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.json.getStringOrNull
 import org.koitharu.kotatsu.parsers.util.json.mapJSONNotNull
 import org.koitharu.kotatsu.parsers.util.parseJson
+import org.koitharu.kotatsu.core.util.ext.parseJsonOrNull
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblerRepository
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblerStorage
 import org.koitharu.kotatsu.scrobbling.common.data.ScrobblingEntity
@@ -70,7 +71,8 @@ class MALRepository @Inject constructor(
 			.post(body.build())
 			.url("${BASE_WEB_URL}/v1/oauth2/token")
 
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		storage.accessToken = response.getString("access_token")
 		storage.refreshToken = response.getString("refresh_token")
 	}
@@ -79,7 +81,8 @@ class MALRepository @Inject constructor(
 		val request = Request.Builder()
 			.get()
 			.url("${BASE_API_URL}/users/@me")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		return MALUser(response).also { storage.user = it }
 	}
 
@@ -96,7 +99,8 @@ class MALRepository @Inject constructor(
 			.addQueryParameter("q", query.take(64))
 			.build()
 		val request = Request.Builder().url(url).get().build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		check(response.has("data")) { "Invalid response: \"$response\"" }
 		val data = response.getJSONArray("data")
 		return data.mapJSONNotNull { jsonToManga(it, query) }
@@ -109,7 +113,8 @@ class MALRepository @Inject constructor(
 			.addQueryParameter("fields", "synopsis")
 			.build()
 		val request = Request.Builder().url(url)
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		return ScrobblerMangaInfo(response)
 	}
 
@@ -127,7 +132,8 @@ class MALRepository @Inject constructor(
 			.url(url)
 			.put(body.build())
 			.build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		saveRate(response, mangaId, scrobblerMangaId)
 	}
 
@@ -143,7 +149,8 @@ class MALRepository @Inject constructor(
 			.url(url)
 			.put(body.build())
 			.build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		saveRate(response, mangaId, rateId.toLong())
 	}
 
@@ -161,7 +168,8 @@ class MALRepository @Inject constructor(
 			.url(url)
 			.put(body.build())
 			.build()
-		val response = okHttp.newCall(request).await().parseJson()
+		val response = okHttp.newCall(request).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from MAL")
 		saveRate(response, mangaId, rateId.toLong())
 	}
 

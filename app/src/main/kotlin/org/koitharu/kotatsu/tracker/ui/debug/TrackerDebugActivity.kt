@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.updatePadding
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.core.nav.router
@@ -48,7 +49,9 @@ class TrackerDebugActivity : BaseActivity<ActivityTrackerDebugBinding>(), OnList
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: TrackDebugItem, view: View) {

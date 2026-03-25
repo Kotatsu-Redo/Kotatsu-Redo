@@ -10,12 +10,14 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.TextView
 import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.DefaultTextWatcher
-import org.koitharu.kotatsu.core.util.ext.consume
+ 
 import org.koitharu.kotatsu.databinding.ActivityKitsuAuthBinding
 import org.koitharu.kotatsu.parsers.util.urlEncoded
 
@@ -58,7 +60,17 @@ class KitsuAuthActivity : BaseActivity<ActivityKitsuAuthBinding>(),
 			leftMargin = barsInsets.left + screenPadding
 			rightMargin = barsInsets.right + screenPadding
 		}
-		return insets.consume(v, typeMask)
+		val src = insets.getInsets(typeMask)
+		val start = false
+		val top = false
+		val end = false
+		val bottom = false
+		val left = if (if (v.isRtl) end else start) 0 else src.left
+		val topVal = if (top) 0 else src.top
+		val right = if (if (v.isRtl) start else end) 0 else src.right
+		val bottomVal = if (bottom) 0 else src.bottom
+		val newInsets = Insets.of(left, topVal, right, bottomVal)
+		return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
 	}
 
 	override fun onClick(v: View) {

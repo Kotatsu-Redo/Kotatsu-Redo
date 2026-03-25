@@ -5,6 +5,8 @@ import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
 import android.os.Bundle
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.fragment.app.Fragment
@@ -114,7 +116,18 @@ class MangaListActivity :
 			end = if (viewBinding.cardSide == null) barsInsets.end(v) else 0,
 			start = barsInsets.start(v),
 		)
-		return insets.consume(v, WindowInsetsCompat.Type.systemBars(), start = false, top = true, end = true, bottom = false)
+		val typeMask = WindowInsetsCompat.Type.systemBars()
+		val src = insets.getInsets(typeMask)
+		val start = false
+		val top = true
+		val end = true
+		val bottom = false
+		val left = if (if (v.isRtl) end else start) 0 else src.left
+		val topVal = if (top) 0 else src.top
+		val right = if (if (v.isRtl) start else end) 0 else src.right
+		val bottomVal = if (bottom) 0 else src.bottom
+		val newInsets = Insets.of(left, topVal, right, bottomVal)
+		return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
 	}
 
 	override fun onClick(v: View) {

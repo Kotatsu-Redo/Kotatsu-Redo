@@ -58,7 +58,8 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.FadingAppbarMediator
 import org.koitharu.kotatsu.core.ui.util.MenuInvalidator
 import org.koitharu.kotatsu.core.ui.widgets.SlidingBottomNavigationView
-import org.koitharu.kotatsu.core.util.ext.consume
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
@@ -230,7 +231,17 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 			bottomMargin = barsInsets.bottom
 		}
 		updateContainerBottomMargin()
-		return insets.consume(v, typeMask, start = viewBinding.navRail != null).also {
+		val src = insets.getInsets(typeMask)
+		val start = viewBinding.navRail != null
+		val top = false
+		val end = false
+		val bottom = false
+		val left = if (if (v.isRtl) end else start) 0 else src.left
+		val topVal = if (top) 0 else src.top
+		val right = if (if (v.isRtl) start else end) 0 else src.right
+		val bottomVal = if (bottom) 0 else src.bottom
+		val newInsets = androidx.core.graphics.Insets.of(left, topVal, right, bottomVal)
+		return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build().also {
 			handleSearchSuggestionsInsets(it)
 		}
 	}

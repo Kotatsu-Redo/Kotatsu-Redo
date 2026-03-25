@@ -23,7 +23,7 @@ import org.koitharu.kotatsu.core.ui.util.RecyclerViewOwner
 import org.koitharu.kotatsu.core.ui.util.ReversibleActionObserver
 import org.koitharu.kotatsu.core.ui.widgets.TipView
 import org.koitharu.kotatsu.core.util.ext.addMenuProvider
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+import androidx.core.graphics.Insets
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.databinding.FragmentListBinding
@@ -96,7 +96,9 @@ class FeedFragment :
 			right = barsInsets.right,
 			bottom = barsInsets.bottom + paddingVertical,
 		)
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onRefresh() {

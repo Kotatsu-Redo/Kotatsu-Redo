@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.updatePadding
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,7 +43,17 @@ class TrackerCategoriesConfigSheet :
 		viewBinding?.recyclerView?.updatePadding(
 			bottom = insets.getInsets(typeMask).bottom,
 		)
-		return insets.consume(v, typeMask, bottom = true)
+		val src = insets.getInsets(typeMask)
+		val start = false
+		val top = false
+		val end = false
+		val bottom = true
+		val left = if (if (v.isRtl) end else start) 0 else src.left
+		val topVal = if (top) 0 else src.top
+		val right = if (if (v.isRtl) start else end) 0 else src.right
+		val bottomVal = if (bottom) 0 else src.bottom
+		val newInsets = Insets.of(left, topVal, right, bottomVal)
+		return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
 	}
 
 	override fun onItemClick(item: FavouriteCategory, view: View) {

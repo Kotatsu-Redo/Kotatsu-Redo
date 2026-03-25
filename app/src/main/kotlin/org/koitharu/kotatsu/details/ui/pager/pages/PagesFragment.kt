@@ -160,7 +160,9 @@ class PagesFragment :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(typeBask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeBask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: PageThumbnail, view: View) {

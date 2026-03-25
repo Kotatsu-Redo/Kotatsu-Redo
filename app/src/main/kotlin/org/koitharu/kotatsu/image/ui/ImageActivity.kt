@@ -33,7 +33,7 @@ import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.util.PopupMenuMediator
 import org.koitharu.kotatsu.core.util.ShareHelper
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+import androidx.core.graphics.Insets
 import org.koitharu.kotatsu.core.util.ext.end
 import org.koitharu.kotatsu.core.util.ext.enqueueWith
 import org.koitharu.kotatsu.core.util.ext.getDisplayIcon
@@ -122,7 +122,9 @@ class ImageActivity : BaseActivity<ActivityImageBinding>(),
 			marginStart = barsInsets.start(v) + baseMargin
 			topMargin = barsInsets.top + baseMargin
 		}
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	private fun loadImage() {

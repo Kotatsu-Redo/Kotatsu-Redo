@@ -47,7 +47,9 @@ class SettingsSearchFragment : BaseFragment<FragmentSearchSuggestionBinding>(),
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(type)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(type, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 
 	override fun onItemClick(item: SettingsItem, view: View) = viewModel.navigateToPreference(item)

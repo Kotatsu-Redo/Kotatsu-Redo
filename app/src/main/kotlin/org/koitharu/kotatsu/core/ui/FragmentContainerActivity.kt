@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -47,7 +49,18 @@ abstract class FragmentContainerActivity(private val fragmentClass: Class<out Fr
 			right = bars.right,
 			top = bars.top,
 		)
-		return insets.consume(v, WindowInsetsCompat.Type.systemBars(), top = true)
+		val typeMask = WindowInsetsCompat.Type.systemBars()
+		val src = insets.getInsets(typeMask)
+		val start = false
+		val top = true
+		val end = false
+		val bottom = false
+		val left = if (if (v.isRtl) end else start) 0 else src.left
+		val topVal = if (top) 0 else src.top
+		val right = if (if (v.isRtl) start else end) 0 else src.right
+		val bottomVal = if (bottom) 0 else src.bottom
+		val newInsets = Insets.of(left, topVal, right, bottomVal)
+		return WindowInsetsCompat.Builder(insets).setInsets(typeMask, newInsets).build()
 	}
 
 	protected open fun getFragmentExtras(): Bundle? = intent.extras

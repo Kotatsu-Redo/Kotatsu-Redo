@@ -64,7 +64,8 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.post(body.build())
 			.url("$BASE_WEB_URL/api/oauth/token")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu")
 		storage.accessToken = response.getString("access_token")
 		storage.refreshToken = response.getString("refresh_token")
 	}
@@ -73,7 +74,8 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.get()
 			.url("$BASE_WEB_URL/api/edge/users?filter[self]=true")
-		val response = okHttp.newCall(request.build()).await().parseJson()
+		val response = (okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu"))
 			.getJSONArray("data")
 			.getJSONObject(0)
 		return ScrobblerUser(
@@ -96,8 +98,9 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.get()
 			.url("$BASE_WEB_URL/api/edge/manga?page[limit]=20&page[offset]=$offset&filter[text]=${query.urlEncoded()}")
-		val response = okHttp.newCall(request.build()).await().parseJson().ensureSuccess()
-		return response.getJSONArray("data").mapJSON { jo ->
+		val response = okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu")
+		return response.ensureSuccess().getJSONArray("data").mapJSON { jo ->
 			val attrs = jo.getJSONObject("attributes")
 			val titles = attrs.getJSONObject("titles").valuesToStringList()
 			ScrobblerManga(
@@ -117,7 +120,9 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.get()
 			.url("$BASE_WEB_URL/api/edge/manga/$id")
-		val data = okHttp.newCall(request.build()).await().parseJson().ensureSuccess().getJSONObject("data")
+		val data = (okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu"))
+			.ensureSuccess().getJSONObject("data")
 		val attrs = data.getJSONObject("attributes")
 		return ScrobblerMangaInfo(
 			id = data.getAsLong("id"),
@@ -159,7 +164,9 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.url("$BASE_WEB_URL/api/edge/library-entries?include=manga")
 			.post(payload.toKitsuRequestBody())
-		val response = okHttp.newCall(request.build()).await().parseJson().ensureSuccess().getJSONObject("data")
+		val response = (okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu"))
+			.ensureSuccess().getJSONObject("data")
 		saveRate(response, mangaId)
 	}
 
@@ -175,7 +182,9 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.url("$BASE_WEB_URL/api/edge/library-entries/$rateId?include=manga")
 			.patch(payload.toKitsuRequestBody())
-		val response = okHttp.newCall(request.build()).await().parseJson().ensureSuccess().getJSONObject("data")
+		val response = (okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu"))
+			.ensureSuccess().getJSONObject("data")
 		saveRate(response, mangaId)
 	}
 
@@ -193,7 +202,9 @@ class KitsuRepository(
 		val request = Request.Builder()
 			.url("$BASE_WEB_URL/api/edge/library-entries/$rateId?include=manga")
 			.patch(payload.toKitsuRequestBody())
-		val response = okHttp.newCall(request.build()).await().parseJson().ensureSuccess().getJSONObject("data")
+		val response = (okHttp.newCall(request.build()).await().parseJsonOrNull()
+			?: throw RuntimeException("Invalid JSON response from Kitsu"))
+			.ensureSuccess().getJSONObject("data")
 		saveRate(response, mangaId)
 	}
 

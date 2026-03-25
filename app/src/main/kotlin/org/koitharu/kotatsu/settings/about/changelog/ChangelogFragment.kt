@@ -69,6 +69,8 @@ class ChangelogFragment : BaseFragment<FragmentChangelogBinding>() {
 			basePadding + if (isTablet && isMaster) 0 else barsInsets.end(v),
 			basePadding + barsInsets.bottom,
 		)
-		return insets.consumeAll(typeMask)
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, androidx.core.graphics.Insets.NONE)
+			.build()
 	}
 }

@@ -5,12 +5,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.Insets
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.prefs.AppWidgetConfig
 import org.koitharu.kotatsu.core.ui.BaseActivity
-// replaced deprecated helper: use consumeAll with explicit type
-import org.koitharu.kotatsu.core.util.ext.consumeAll
+import org.koitharu.kotatsu.core.util.ext.isRtl
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetRecentBinding
 
 @AndroidEntryPoint
@@ -45,7 +45,9 @@ class RecentWidgetConfigActivity :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+			.build()
 	}
 
 	override fun onClick(v: View) {
