@@ -10,7 +10,8 @@ import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.BaseListAdapter
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+// replaced deprecated helper: use consumeAll with explicit type
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.databinding.ActivityTrackerDebugBinding
 import org.koitharu.kotatsu.list.ui.adapter.ListItemType
@@ -47,7 +48,7 @@ class TrackerDebugActivity : BaseActivity<ActivityTrackerDebugBinding>(), OnList
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onItemClick(item: TrackDebugItem, view: View) {

@@ -15,7 +15,8 @@ import org.koitharu.kotatsu.core.ui.BaseActivity
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+// replaced deprecated helper: use consumeAll with explicit type
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetShelfBinding
 import org.koitharu.kotatsu.widget.shelf.adapter.CategorySelectAdapter
 import org.koitharu.kotatsu.widget.shelf.model.CategoryItem
@@ -66,7 +67,7 @@ class ShelfWidgetConfigActivity :
 			right = barsInsets.right,
 			top = barsInsets.top,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onClick(v: View) {

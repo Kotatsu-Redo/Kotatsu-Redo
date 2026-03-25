@@ -9,7 +9,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.prefs.AppWidgetConfig
 import org.koitharu.kotatsu.core.ui.BaseActivity
-import org.koitharu.kotatsu.core.util.ext.consumeAllSystemBarsInsets
+// replaced deprecated helper: use consumeAll with explicit type
+import org.koitharu.kotatsu.core.util.ext.consumeAll
 import org.koitharu.kotatsu.databinding.ActivityAppwidgetRecentBinding
 
 @AndroidEntryPoint
@@ -44,7 +45,7 @@ class RecentWidgetConfigActivity :
 			barsInsets.right,
 			barsInsets.bottom,
 		)
-		return insets.consumeAllSystemBarsInsets()
+		return insets.consumeAll(WindowInsetsCompat.Type.systemBars())
 	}
 
 	override fun onClick(v: View) {
