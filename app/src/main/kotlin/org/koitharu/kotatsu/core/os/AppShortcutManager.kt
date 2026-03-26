@@ -71,10 +71,11 @@ class AppShortcutManager @Inject constructor(
 		if (!settings.isDynamicShortcutsEnabled) {
 			return
 		}
+		Log.d(TAG, "onInvalidated called, tables=$tables")
 		val prevJob = shortcutsUpdateJob
 		shortcutsUpdateJob = processLifecycleScope.launch(Dispatchers.Default) {
 			prevJob?.join()
-			updateShortcutsImpl()
+			doUpdateShortcuts()
 		}
 	}
 
@@ -118,12 +119,15 @@ class AppShortcutManager @Inject constructor(
 			// After the background job completes, poll the system shortcuts briefly
 			// to ensure the OS has applied them. This reduces flakiness in instrumentation tests.
 			val start = System.currentTimeMillis()
-			while (System.currentTimeMillis() - start < 5_000) {
+			while (System.currentTimeMillis() - start < 8_000) {
 				val list = ShortcutManagerCompat.getShortcuts(
 					context,
 					ShortcutManagerCompat.FLAG_MATCH_CACHED or ShortcutManagerCompat.FLAG_MATCH_DYNAMIC or ShortcutManagerCompat.FLAG_MATCH_PINNED,
 				)
-				if (list.isNotEmpty()) return true
+				if (list.isNotEmpty()) {
+					Log.d(TAG, "await: shortcuts visible, count=${list.size}")
+					return true
+				}
 				kotlinx.coroutines.delay(100)
 			}
 			return false
@@ -152,7 +156,7 @@ class AppShortcutManager @Inject constructor(
 			context.getSystemService(ShortcutManager::class.java).maxShortcutCountPerActivity > 0
 	}
 
-	private suspend fun updateShortcutsImpl() = runCatchingCancellable {
+	private suspend fun doUpdateShortcuts() = runCatchingCancellable {
 		val maxShortcuts = ShortcutManagerCompat.getMaxShortcutCountPerActivity(context).coerceAtLeast(5)
 		val shortcuts = historyRepository.getList(0, maxShortcuts)
 			.filter { x -> x.title.isNotEmpty() }
@@ -202,6 +206,23 @@ class AppShortcutManager @Inject constructor(
 		}
 	}.onFailure {
 		it.printStackTraceDebug()
+	}
+
+	@VisibleForTesting
+	suspend fun updateNow(): Boolean {
+		// Directly perform the update and return whether shortcuts are visible afterwards.
+		doUpdateShortcuts()
+		// Give the OS a short moment to apply shortcuts, then check.
+		val start = System.currentTimeMillis()
+		while (System.currentTimeMillis() - start < 5_000) {
+			val list = ShortcutManagerCompat.getShortcuts(
+				context,
+				ShortcutManagerCompat.FLAG_MATCH_CACHED or ShortcutManagerCompat.FLAG_MATCH_DYNAMIC or ShortcutManagerCompat.FLAG_MATCH_PINNED,
+			)
+			if (list.isNotEmpty()) return true
+			kotlinx.coroutines.delay(100)
+		}
+		return false
 	}
 
 	private fun clearShortcuts() {

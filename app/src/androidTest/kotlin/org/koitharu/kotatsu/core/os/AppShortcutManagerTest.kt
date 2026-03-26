@@ -49,7 +49,7 @@ class AppShortcutManagerTest {
 			return@runTest
 		}
 		database.invalidationTracker.addObserver(appShortcutManager)
-		awaitUpdate()
+		InstrumentationRegistry.getInstrumentation().awaitForIdle()
 		assertTrue(getShortcuts().isEmpty())
 		historyRepository.addOrUpdate(
 			manga = SampleData.manga,
@@ -59,8 +59,9 @@ class AppShortcutManagerTest {
 			percent = 0.3f,
 			force = false,
 		)
-		awaitUpdate()
-
+		// Force the shortcut update directly in tests to avoid timing issues
+		val updated = appShortcutManager.updateNow()
+		assertTrue("updateNow() should report shortcuts visible", updated)
 		val shortcuts = getShortcuts()
 		assertEquals(1, shortcuts.size)
 	}

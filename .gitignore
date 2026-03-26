@@ -24,10 +24,8 @@
 .idea/render.experimental.xml
 .idea/workspace.xml
 .kotlin/
-.vscode/
 app/build
 app/schemas
 build/
 captures
-keystores
 local.properties
