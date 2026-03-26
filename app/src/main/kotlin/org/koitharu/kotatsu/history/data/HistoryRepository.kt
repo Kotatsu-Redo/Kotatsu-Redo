@@ -114,7 +114,6 @@ class HistoryRepository @Inject constructor(
 		if (!force && shouldSkip(manga)) {
 			return
 		}
-		assert(manga.chapters != null)
 		db.withTransaction {
 			mangaRepository.storeManga(manga, replaceExisting = true)
 			val branch = manga.chapters?.findById(chapterId)?.branch

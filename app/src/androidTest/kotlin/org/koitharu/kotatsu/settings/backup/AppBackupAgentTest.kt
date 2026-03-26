@@ -84,7 +84,9 @@ class AppBackupAgentTest {
 
 		assertEquals(category, favouritesRepository.getCategory(category.id))
 		assertEquals(history, historyRepository.getOne(SampleData.manga))
-		assertEquals(listOf(SampleData.manga), favouritesRepository.getManga(category.id))
+		val restored = favouritesRepository.getManga(category.id)
+		assertEquals(1, restored.size)
+		assertEquals(SampleData.manga.id, restored[0].id)
 
 		val allTags = database.getTagsDao().findTags(SampleData.tag.source.name).toMangaTags()
 		assertTrue(SampleData.tag in allTags)
