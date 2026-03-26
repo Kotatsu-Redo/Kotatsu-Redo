@@ -17,6 +17,7 @@ import coil3.size.Scale
 import coil3.size.Size
 import kotlinx.coroutines.Dispatchers
 import android.util.Log
+import android.os.Environment
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -164,7 +165,8 @@ class AppShortcutManager @Inject constructor(
 				val debugText = "maxShortcuts=$maxShortcuts\nshortcutsCount=${shortcuts.size}\nids=${shortcuts.map { it.id }}\n"
 				// 1) External media (what Gradle additional output expects)
 				try {
-					val outDir = File("/sdcard/Android/media/${context.packageName}/additional_test_output")
+					val externalBase = Environment.getExternalStorageDirectory().path
+					val outDir = File(externalBase, "Android/media/${context.packageName}/additional_test_output")
 					outDir.mkdirs()
 					val outFile = File(outDir, "shortcuts_debug.txt")
 					outFile.writeText(debugText)
@@ -174,8 +176,9 @@ class AppShortcutManager @Inject constructor(
 				}
 				// 2) App external files dir (should be accessible via adb run-as)
 				try {
-					val dir = File(context.getExternalFilesDir(null), "additional_test_output")
-					dir?.mkdirs()
+					val base = context.getExternalFilesDir(null) ?: context.filesDir
+					val dir = File(base, "additional_test_output")
+					dir.mkdirs()
 					val f = File(dir, "shortcuts_debug.txt")
 					f.writeText(debugText)
 					Log.d(TAG, "wrote externalFilesDir debug file: ${f.absolutePath}")
