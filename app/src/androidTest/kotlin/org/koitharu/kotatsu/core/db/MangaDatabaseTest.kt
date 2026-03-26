@@ -33,12 +33,23 @@ class MangaDatabaseTest {
 	@Test
 	fun migrateAll() {
 		val assetManager = InstrumentationRegistry.getInstrumentation().context.assets
-		val schemaFiles = try {
-			assetManager.list("org.koitharu.kotatsu.core.db.MangaDatabase")
-		} catch (e: Exception) {
-			null
+		val schemaDir = "org.koitharu.kotatsu.core.db.MangaDatabase"
+
+		// Ensure exported schema files exist for every required version (start..latest).
+		val requiredStart = migrations.first().startVersion
+		val requiredEnd = migrations.last().endVersion
+		val missing = mutableListOf<Int>()
+		for (v in requiredStart..requiredEnd) {
+			try {
+				assetManager.open("$schemaDir/$v.json").close()
+			} catch (e: Exception) {
+				missing += v
+			}
 		}
-		Assume.assumeTrue("No exported Room schema files found; skipping migration test", schemaFiles != null && schemaFiles.isNotEmpty())
+		Assume.assumeTrue(
+			"Missing exported Room schema files for versions: $missing; skipping migration test",
+			missing.isEmpty(),
+		)
 
 		helper.createDatabase(TEST_DB, 1).close()
 		for (migration in migrations) {

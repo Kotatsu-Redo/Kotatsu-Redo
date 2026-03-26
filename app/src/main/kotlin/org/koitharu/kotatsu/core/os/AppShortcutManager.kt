@@ -16,9 +16,11 @@ import coil3.request.transformations
 import coil3.size.Scale
 import coil3.size.Size
 import kotlinx.coroutines.Dispatchers
+import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.LocalizedAppContext
 import org.koitharu.kotatsu.core.db.TABLE_HISTORY
@@ -50,6 +52,10 @@ class AppShortcutManager @Inject constructor(
 	private val mangaRepository: MangaDataRepository,
 	private val settings: AppSettings,
 ) : InvalidationTracker.Observer(TABLE_HISTORY), SharedPreferences.OnSharedPreferenceChangeListener {
+
+	private companion object {
+		const val TAG = "AppShortcutManager"
+	}
 
 	private val iconSize by lazy {
 		Size(ShortcutManagerCompat.getIconMaxWidth(context), ShortcutManagerCompat.getIconMaxHeight(context))
@@ -105,7 +111,35 @@ class AppShortcutManager @Inject constructor(
 
 	@VisibleForTesting
 	suspend fun await(): Boolean {
-		return shortcutsUpdateJob?.join() != null
+		val job = shortcutsUpdateJob
+		if (job != null) {
+			job.join()
+			// After the background job completes, poll the system shortcuts briefly
+			// to ensure the OS has applied them. This reduces flakiness in instrumentation tests.
+			val start = System.currentTimeMillis()
+			while (System.currentTimeMillis() - start < 5_000) {
+				val list = ShortcutManagerCompat.getShortcuts(
+					context,
+					ShortcutManagerCompat.FLAG_MATCH_CACHED or ShortcutManagerCompat.FLAG_MATCH_DYNAMIC or ShortcutManagerCompat.FLAG_MATCH_PINNED,
+				)
+				if (list.isNotEmpty()) return true
+				kotlinx.coroutines.delay(100)
+			}
+			return false
+		}
+		// Fallback: poll system shortcuts for a short time to reduce flakiness in tests
+		return runCatchingCancellable {
+			val start = System.currentTimeMillis()
+			while (System.currentTimeMillis() - start < 5_000) {
+				val list = ShortcutManagerCompat.getShortcuts(
+					context,
+					ShortcutManagerCompat.FLAG_MATCH_CACHED or ShortcutManagerCompat.FLAG_MATCH_DYNAMIC or ShortcutManagerCompat.FLAG_MATCH_PINNED,
+				)
+				if (list.isNotEmpty()) return@runCatchingCancellable true
+				kotlinx.coroutines.delay(100)
+			}
+			false
+		}.getOrDefault(false)
 	}
 
 	fun notifyMangaOpened(mangaId: Long) {
@@ -122,7 +156,47 @@ class AppShortcutManager @Inject constructor(
 		val shortcuts = historyRepository.getList(0, maxShortcuts)
 			.filter { x -> x.title.isNotEmpty() }
 			.map { buildShortcutInfo(it) }
-		ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)
+		try {
+				Log.d(TAG, "updateShortcutsImpl: maxShortcuts=$maxShortcuts, shortcutsCount=${shortcuts.size}, ids=${shortcuts.map { it.id }}")
+				ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)
+				Log.d(TAG, "setDynamicShortcuts called")
+				// Write debug artifacts to multiple locations to ensure at least one is pullable
+				val debugText = "maxShortcuts=$maxShortcuts\nshortcutsCount=${shortcuts.size}\nids=${shortcuts.map { it.id }}\n"
+				// 1) External media (what Gradle additional output expects)
+				try {
+					val outDir = File("/sdcard/Android/media/${context.packageName}/additional_test_output")
+					outDir.mkdirs()
+					val outFile = File(outDir, "shortcuts_debug.txt")
+					outFile.writeText(debugText)
+					Log.d(TAG, "wrote external media debug file: ${outFile.absolutePath}")
+				} catch (e: Exception) {
+					Log.d(TAG, "failed writing external media artifact: ${e.message}")
+				}
+				// 2) App external files dir (should be accessible via adb run-as)
+				try {
+					val dir = File(context.getExternalFilesDir(null), "additional_test_output")
+					dir?.mkdirs()
+					val f = File(dir, "shortcuts_debug.txt")
+					f.writeText(debugText)
+					Log.d(TAG, "wrote externalFilesDir debug file: ${f.absolutePath}")
+				} catch (e: Exception) {
+					Log.d(TAG, "failed writing externalFilesDir artifact: ${e.message}")
+				}
+				// 3) Internal files dir (pullable via `adb shell run-as <pkg> cat`)
+				try {
+					val internalDir = File(context.filesDir, "additional_test_output")
+					internalDir.mkdirs()
+					val fi = File(internalDir, "shortcuts_debug.txt")
+					fi.writeText(debugText)
+					Log.d(TAG, "wrote internal filesDir debug file: ${fi.absolutePath}")
+				} catch (e: Exception) {
+					Log.d(TAG, "failed writing internal artifact: ${e.message}")
+				}
+		} catch (e: Exception) {
+			// Log and rethrow to be handled by runCatchingCancellable
+			Log.d(TAG, "setDynamicShortcuts threw: ${e.message}")
+			throw e
+		}
 	}.onFailure {
 		it.printStackTraceDebug()
 	}

@@ -33,7 +33,12 @@ import java.io.File
 
 class MangaIndex(source: String?) {
 
-	private val json: JSONObject = source?.let(::JSONObject) ?: JSONObject()
+	private val json: JSONObject = try {
+		if (source == null) JSONObject() else JSONObject(source)
+	} catch (e: Exception) {
+		e.printStackTrace()
+		JSONObject()
+	}
 
 	fun setMangaInfo(manga: Manga) {
 		require(!manga.isLocal) { "Local manga information cannot be stored" }
