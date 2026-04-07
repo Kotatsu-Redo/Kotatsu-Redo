@@ -19,7 +19,17 @@ class ReversedDoubleReaderFragment : DoubleReaderFragment() {
 	}
 
 	override fun notifyPageChanged(lowerPos: Int, upperPos: Int) {
-		viewModel.onCurrentPageChanged(reversed(upperPos), reversed(lowerPos))
+		// Convert padded positions → reversed positions → original positions
+		val revLower = positionMap.getOrElse(upperPos) { -1 }
+		val revUpper = positionMap.getOrElse(lowerPos) { -1 }
+		val n = originalPageCount
+		val origLower = if (revLower >= 0) (n - 1 - revLower) else -1
+		val origUpper = if (revUpper >= 0) (n - 1 - revUpper) else -1
+		val lower = if (origLower >= 0) origLower else origUpper
+		val upper = if (origUpper >= 0) origUpper else origLower
+		if (lower >= 0) {
+			viewModel.onCurrentPageChanged(lower, upper.coerceAtLeast(lower))
+		}
 	}
 
 	private fun reversed(position: Int): Int {

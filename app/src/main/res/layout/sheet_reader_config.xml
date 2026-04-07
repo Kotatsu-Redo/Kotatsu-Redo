@@ -145,6 +145,19 @@
                 android:visibility="gone"
                 tools:visibility="visible" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_double_cover_page"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_small"
+                android:drawablePadding="?android:listPreferredItemPaddingStart"
+                android:minHeight="?android:listPreferredItemHeightSmall"
+                android:paddingStart="?android:listPreferredItemPaddingStart"
+                android:paddingEnd="?android:listPreferredItemPaddingEnd"
+                android:text="@string/double_page_cover_page"
+                android:textAppearance="@style/TextAppearance.Kotatsu.GridTitle"
+                android:textColor="?colorOnSurfaceVariant" />
+
             <TextView
                 android:id="@+id/text_double_sensitivity"
                 android:layout_width="match_parent"

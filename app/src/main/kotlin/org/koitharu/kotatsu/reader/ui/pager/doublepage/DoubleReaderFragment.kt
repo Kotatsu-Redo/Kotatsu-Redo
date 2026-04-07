@@ -39,6 +39,17 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 
 	private var recyclerLifecycleDispatcher: RecyclerViewLifecycleDispatcher? = null
 
+	/**
+	 * Maps padded adapter positions to original (unpadded) page list positions.
+	 * Spacer positions are mapped to -1.
+	 */
+	protected var positionMap: IntArray = IntArray(0)
+		private set
+
+	/** Number of pages in the original (unpadded) list. */
+	protected var originalPageCount: Int = 0
+		private set
+
 	override fun onCreateViewBinding(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
@@ -50,6 +61,8 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 	) {
 		super.onViewBindingCreated(binding, savedInstanceState)
 		with(binding.recyclerView) {
+			clipChildren = false
+			clipToPadding = false
 			adapter = readerAdapter
 			recyclerLifecycleDispatcher = RecyclerViewLifecycleDispatcher().also {
 				addOnScrollListener(it)
@@ -66,15 +79,29 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 	}
 
 	override suspend fun onPagesChanged(pages: List<ReaderPage>, pendingState: ReaderState?) = coroutineScope {
+		originalPageCount = pages.size
+		val paddedPages = pages.padForDoublePage(coverPage = settings.isReaderDoubleCoverPage)
+
+		// Build position map: padded index → original index (-1 for spacers)
+		positionMap = IntArray(paddedPages.size)
+		var origIndex = 0
+		for (i in paddedPages.indices) {
+			if (paddedPages[i].index < 0) {
+				positionMap[i] = -1
+			} else {
+				positionMap[i] = origIndex++
+			}
+		}
+
 		val items = launch {
-			requireAdapter().setItems(pages)
+			requireAdapter().setItems(paddedPages)
 			yield()
 			viewBinding?.recyclerView?.let { rv ->
 				recyclerLifecycleDispatcher?.invalidate(rv)
 			}
 		}
 		if (pendingState != null) {
-			var position = pages.indexOfFirst {
+			var position = paddedPages.indexOfFirst {
 				it.chapterId == pendingState.chapterId && it.index == pendingState.page
 			}
 			items.join()
@@ -100,13 +127,11 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 	)
 
 	override fun onZoomIn() {
-		(viewBinding ?: return).recyclerView.visiblePageHolders()
-			.forEach { it.onZoomIn() }
+		viewBinding?.frame?.onZoomIn()
 	}
 
 	override fun onZoomOut() {
-		(viewBinding ?: return).recyclerView.visiblePageHolders()
-			.forEach { it.onZoomOut() }
+		viewBinding?.frame?.onZoomOut()
 	}
 
 	override fun switchPageBy(delta: Int) {
@@ -127,7 +152,9 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 
 	override fun getCurrentState(): ReaderState? = viewBinding?.run {
 		val adapter = recyclerView.adapter as? BaseReaderAdapter<*>
-		val page = adapter?.getItemOrNull(getCurrentItem()) ?: return@run null
+		val pos = getCurrentItem()
+		val page = adapter?.getItemOrNull(pos) ?: return@run null
+		if (page.index < 0) return@run null // Skip spacer
 		ReaderState(
 			chapterId = page.chapterId,
 			page = page.index,
@@ -136,7 +163,14 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 	}
 
 	protected open fun notifyPageChanged(lowerPos: Int, upperPos: Int) {
-		viewModel.onCurrentPageChanged(lowerPos, upperPos)
+		// Convert padded adapter positions to original page list positions
+		val origLower = positionMap.getOrElse(lowerPos) { -1 }
+		val origUpper = positionMap.getOrElse(upperPos) { -1 }
+		val lower = if (origLower >= 0) origLower else origUpper
+		val upper = if (origUpper >= 0) origUpper else origLower
+		if (lower >= 0) {
+			viewModel.onCurrentPageChanged(lower, upper.coerceAtLeast(lower))
+		}
 	}
 
 	private fun getCurrentItem() = (requireViewBinding().recyclerView.layoutManager as LinearLayoutManager)

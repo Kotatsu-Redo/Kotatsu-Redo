@@ -93,6 +93,8 @@ class ReaderConfigSheet :
         binding.switchDoubleReader.isEnabled = mode == ReaderMode.STANDARD || mode == ReaderMode.REVERSED
         binding.switchDoubleFoldable.isChecked = settings.isReaderDoubleOnFoldable
         binding.switchDoubleFoldable.isEnabled = binding.switchDoubleReader.isEnabled
+        binding.switchDoubleCoverPage.isChecked = settings.isReaderDoubleCoverPage
+        binding.switchDoubleCoverPage.isEnabled = binding.switchDoubleReader.isEnabled
         binding.sliderDoubleSensitivity.setValueRounded(settings.readerDoublePagesSensitivity * 100f)
         binding.sliderDoubleSensitivity.setLabelFormatter(IntPercentLabelFormatter(binding.root.context))
         binding.adjustSensitivitySlider(withAnimation = false)
@@ -107,6 +109,7 @@ class ReaderConfigSheet :
         binding.buttonBookmark.setOnClickListener(this)
         binding.switchDoubleReader.setOnCheckedChangeListener(this)
         binding.switchDoubleFoldable.setOnCheckedChangeListener(this)
+        binding.switchDoubleCoverPage.setOnCheckedChangeListener(this)
         binding.sliderDoubleSensitivity.addOnChangeListener(this)
 
         viewModel.isBookmarkAdded.observe(viewLifecycleOwner) {
@@ -191,6 +194,11 @@ class ReaderConfigSheet :
                 // Re-evaluate double-page considering foldable state and current manual toggle
                 findParentCallback(Callback::class.java)?.onDoubleModeChanged(settings.isReaderDoubleOnLandscape)
             }
+
+            R.id.switch_double_cover_page -> {
+                settings.isReaderDoubleCoverPage = isChecked
+                findParentCallback(Callback::class.java)?.onDoubleModeChanged(settings.isReaderDoubleOnLandscape)
+            }
         }
     }
 
@@ -256,7 +264,8 @@ class ReaderConfigSheet :
         val needTransition = withAnimation && (
             (isSubOptionsVisible != sliderDoubleSensitivity.isVisible) ||
                 (isSubOptionsVisible != textDoubleSensitivity.isVisible) ||
-                (isSubOptionsVisible != switchDoubleFoldable.isVisible)
+                (isSubOptionsVisible != switchDoubleFoldable.isVisible) ||
+                (isSubOptionsVisible != switchDoubleCoverPage.isVisible)
             )
         if (needTransition) {
             TransitionManager.beginDelayedTransition(layoutMain)
@@ -264,6 +273,7 @@ class ReaderConfigSheet :
         sliderDoubleSensitivity.isVisible = isSubOptionsVisible
         textDoubleSensitivity.isVisible = isSubOptionsVisible
         switchDoubleFoldable.isVisible = isSubOptionsVisible
+        switchDoubleCoverPage.isVisible = isSubOptionsVisible
     }
 
     interface Callback {

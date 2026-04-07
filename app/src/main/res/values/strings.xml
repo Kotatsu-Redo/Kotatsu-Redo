@@ -585,6 +585,7 @@
     <string name="use_two_pages_landscape">Use two pages layout on landscape orientation (beta)</string>
     <string name="auto_double_foldable">Auto Two-Page On Foldable</string>
     <string name="two_page_scroll_sensitivity">Two-Page Scroll Sensitivity</string>
+    <string name="double_page_cover_page">First page as cover (solo)</string>
     <string name="default_webtoon_zoom_out">Default webtoon zoom out</string>
     <string name="fullscreen_mode">Fullscreen mode</string>
     <string name="reader_fullscreen_summary">Hide system status and navigation bars</string>
