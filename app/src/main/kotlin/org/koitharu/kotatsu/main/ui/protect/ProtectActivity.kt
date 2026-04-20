@@ -11,7 +11,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.biometric.AuthenticationRequest
-import androidx.biometric.AuthenticationRequest.Biometric
 import androidx.biometric.AuthenticationResult
 import androidx.biometric.AuthenticationResultCallback
 import androidx.biometric.BiometricManager
@@ -140,9 +139,9 @@ class ProtectActivity :
 		}
 		val request = AuthenticationRequest.biometricRequest(
 			title = getString(R.string.app_name),
-			authFallback = Biometric.Fallback.NegativeButton(getString(android.R.string.cancel)),
+			AuthenticationRequest.Biometric.Fallback.CustomOption(getString(android.R.string.cancel)),
 			init = {
-				setMinStrength(Biometric.Strength.Class2)
+				setMinStrength(AuthenticationRequest.Biometric.Strength.Class2)
 				setIsConfirmationRequired(false)
 			},
 		)

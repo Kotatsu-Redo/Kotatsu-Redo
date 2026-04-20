@@ -6,7 +6,7 @@ import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
-import androidx.core.content.res.use
+import androidx.core.content.withStyledAttributes
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
@@ -66,8 +66,8 @@ var TextView.isBold: Boolean
 	}
 
 fun TextView.setThemeTextAppearance(@AttrRes resId: Int, @StyleRes fallback: Int) {
-	context.obtainStyledAttributes(intArrayOf(resId)).use {
-		TextViewCompat.setTextAppearance(this, it.getResourceId(0, fallback))
+	context.withStyledAttributes(null, intArrayOf(resId)) {
+		TextViewCompat.setTextAppearance(this@setThemeTextAppearance, getResourceId(0, fallback))
 	}
 }
 

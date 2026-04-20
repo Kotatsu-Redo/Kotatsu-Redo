@@ -1,9 +1,12 @@
 package org.koitharu.kotatsu.settings.about
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.ACTION_INSTALL_PACKAGE
 import android.os.Environment
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,7 +35,7 @@ class AppUpdateViewModel @Inject constructor(
 	val installIntent = MutableStateFlow<Intent?>(null)
 	val onDownloadDone = MutableEventFlow<Intent>()
 
-	private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+	private val downloadManager = checkNotNull(context.getSystemService<DownloadManager>())
 	private val appName = context.getString(R.string.app_name)
 
 	init {
@@ -57,14 +60,15 @@ class AppUpdateViewModel @Inject constructor(
 		}
 	}
 
-	fun onDownloadComplete(intent: Intent) {
+	@SuppressLint("RequestInstallPackagesPolicy")
+    fun onDownloadComplete(intent: Intent) {
 		launchLoadingJob(Dispatchers.Default) {
 			val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L)
 			if (downloadId == 0L) {
 				return@launchLoadingJob
 			}
 			@Suppress("DEPRECATION")
-			val installerIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+			val installerIntent = Intent(ACTION_INSTALL_PACKAGE)
 			installerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
 			installerIntent.setDataAndType(
 				downloadManager.getUriForDownloadedFile(downloadId),

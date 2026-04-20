@@ -130,15 +130,15 @@ class SyncController @Inject constructor(
 		requestSyncImpl(favourites = favourites, history = history)
 	}
 
-	private suspend fun requestSyncImpl(favourites: Boolean, history: Boolean) = mutex.withLock {
+	private suspend fun requestSyncImpl(favourites: Boolean, history: Boolean): Unit = mutex.withLock {
 		if (!favourites && !history) {
-			return
+			return@withLock
 		}
 		val db = dbProvider.get()
 		val account = peekAccount()
 		if (account == null || !ContentResolver.getMasterSyncAutomatically()) {
 			db.gc(favourites, history)
-			return
+			return@withLock
 		}
 		var gcHistory = false
 		var gcFavourites = false

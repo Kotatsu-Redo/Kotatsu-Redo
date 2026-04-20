@@ -13,11 +13,9 @@ fun Insets.start(view: View): Int {
 	return if (view.isRtl) right else left
 }
 
-@Deprecated("")
 val WindowInsetsCompat.systemBarsInsets: Insets
 	get() = getInsets(WindowInsetsCompat.Type.systemBars())
 
-@Deprecated("")
 fun WindowInsetsCompat.consumeSystemBarsInsets(
 	left: Boolean = false,
 	top: Boolean = false,
@@ -62,7 +60,6 @@ fun WindowInsetsCompat.consumeAll(
 	.setInsets(typeMask, Insets.NONE)
 	.build()
 
-@Deprecated("")
 fun WindowInsetsCompat.consumeSystemBarsInsets(
 	view: View,
 	start: Boolean = false,
@@ -71,10 +68,8 @@ fun WindowInsetsCompat.consumeSystemBarsInsets(
 	bottom: Boolean = false,
 ): WindowInsetsCompat = consume(view, WindowInsetsCompat.Type.systemBars(), start, top, end, bottom)
 
-@Deprecated("")
 fun WindowInsetsCompat.consumeAllSystemBarsInsets() = consumeAll(WindowInsetsCompat.Type.systemBars())
 
-@Deprecated("")
 fun Insets.consume(
 	view: View,
 	start: Boolean = false,

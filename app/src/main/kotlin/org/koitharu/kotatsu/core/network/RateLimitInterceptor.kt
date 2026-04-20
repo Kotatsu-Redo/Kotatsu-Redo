@@ -2,7 +2,6 @@ package org.koitharu.kotatsu.core.network
 
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.internal.closeQuietly
 import org.koitharu.kotatsu.parsers.exception.TooManyRequestExceptions
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -13,10 +12,11 @@ class RateLimitInterceptor : Interceptor {
 		val response = chain.proceed(chain.request())
 		if (response.code == 429) {
 			val request = response.request
-			response.closeQuietly()
+			val retryAfter = response.header(CommonHeaders.RETRY_AFTER)?.parseRetryAfter() ?: 0L
+			response.close()
 			throw TooManyRequestExceptions(
 				url = request.url.toString(),
-				retryAfter = response.header(CommonHeaders.RETRY_AFTER)?.parseRetryAfter() ?: 0L,
+				retryAfter = retryAfter,
 			)
 		}
 		return response

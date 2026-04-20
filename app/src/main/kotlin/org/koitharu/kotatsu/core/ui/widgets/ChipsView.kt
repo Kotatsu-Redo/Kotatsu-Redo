@@ -10,6 +10,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.core.content.withStyledAttributes
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.core.view.children
@@ -61,8 +62,8 @@ class ChipsView @JvmOverloads constructor(
 		val data = it.tag
 		onChipLongClickListener?.onChipLongClick(chip, data) ?: false
 	}
-	private val chipStyle: Int
-	private val iconsVisible: Boolean
+	private var chipStyle: Int = R.style.Widget_Kotatsu_Chip
+	private var iconsVisible: Boolean = true
 	var onChipClickListener: OnChipClickListener? = null
 		set(value) {
 			field = value
@@ -74,10 +75,10 @@ class ChipsView @JvmOverloads constructor(
 	var onChipLongClickListener: OnChipLongClickListener? = null
 
 	init {
-		val ta = context.obtainStyledAttributes(attrs, R.styleable.ChipsView, defStyleAttr, 0)
-		chipStyle = ta.getResourceId(R.styleable.ChipsView_chipStyle, R.style.Widget_Kotatsu_Chip)
-		iconsVisible = ta.getBoolean(R.styleable.ChipsView_chipIconVisible, true)
-		ta.recycle()
+		context.withStyledAttributes(attrs, R.styleable.ChipsView, defStyleAttr, 0) {
+			chipStyle = getResourceId(R.styleable.ChipsView_chipStyle, R.style.Widget_Kotatsu_Chip)
+			iconsVisible = getBoolean(R.styleable.ChipsView_chipIconVisible, true)
+		}
 
 		if (isInEditMode) {
 			setChips(
@@ -125,10 +126,10 @@ class ChipsView @JvmOverloads constructor(
 
 	data class ChipModel(
 		val title: CharSequence? = null,
-		@StringRes val titleResId: Int = 0,
-		@DrawableRes val icon: Int = 0,
+		@param:StringRes val titleResId: Int = 0,
+		@param:DrawableRes val icon: Int = 0,
 		val iconData: Any? = null,
-		@ColorRes val tint: Int = 0,
+		@param:ColorRes val tint: Int = 0,
 		val counter: Int = 0,
 		val isChecked: Boolean = false,
 		val isLoading: Boolean = false,

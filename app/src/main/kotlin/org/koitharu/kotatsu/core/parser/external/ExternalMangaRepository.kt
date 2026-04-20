@@ -6,6 +6,7 @@ import kotlinx.coroutines.runInterruptible
 import org.koitharu.kotatsu.core.cache.MemoryContentCache
 import org.koitharu.kotatsu.core.parser.CachingMangaRepository
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.parsers.InternalParsersApi
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
@@ -37,7 +38,8 @@ class ExternalMangaRepository(
 	override val sortOrders: Set<SortOrder>
 		get() = capabilities?.availableSortOrders ?: EnumSet.of(SortOrder.POPULARITY)
 
-	override val filterCapabilities: MangaListFilterCapabilities
+	@OptIn(InternalParsersApi::class)
+    override val filterCapabilities: MangaListFilterCapabilities
 		get() = capabilities?.listFilterCapabilities ?: MangaListFilterCapabilities()
 
 	override var defaultSortOrder: SortOrder

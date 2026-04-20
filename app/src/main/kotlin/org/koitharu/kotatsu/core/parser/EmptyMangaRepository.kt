@@ -1,5 +1,6 @@
 package org.koitharu.kotatsu.core.parser
 
+import org.koitharu.kotatsu.parsers.InternalParsersApi
 import org.koitharu.kotatsu.core.exceptions.UnsupportedSourceException
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
@@ -18,8 +19,9 @@ open class EmptyMangaRepository(override val source: MangaSource) : MangaReposit
 
 	override var defaultSortOrder: SortOrder
 		get() = SortOrder.NEWEST
-		set(value) = Unit
+		set(@Suppress("UNUSED_PARAMETER") value) = Unit
 
+	@OptIn(InternalParsersApi::class)
 	override val filterCapabilities: MangaListFilterCapabilities
 		get() = MangaListFilterCapabilities()
 

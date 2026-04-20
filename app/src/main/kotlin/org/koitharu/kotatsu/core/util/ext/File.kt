@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.storage.StorageManager
 import android.provider.OpenableColumns
+import androidx.core.content.getSystemService
 import androidx.core.database.getStringOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -40,11 +41,9 @@ fun ZipFile.readText(entry: ZipEntry) = getInputStream(entry).use { output ->
 }
 
 fun File.getStorageName(context: Context): String = runCatching {
-	val manager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-		manager.getStorageVolume(this)?.getDescription(context)?.let {
-			return@runCatching it
-		}
+	val manager = checkNotNull(context.getSystemService<StorageManager>())
+	manager.getStorageVolume(this)?.getDescription(context)?.let {
+		return@runCatching it
 	}
 	when {
 		Environment.isExternalStorageEmulated(this) -> context.getString(R.string.internal_storage)

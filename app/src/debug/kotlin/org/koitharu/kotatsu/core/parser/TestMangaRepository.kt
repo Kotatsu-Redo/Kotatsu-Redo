@@ -2,6 +2,7 @@ package org.koitharu.kotatsu.core.parser
 
 import org.koitharu.kotatsu.core.cache.MemoryContentCache
 import org.koitharu.kotatsu.core.model.TestMangaSource
+import org.koitharu.kotatsu.parsers.InternalParsersApi
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
@@ -29,9 +30,11 @@ class TestMangaRepository(
 		get() = sortOrders.first()
 		set(value) = Unit
 
-	override val filterCapabilities = MangaListFilterCapabilities()
+	@OptIn(InternalParsersApi::class)
+    override val filterCapabilities = MangaListFilterCapabilities()
 
-	override suspend fun getFilterOptions() = MangaListFilterOptions()
+	@OptIn(InternalParsersApi::class)
+    override suspend fun getFilterOptions() = MangaListFilterOptions()
 
 	override suspend fun getList(
 		offset: Int,

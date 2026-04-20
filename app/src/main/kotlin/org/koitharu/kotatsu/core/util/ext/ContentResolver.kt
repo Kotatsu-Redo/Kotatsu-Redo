@@ -8,6 +8,7 @@ import android.os.storage.StorageManager
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import androidx.core.net.toFile
 import org.koitharu.kotatsu.parsers.util.nullIfEmpty
 import org.koitharu.kotatsu.parsers.util.removeSuffix
@@ -59,7 +60,7 @@ private fun getVolumePath(volumeId: String, context: Context): String? {
 
 
 private fun getVolumePathBeforeAndroid11(volumeId: String, context: Context): String? = runCatching {
-	val mStorageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
+	val mStorageManager = checkNotNull(context.getSystemService<StorageManager>())
 	val storageVolumeClazz = Class.forName("android.os.storage.StorageVolume")
 	val getVolumeList = mStorageManager.javaClass.getMethod("getVolumeList")
 	val getUuid = storageVolumeClazz.getMethod("getUuid")
@@ -83,7 +84,7 @@ private fun getVolumePathBeforeAndroid11(volumeId: String, context: Context): St
 
 @RequiresApi(Build.VERSION_CODES.R)
 private fun getVolumePathForAndroid11AndAbove(volumeId: String, context: Context): String? = runCatching {
-	val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
+	val storageManager = checkNotNull(context.getSystemService<StorageManager>())
 	storageManager.storageVolumes.firstNotNullOfOrNull { volume ->
 		if (volume.isPrimary && volumeId == PRIMARY_VOLUME_NAME) {
 			volume.directory?.path

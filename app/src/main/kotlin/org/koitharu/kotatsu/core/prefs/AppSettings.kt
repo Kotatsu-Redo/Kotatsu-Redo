@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.annotation.FloatRange
 import androidx.appcompat.app.AppCompatDelegate
@@ -41,7 +40,6 @@ import org.koitharu.kotatsu.reader.domain.ReaderColorFilter
 import java.io.File
 import java.net.Proxy
 import java.util.EnumSet
-import java.util.HashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -695,11 +693,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 	}
 
 	private fun isBackgroundNetworkRestricted(): Boolean {
-		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			connectivityManager.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
-		} else {
-			false
-		}
+		return connectivityManager.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
 	}
 
 	companion object {

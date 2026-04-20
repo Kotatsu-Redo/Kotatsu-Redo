@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -79,7 +80,6 @@ import org.koitharu.kotatsu.local.data.LocalMangaRepository
 import org.koitharu.kotatsu.local.data.LocalStorageCache
 import org.koitharu.kotatsu.local.data.LocalStorageChanges
 import org.koitharu.kotatsu.local.data.PageCache
-import org.koitharu.kotatsu.local.data.TempFileFilter
 import org.koitharu.kotatsu.local.data.input.LocalMangaParser
 import org.koitharu.kotatsu.local.data.output.LocalMangaOutput
 import org.koitharu.kotatsu.local.domain.MangaLock
@@ -90,7 +90,6 @@ import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.ifNullOrEmpty
 import org.koitharu.kotatsu.parsers.util.mapToSet
-import org.koitharu.kotatsu.parsers.util.requireBody
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.reader.domain.PageLoader
 import java.io.File
@@ -104,14 +103,14 @@ import javax.inject.Inject
 class DownloadWorker @AssistedInject constructor(
 	@Assisted appContext: Context,
 	@Assisted params: WorkerParameters,
-	@MangaHttpClient private val okHttp: OkHttpClient,
-	@PageCache private val cache: LocalStorageCache,
+	@param:MangaHttpClient private val okHttp: OkHttpClient,
+	@param:PageCache private val cache: LocalStorageCache,
 	private val localMangaRepository: LocalMangaRepository,
 	private val mangaLock: MangaLock,
 	private val mangaDataRepository: MangaDataRepository,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val settings: AppSettings,
-	@LocalStorageChanges private val localStorageChanges: MutableSharedFlow<LocalManga?>,
+	@param:LocalStorageChanges private val localStorageChanges: MutableSharedFlow<LocalManga?>,
 	private val slowdownDispatcher: DownloadSlowdownDispatcher,
 	private val imageProxyInterceptor: ImageProxyInterceptor,
 	notificationFactoryFactory: DownloadNotificationFactory.Factory,
@@ -119,7 +118,7 @@ class DownloadWorker @AssistedInject constructor(
 
 	private val task = DownloadTask(params.inputData)
 	private val notificationFactory = notificationFactoryFactory.create(uuid = params.id, isSilent = task.isSilent)
-	private val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+	private val notificationManager = checkNotNull(appContext.getSystemService<NotificationManager>())
 
 	@Volatile
 	private var lastPublishedState: DownloadState? = null
@@ -404,7 +403,7 @@ class DownloadWorker @AssistedInject constructor(
 			.use { response ->
 				var file: File? = null
 				try {
-					response.requireBody().use { body ->
+                    response.body.use { body ->
 						file = destination.createTempFile(
 							ext = MimeTypes.getExtension(body.contentType()?.toMimeType())
 						).also { tempFiles += it }
@@ -485,7 +484,7 @@ class DownloadWorker @AssistedInject constructor(
 
 	@Reusable
 	class Scheduler @Inject constructor(
-		@ApplicationContext private val context: Context,
+		@param:ApplicationContext private val context: Context,
 		private val mangaDataRepository: MangaDataRepository,
 		private val workManager: WorkManager,
 	) {

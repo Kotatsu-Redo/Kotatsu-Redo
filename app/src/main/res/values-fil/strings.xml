@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="updated">Na-update</string>
     <string name="newest">Pinakabago</string>
@@ -66,7 +66,7 @@
     <string name="black_dark_theme_summary">Gumagamit ng mas kaunting power sa mga AMOLED na screen</string>
     <string name="backup_restore">I-backup at I-restore</string>
     <string name="data_restored">Naibalik na</string>
-    <string name="preparing_">Naghahanda…</string>
+    <string name="preparing_">Naghahandaâ€¦</string>
     <string name="file_not_found">Hindi nahanap ang file</string>
     <string name="backup_information">Maaari kang lumikha ng backup ng iyong kasaysayan at mga paborito at i-restore ito</string>
     <string name="just_now">Ngayon lang</string>
@@ -111,7 +111,7 @@
     <string name="grid">Grid</string>
     <string name="settings">Mga setting</string>
     <string name="remote_sources">Mga source ng Manga</string>
-    <string name="loading_">Naglo-load…</string>
+    <string name="loading_">Naglo-loadâ€¦</string>
     <string name="close">Isara</string>
     <string name="nothing_found">Walang nahanap</string>
     <string name="remove">Tanggalin</string>
@@ -126,8 +126,8 @@
     <string name="share_s">Ibahagi sa %s</string>
     <string name="search">Maghanap</string>
     <string name="search_manga">Maghanap ng manga</string>
-    <string name="manga_downloading_">Nagda-download…</string>
-    <string name="processing_">Nagpoproseso…</string>
+    <string name="manga_downloading_">Nagda-downloadâ€¦</string>
+    <string name="processing_">Nagpoprosesoâ€¦</string>
     <string name="download_complete">Na-download</string>
     <string name="downloads">Mga download</string>
     <string name="by_name">Pangalan</string>
@@ -144,8 +144,8 @@
     <string name="notification_sound">Tunog ng abiso</string>
     <string name="favourites_categories">Mga paboritong kategorya</string>
     <string name="remove_category">Tanggalin</string>
-    <string name="text_empty_holder_primary">Parang walang laman dito…</string>
-    <string name="text_history_holder_secondary">Hanapin kung anong pwedeng basahin sa «Mag-Explore» na seksyon</string>
+    <string name="text_empty_holder_primary">Parang walang laman ditoâ€¦</string>
+    <string name="text_history_holder_secondary">Hanapin kung anong pwedeng basahin sa Â«Mag-ExploreÂ» na seksyon</string>
     <string name="recent_manga">Kamakailan</string>
     <string name="manga_save_location">Mga folder ng pag-download</string>
     <string name="save_page">I-save ang pahina</string>
@@ -189,7 +189,7 @@
     <string name="zoom_mode_fit_height">Pagkasyahin sa tangkad</string>
     <string name="never">Hindi kailanman</string>
     <string name="only_using_wifi">Sa Wi-Fi lang</string>
-    <string name="computing_">Nagco-compute…</string>
+    <string name="computing_">Nagco-computeâ€¦</string>
     <string name="chapter_d_of_d">Kabanata %1$d ng %2$d</string>
     <string name="try_again">Subukan ulit</string>
     <string name="sort_order">Pag-aayos ng order</string>
@@ -199,7 +199,6 @@
     <string name="logged_in_as">Naka-log in bilang %s</string>
     <string name="various_languages">Iba\'t ibang wika</string>
     <string name="search_chapters">Maghanap ng kabanata</string>
-    <string name="percent_string_pattern">%1$s%%</string>
     <string name="appearance">Hitsura</string>
     <string name="suggestions_excluded_genres">Hindi isali ang mga genre</string>
     <string name="suggestions_excluded_genres_summary">Tukuyin ang mga genre na hindi mo nais na makita sa mga mungkahi</string>
@@ -250,7 +249,6 @@
     <string name="other_cache">Iba pang cache</string>
     <string name="storage_usage">Paggamit ng storage</string>
     <string name="available">Magagamit na</string>
-    <string name="memory_usage_pattern">%1$s - %2$s</string>
     <string name="removed_from_favourites">Inalis sa mga paborito</string>
     <string name="options">Mga pagpipilian</string>
     <string name="incognito_mode">Incognito na mode</string>
@@ -341,7 +339,7 @@
     <string name="importing_manga">Pag-import ng manga</string>
     <string name="import_completed_hint">Maaari mong tanggalin ang orihinal na file mula sa storage upang makatipid ng espasyo</string>
     <string name="compact">Compact</string>
-    <string name="scrobbling_empty_hint">Upang subaybayan ang pag unlad ng pagbabasa, piliin ang Menu → Track sa screen ng mga detalye ng manga.</string>
+    <string name="scrobbling_empty_hint">Upang subaybayan ang pag unlad ng pagbabasa, piliin ang Menu â†’ Track sa screen ng mga detalye ng manga.</string>
     <string name="download_started">Nagsimula na ang pag-download</string>
     <string name="color_theme">Scheme ng kulay</string>
     <string name="theme_name_miku">Miku</string>
@@ -485,7 +483,6 @@
     <string name="speed_value">x%.1f</string>
     <string name="sources_catalog">Katalugo ng mga source</string>
     <string name="content_type_manga">Manga</string>
-    <string name="source_summary_pattern">%1$s, %2$s</string>
     <string name="content_type_hentai">Hentai</string>
     <string name="content_type_comics">Mga Comic</string>
     <string name="catalog">Katalogo</string>
@@ -533,7 +530,7 @@
     <string name="mark_as_completed_prompt">Markahan ang napiling manga bilang tapos na nabasa?
 \n
 \nBabala: mawawala ang kasalukuyang progress sa pagbabasa.</string>
-    <string name="category_hidden_done">Nakatago ang kategoryang ito mula sa pangunahing screen at naa-access sa pamamagitan ng Menu → Ayusin ang mga kategorya</string>
+    <string name="category_hidden_done">Nakatago ang kategoryang ito mula sa pangunahing screen at naa-access sa pamamagitan ng Menu â†’ Ayusin ang mga kategorya</string>
     <string name="remove_from_history">Alisin sa kasaysayan</string>
     <string name="incognito_mode_hint">Hindi mase-save ang iyong progress sa pagbabasa</string>
     <string name="last_read">Huling nabasa</string>
@@ -543,7 +540,6 @@
     <string name="ask_for_dest_dir_every_time">Laging magtanong sa direktoryo ng patutunguhan</string>
     <string name="default_page_save_dir">Default na directory ng pag-save ng pahina</string>
     <string name="email_password_enter_hint">Ilagay ang iyong email at password upang magpatuloy</string>
-    <string name="remaining_time_pattern">%1$s %2$s</string>
     <string name="volume_">Volume %d</string>
     <string name="volume_unknown">Hindi kilalang volume</string>
     <string name="vertical">Patayo</string>
@@ -627,7 +623,6 @@
     <string name="less_frequently">Minsanan</string>
     <string name="more_frequently">Madalas</string>
     <string name="frequency_of_check">Dalas ng pag-tingin</string>
-    <string name="new_chapters_pattern">%1$s: %2$d</string>
     <string name="pin_navigation_ui">I-pin ang UI ng nabigasyon</string>
     <string name="pin_navigation_ui_summary">Huwag itago ang navigation bar at ang view ng paghahanap sa pag-scroll</string>
     <string name="blocked_by_server_message">Hinarangan ka ng server. Subukang gumamit ng ibang koneksyon sa network (VPN, Proxy, atbp.)</string>
@@ -862,3 +857,4 @@
     <string name="reader_chapter_toast">Ipakita ang popup sa pagpalit ng kabanata</string>
     <string name="reader_chapter_toast_summary">Magpakita ng pop-up na mensahe na may pamagat ng kabanata kapag binago ito</string>
 </resources>
+

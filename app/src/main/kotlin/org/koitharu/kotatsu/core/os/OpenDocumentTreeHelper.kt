@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityOptionsCompat
+import androidx.core.content.getSystemService
 
 // https://stackoverflow.com/questions/77555641/saf-no-activity-found-to-handle-intent-android-intent-action-open-document-tr
 class OpenDocumentTreeHelper(
@@ -79,7 +80,7 @@ class OpenDocumentTreeHelper(
 	) : OpenDocumentTreeContractDefault(flags) {
 
 		override fun createIntent(context: Context, input: Uri?): Intent {
-			val intent = (context.getSystemService(Context.STORAGE_SERVICE) as? StorageManager)
+			val intent = context.getSystemService<StorageManager>()
 				?.primaryStorageVolume
 				?.createOpenDocumentTreeIntent()
 			if (intent == null) { // fallback

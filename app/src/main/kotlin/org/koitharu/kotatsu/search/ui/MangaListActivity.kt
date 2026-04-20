@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.os.bundleOf
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
@@ -126,7 +125,7 @@ class MangaListActivity :
 
 	fun showPreview(manga: Manga): Boolean = setSideFragment(
 		PreviewFragment::class.java,
-		bundleOf(AppRouter.KEY_MANGA to ParcelableManga(manga)),
+		Bundle().apply { putParcelable(AppRouter.KEY_MANGA, ParcelableManga(manga)) },
 	)
 
 	fun hidePreview() = setSideFragment(FilterSheetFragment::class.java, null)

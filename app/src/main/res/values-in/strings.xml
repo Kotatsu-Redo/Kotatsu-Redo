@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="local_storage">Penyimpanan lokal</string>
     <string name="favourites">Disukai</string>
@@ -10,8 +10,8 @@
     <string name="list_mode">Mode daftar</string>
     <string name="settings">Pengaturan</string>
     <string name="remote_sources">Sumber manga</string>
-    <string name="loading_">Memuat…</string>
-    <string name="computing_">Menghitung…</string>
+    <string name="loading_">Memuatâ€¦</string>
+    <string name="computing_">Menghitungâ€¦</string>
     <string name="chapter_d_of_d">Bab %1$d dari %2$d</string>
     <string name="close">Tutup</string>
     <string name="try_again">Coba lagi</string>
@@ -28,8 +28,8 @@
     <string name="share_s">Bagikan %s</string>
     <string name="search">Cari</string>
     <string name="search_manga">Cari manga</string>
-    <string name="manga_downloading_">Mengunduh…</string>
-    <string name="processing_">Memproses…</string>
+    <string name="manga_downloading_">Mengunduhâ€¦</string>
+    <string name="processing_">Memprosesâ€¦</string>
     <string name="download_complete">Diunduh</string>
     <string name="downloads">Unduhan</string>
     <string name="by_name">Nama</string>
@@ -83,9 +83,9 @@
     <string name="download">Unduh</string>
     <string name="notifications_settings">Pengaturan notifikasi</string>
     <string name="notification_sound">Suara notifikasi</string>
-    <string name="text_empty_holder_primary">Sepi juga di sini…</string>
+    <string name="text_empty_holder_primary">Sepi juga di siniâ€¦</string>
     <string name="text_history_holder_primary">Apa yang Anda baca akan ditampilkan di sini</string>
-    <string name="text_history_holder_secondary">Cari sesuatu untuk dibaca via «Eksplor»</string>
+    <string name="text_history_holder_secondary">Cari sesuatu untuk dibaca via Â«EksplorÂ»</string>
     <string name="text_local_holder_primary">Simpan sesuatu dulu</string>
     <string name="manga_shelf">Rak</string>
     <string name="recent_manga">Baru-baru ini</string>
@@ -171,7 +171,6 @@
     <string name="various_languages">Berbagai bahasa</string>
     <string name="search_chapters">Cari bab</string>
     <string name="chapters_empty">Tidak ada bab di manga ini</string>
-    <string name="percent_string_pattern">%1$s%%</string>
     <string name="appearance">Tampilan</string>
     <string name="suggestions_excluded_genres">Kecualikan genre</string>
     <string name="suggestions_excluded_genres_summary">Tentukan genre yang Anda tidak ingin lihat di saran</string>
@@ -227,7 +226,7 @@
     <string name="restore_backup">Pulihkan dari cadangan</string>
     <string name="file_not_found">Berkas tidak ditemukan</string>
     <string name="password_length_hint">Kata sandi harus 4 karakter atau lebih</string>
-    <string name="preparing_">Mempersiapkan…</string>
+    <string name="preparing_">Mempersiapkanâ€¦</string>
     <string name="text_clear_updates_feed_prompt">Bersihkan semua riwayat pembaruan secara permanen\?</string>
     <string name="sign_in">Masuk</string>
     <string name="default_s">Standar: %s</string>
@@ -316,13 +315,12 @@
     <string name="server_error">Kesalahan di sisi server (%1$d). Silakan coba lagi nanti</string>
     <string name="compact">Padat</string>
     <string name="prefetch_content">Pramuat konten</string>
-    <string name="memory_usage_pattern">%s - %s</string>
     <string name="nothing_here">Tidak ada apapun di sini</string>
     <string name="reader_control_ltr_summary">Jangan ubah arah pergantian halaman ke mode pembaca, misalnya, menekan tombol kanan selalu beralih ke halaman berikutnya. Opsi ini hanya berlaku untuk perangkat masukan hardware</string>
     <string name="source_disabled">Sumber dinonaktifkan</string>
     <string name="mark_as_current">Tandai sebagai saat ini</string>
     <string name="show_suspicious_content">Tampilkan konten yang mencurigakan</string>
-    <string name="scrobbling_empty_hint">Untuk melacak progres membaca, pilih Menu → Lacak di layar detail manga.</string>
+    <string name="scrobbling_empty_hint">Untuk melacak progres membaca, pilih Menu â†’ Lacak di layar detail manga.</string>
     <string name="services">Layanan</string>
     <string name="clear_new_chapters_counters">Juga bersihkan informasi tentang bab baru</string>
     <string name="network_unavailable_hint">Nyalakan Wi-Fi atau jaringan seluler untuk membaca manga daring</string>
@@ -517,7 +515,6 @@
     <string name="state_paused">Dijeda</string>
     <string name="content_type_other">Lainnya</string>
     <string name="sync_auth">Masuk untuk sinkronkan akun</string>
-    <string name="source_summary_pattern">%1$s, %2$s</string>
     <string name="downloads_settings_info">Anda dapat mengaktifkan perlambatan pengunduhan untuk setiap sumber manga satu per satu di pengaturan sumber, jika Anda mengalami masalah dengan pemblokiran sisi server</string>
     <string name="default_tab">Tab bawaan</string>
     <string name="category_hidden_done">Kategori ini telah disembunyikan dari tampilan utama dan dapat di akses melalui Menu -&gt; Manage categoties</string>
@@ -539,7 +536,6 @@
     <string name="rating_suggestive">Disarankan</string>
     <string name="vertical">Vertikal</string>
     <string name="last_read">Terakhir dibaca</string>
-    <string name="remaining_time_pattern">%1$s%2$s</string>
     <string name="toggle_ui">Tampilkan/Sembunyikan UI</string>
     <string name="prev_chapter">Bab sebelumnya</string>
     <string name="switch_pages_volume_buttons">Aktifkan tombol volume</string>
@@ -884,3 +880,4 @@
     <string name="pinned_sources_only">Hanya sumber yang disematkan</string>
     <string name="hide_empty_sources">Sembunyikan sumber kosong</string>
 </resources>
+

@@ -71,6 +71,7 @@ abstract class SuggestionDao : MangaQueryBuilder.ConditionCallback {
 		}
 	}
 
+	@Transaction
 	@Query("SELECT * FROM manga WHERE manga_id IN (:ids)")
 	protected abstract suspend fun getByIds(ids: LongArray): List<MangaWithTags>
 

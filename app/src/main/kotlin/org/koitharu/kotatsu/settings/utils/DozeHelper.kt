@@ -2,11 +2,11 @@ package org.koitharu.kotatsu.settings.utils
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -55,7 +55,7 @@ class DozeHelper(
 	private fun isDozeIgnoreAvailable(): Boolean {
 		val context = fragment.context ?: return false
 		val packageName = context.packageName
-		val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+		val powerManager = context.getSystemService<PowerManager>() ?: return false
 		return !powerManager.isIgnoringBatteryOptimizations(packageName)
 	}
 }

@@ -1,7 +1,6 @@
 package org.koitharu.kotatsu.core.ui.widgets
 
 import android.content.Context
-import android.os.Build
 import android.text.Selection
 import android.text.Spannable
 import android.util.AttributeSet
@@ -18,9 +17,7 @@ class SelectableTextView @JvmOverloads constructor(
 ) : MaterialTextView(context, attrs, defStyleAttr) {
 
 	init {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			pointerIcon = PointerIcon.getSystemIcon(context, PointerIconCompat.TYPE_TEXT)
-		}
+		pointerIcon = PointerIcon.getSystemIcon(context, PointerIconCompat.TYPE_TEXT)
 	}
 
 	override fun dispatchTouchEvent(event: MotionEvent?): Boolean {

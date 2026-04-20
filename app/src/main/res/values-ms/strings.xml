@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="enter_password">Masukkan kata laluan</string>
     <string name="protect_application_summary">Minta kata laluan ketika memulakan Kotatsu</string>
@@ -18,8 +18,8 @@
     <string name="list_mode">Mod senarai</string>
     <string name="settings">Tetapan</string>
     <string name="remote_sources">Sumber Manga</string>
-    <string name="loading_">Memuat…</string>
-    <string name="computing_">Mengira…</string>
+    <string name="loading_">Memuatâ€¦</string>
+    <string name="computing_">Mengiraâ€¦</string>
     <string name="chapter_d_of_d">Bab %1$d daripada %2$d</string>
     <string name="close">Tutup</string>
     <string name="try_again">Cuba semula</string>
@@ -33,7 +33,7 @@
     <string name="create_shortcut">Buat pintasan</string>
     <string name="search">Cari</string>
     <string name="search_manga">Cari manga</string>
-    <string name="manga_downloading_">Memuat turun…</string>
+    <string name="manga_downloading_">Memuat turunâ€¦</string>
     <string name="download_complete">Dimuat turun</string>
     <string name="downloads">Muat turun</string>
     <string name="by_name">Nama</string>
@@ -99,7 +99,7 @@
     <string name="create_backup">Buat penyandaran data</string>
     <string name="restore_backup">Pulihkan daripada sandaran</string>
     <string name="data_restored">Dipulihkan</string>
-    <string name="preparing_">Bersedia…</string>
+    <string name="preparing_">Bersediaâ€¦</string>
     <string name="file_not_found">Fail tidak ditemui</string>
     <string name="data_restored_success">Semua data telah dipulih</string>
     <string name="data_restored_with_errors">Data telah dipulih, namun terdapat ralat</string>
@@ -155,7 +155,6 @@
     <string name="various_languages">Pelbagai bahasa</string>
     <string name="search_chapters">Cari bab</string>
     <string name="chapters_empty">Tiada bab dalam manga ini</string>
-    <string name="percent_string_pattern">%1$s%%</string>
     <string name="appearance">Penampilan</string>
     <string name="suggestions_updating">Pengemaskinian pengesyoran</string>
     <string name="suggestions_excluded_genres_summary">Tentukan genre yang anda tidak mahu lihat dalam pengesyoran</string>
@@ -226,7 +225,6 @@
     <string name="other_cache">Cache lain-lain</string>
     <string name="storage_usage">Penggunaan storan</string>
     <string name="available">Tersedia</string>
-    <string name="memory_usage_pattern">%s - %s</string>
     <string name="removed_from_favourites">Dibuang daripada kegemaran</string>
     <string name="options">Pilihan</string>
     <string name="local_storage">Storan tempatan</string>
@@ -246,7 +244,7 @@
     <string name="suggestions_info">Semua data hanya dianalisa secara tempatan pada peranti ini dan tidak dihantar ke mana-mana.</string>
     <string name="you_have_not_favourites_yet">Tiada kegemaran lagi</string>
     <string name="exclude_nsfw_from_suggestions">Jangan syor manga NSFW</string>
-    <string name="processing_">Memproses…</string>
+    <string name="processing_">Memprosesâ€¦</string>
     <string name="onboard_text">Pilih bahasa untuk manga yang anda mahu baca. Anda boleh mengubah ini kemudian melalui tetapan.</string>
     <string name="add_to_favourites">Tambah dalam kegemaran</string>
     <string name="theme">Tema</string>
@@ -268,12 +266,12 @@
     <string name="notifications_settings">Tetapan pemberitahuan</string>
     <string name="grid_size">Saiz grid</string>
     <string name="switch_pages">Tukar muka surat</string>
-    <string name="text_empty_holder_primary">Ianya agak kosong di sini…</string>
+    <string name="text_empty_holder_primary">Ianya agak kosong di siniâ€¦</string>
     <string name="text_search_holder_secondary">Cuba untuk merumuskan semula carian.</string>
     <string name="updates">Kemas kini</string>
     <string name="all_favourites">Semua kegemaran</string>
     <string name="favourites_categories">Kategori kegemaran</string>
-    <string name="text_history_holder_secondary">Cari apa yang boleh dibaca melalui seksyen «Jelajah»</string>
+    <string name="text_history_holder_secondary">Cari apa yang boleh dibaca melalui seksyen Â«JelajahÂ»</string>
     <string name="pages_animation">Animasi muka surat</string>
     <string name="manga_save_location">Folder muat turun</string>
     <string name="not_available">Tidak tersedia</string>
@@ -358,7 +356,7 @@
     <string name="show_in_grid_view">Tunjukkan dalam paparan grid</string>
     <string name="theme_name_miku">Miku</string>
     <string name="nothing_here">Tidak ada apa -apa di sini</string>
-    <string name="scrobbling_empty_hint">Untuk Melacak Progres Membaca, Pilih Menu → LaCak Di Layar Butiran Manga.</string>
+    <string name="scrobbling_empty_hint">Untuk Melacak Progres Membaca, Pilih Menu â†’ LaCak Di Layar Butiran Manga.</string>
     <string name="services">Perkhidmatan</string>
     <string name="allow_unstable_updates">Benarkan kemas kini yang tidak stabil</string>
     <string name="allow_unstable_updates_summary">Terima pemberitahuan mengenai binaan yang tidak stabil</string>
@@ -544,7 +542,7 @@
     <string name="default_tab">Tab lalai</string>
     <string name="mark_as_completed">Tanda seperti selesai</string>
     <string name="mark_as_completed_prompt">Tandakan manga yang dipilih sepenuhnya dibaca?\n\nAmaran: Kemajuan bacaan semasa akan hilang.</string>
-    <string name="category_hidden_done">Kategori ini tersembunyi dari skrin utama dan boleh diakses melalui menu → Urus kategori</string>
+    <string name="category_hidden_done">Kategori ini tersembunyi dari skrin utama dan boleh diakses melalui menu â†’ Urus kategori</string>
     <string name="volume_">Kelantangan %d</string>
     <string name="volume_unknown">Jumlah yang tidak diketahui</string>
     <string name="incognito_mode_hint">Kemajuan bacaan anda tidak akan disimpan</string>
@@ -859,3 +857,4 @@
     <string name="telegram_integration">Telegram integrasi</string>
     <string name="test_parser">Ujian manga sumber</string>
 </resources>
+

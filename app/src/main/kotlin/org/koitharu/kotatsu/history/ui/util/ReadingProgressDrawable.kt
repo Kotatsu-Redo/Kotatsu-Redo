@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StyleRes
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.withStyledAttributes
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.image.PaintDrawable
 import org.koitharu.kotatsu.core.util.ext.hasFocusStateSpecified
@@ -24,15 +25,15 @@ class ReadingProgressDrawable(
 
 	override val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG)
 	private val checkDrawable = AppCompatResources.getDrawable(context, R.drawable.ic_check)
-	private val lineColor: ColorStateList
-	private val outlineColor: ColorStateList
-	private val backgroundColor: ColorStateList
-	private val textColor: ColorStateList
+	private var lineColor: ColorStateList = ColorStateList.valueOf(Color.BLACK)
+	private var outlineColor: ColorStateList = ColorStateList.valueOf(Color.TRANSPARENT)
+	private var backgroundColor: ColorStateList = ColorStateList.valueOf(Color.TRANSPARENT)
+	private var textColor: ColorStateList = ColorStateList.valueOf(Color.BLACK)
 	private val textBounds = Rect()
 	private val tempRect = Rect()
-	private val desiredHeight: Int
-	private val desiredWidth: Int
-	private val autoFitTextSize: Boolean
+	private var desiredHeight: Int = -1
+	private var desiredWidth: Int = -1
+	private var autoFitTextSize: Boolean = false
 
 	private var currentLineColor: Int = Color.TRANSPARENT
 	private var currentOutlineColor: Int = Color.TRANSPARENT
@@ -57,24 +58,24 @@ class ReadingProgressDrawable(
 		}
 
 	init {
-		val ta = context.obtainStyledAttributes(styleResId, R.styleable.ProgressDrawable)
-		desiredHeight = ta.getDimensionPixelSize(R.styleable.ProgressDrawable_android_height, -1)
-		desiredWidth = ta.getDimensionPixelSize(R.styleable.ProgressDrawable_android_width, -1)
-		autoFitTextSize = ta.getBoolean(R.styleable.ProgressDrawable_autoFitTextSize, false)
-		lineColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_strokeColor) ?: ColorStateList.valueOf(
-			Color.BLACK,
-		)
-		outlineColor =
-			ta.getColorStateList(R.styleable.ProgressDrawable_outlineColor) ?: ColorStateList.valueOf(Color.TRANSPARENT)
-		backgroundColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_fillColor)?.withAlpha(
-			(255 * ta.getFloat(R.styleable.ProgressDrawable_android_fillAlpha, 0f)).toInt(),
-		) ?: ColorStateList.valueOf(Color.TRANSPARENT)
-		textColor = ta.getColorStateList(R.styleable.ProgressDrawable_android_textColor) ?: lineColor
-		paint.strokeCap = Paint.Cap.ROUND
-		paint.textAlign = Paint.Align.CENTER
-		paint.textSize = ta.getDimension(R.styleable.ProgressDrawable_android_textSize, paint.textSize)
-		paint.strokeWidth = ta.getDimension(R.styleable.ProgressDrawable_strokeWidth, 1f)
-		ta.recycle()
+		context.withStyledAttributes(styleResId, R.styleable.ProgressDrawable) {
+			desiredHeight = getDimensionPixelSize(R.styleable.ProgressDrawable_android_height, -1)
+			desiredWidth = getDimensionPixelSize(R.styleable.ProgressDrawable_android_width, -1)
+			autoFitTextSize = getBoolean(R.styleable.ProgressDrawable_autoFitTextSize, false)
+			lineColor = getColorStateList(R.styleable.ProgressDrawable_android_strokeColor) ?: ColorStateList.valueOf(
+				Color.BLACK,
+			)
+			outlineColor =
+				getColorStateList(R.styleable.ProgressDrawable_outlineColor) ?: ColorStateList.valueOf(Color.TRANSPARENT)
+			backgroundColor = getColorStateList(R.styleable.ProgressDrawable_android_fillColor)?.withAlpha(
+				(255 * getFloat(R.styleable.ProgressDrawable_android_fillAlpha, 0f)).toInt(),
+			) ?: ColorStateList.valueOf(Color.TRANSPARENT)
+			textColor = getColorStateList(R.styleable.ProgressDrawable_android_textColor) ?: lineColor
+			paint.strokeCap = Paint.Cap.ROUND
+			paint.textAlign = Paint.Align.CENTER
+			paint.textSize = getDimension(R.styleable.ProgressDrawable_android_textSize, paint.textSize)
+			paint.strokeWidth = getDimension(R.styleable.ProgressDrawable_strokeWidth, 1f)
+		}
 		checkDrawable?.setTintList(textColor)
 		onStateChange(state)
 	}
@@ -93,9 +94,9 @@ class ReadingProgressDrawable(
 		if (percent < 0f) {
 			return
 		}
-		val cx = bounds.exactCenterX()
-		val cy = bounds.exactCenterY()
-		val radius = minOf(bounds.width(), bounds.height()) / 2f
+		val cx = getBounds().exactCenterX()
+		val cy = getBounds().exactCenterY()
+		val radius = minOf(getBounds().width(), getBounds().height()) / 2f
 		if (hasBackground) {
 			paint.style = Paint.Style.FILL
 			paint.color = currentBackgroundColor
@@ -120,14 +121,14 @@ class ReadingProgressDrawable(
 		)
 		if (hasText) {
 			if (checkDrawable != null && ReadingProgress.isCompleted(percent)) {
-				tempRect.set(bounds)
+				tempRect.set(getBounds())
 				tempRect.scale(0.6)
 				checkDrawable.bounds = tempRect
 				checkDrawable.draw(canvas)
 			} else {
 				paint.style = Paint.Style.FILL
 				paint.color = currentTextColor
-				val ty = bounds.height() / 2f + textBounds.height() / 2f - textBounds.bottom
+				val ty = getBounds().height() / 2f + textBounds.height() / 2f - textBounds.bottom
 				canvas.drawText(text, cx, ty, paint)
 			}
 		}

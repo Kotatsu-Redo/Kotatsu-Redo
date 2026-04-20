@@ -297,7 +297,7 @@ class ReaderViewModel @Inject constructor(
         loadingJob = launchLoadingJob(Dispatchers.Default) {
             prevJob?.cancelAndJoin()
             content.value = ReaderContent(emptyList(), null)
-            chaptersLoader.loadSingleChapter(id)
+            val hasPages = chaptersLoader.loadSingleChapter(id)
             val newState = ReaderState(id, page, 0)
             content.value = ReaderContent(chaptersLoader.snapshot(), newState)
             saveCurrentState(newState)
@@ -321,7 +321,7 @@ class ReaderViewModel @Inject constructor(
                 prevState.chapterId
             }
             content.value = ReaderContent(emptyList(), null)
-            chaptersLoader.loadSingleChapter(newChapterId)
+            val hasPages = chaptersLoader.loadSingleChapter(newChapterId)
             val newState = ReaderState(
                 chapterId = newChapterId,
                 page = if (delta == 0) prevState.page else 0,
@@ -419,10 +419,9 @@ class ReaderViewModel @Inject constructor(
                         val manga = details.toManga()
                         // obtain state
                         if (readingState.value == null) {
-                            val newState = getStateFromIntent(manga)
-                            if (newState == null) {
-                                return@collect // manga not loaded yet if cannot get state
-                            }
+                            val newState =
+                                getStateFromIntent(manga) ?: return@collect
+                            // manga not loaded yet if it cannot get state
                             readingState.value = newState
                             val mode = runCatchingCancellable {
                                 detectReaderModeUseCase(manga, newState)
@@ -431,7 +430,7 @@ class ReaderViewModel @Inject constructor(
                             selectedBranch.value = branch
                             readerMode.value = mode
                             try {
-                                chaptersLoader.loadSingleChapter(newState.chapterId)
+                                val hasPages = chaptersLoader.loadSingleChapter(newState.chapterId)
                             } catch (e: Exception) {
                                 readingState.value = null // try next time
                                 exception = e.mergeWith(exception)

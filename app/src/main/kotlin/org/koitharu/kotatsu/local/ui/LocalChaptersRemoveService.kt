@@ -9,6 +9,7 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.koitharu.kotatsu.R
@@ -67,7 +68,7 @@ class LocalChaptersRemoveService : CoroutineIntentService() {
 			.setAutoCancel(true)
 			.setContentIntent(ErrorReporterReceiver.getPendingIntent(applicationContext, error))
 			.build()
-		val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+		val nm = checkNotNull(getSystemService<NotificationManager>())
 		nm.notify(NOTIFICATION_ID + startId, notification)
 	}
 
