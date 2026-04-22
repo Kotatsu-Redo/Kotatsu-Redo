@@ -5,7 +5,7 @@ adapterdelegates = "4.3.2"
 appcompat = "1.7.1"
 avifDecoder = "1.1.1.14d8e3c4"
 biometric = "1.4.0-alpha04"
-coil = "3.3.0"
+coil = "3.4.0"
 collections = "1.5.0"
 # https://github.com/google/conscrypt/issues/1268
 #noinspection NewerVersionAvailable,GradleDependency - 2.5.3 cause crashes
