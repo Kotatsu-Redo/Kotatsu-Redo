@@ -4,10 +4,10 @@ import android.graphics.Bitmap
 import android.view.View
 import androidx.annotation.CheckResult
 import androidx.collection.scatterSetOf
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import com.davemorrissey.labs.subscaleview.decoder.SkiaImageDecoder
-import com.davemorrissey.labs.subscaleview.decoder.SkiaImageRegionDecoder
-import com.davemorrissey.labs.subscaleview.decoder.SkiaPooledImageRegionDecoder
+import com.sonai.ssiv.SubsamplingScaleImageView
+import com.sonai.ssiv.decoder.SkiaImageDecoder
+import com.sonai.ssiv.decoder.SkiaImageRegionDecoder
+import com.sonai.ssiv.decoder.SkiaPooledImageRegionDecoder
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

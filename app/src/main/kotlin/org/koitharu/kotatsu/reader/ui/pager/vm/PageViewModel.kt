@@ -3,8 +3,8 @@ package org.koitharu.kotatsu.reader.ui.pager.vm
 import android.graphics.Rect
 import android.net.Uri
 import androidx.annotation.WorkerThread
-import com.davemorrissey.labs.subscaleview.DefaultOnImageEventListener
-import com.davemorrissey.labs.subscaleview.ImageSource
+import com.sonai.ssiv.DefaultOnImageEventListener
+import com.sonai.ssiv.ImageSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -11,8 +11,8 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
-import com.davemorrissey.labs.subscaleview.DefaultOnImageEventListener
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+import com.sonai.ssiv.DefaultOnImageEventListener
+import com.sonai.ssiv.SubsamplingScaleImageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch

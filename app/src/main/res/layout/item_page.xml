@@ -6,13 +6,13 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
-	<com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+	<com.sonai.ssiv.SubsamplingScaleImageView
 		android:id="@+id/ssiv"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:defaultFocusHighlightEnabled="false"
 		android:focusable="true"
-		app:doubleTapZoomStyle="center"
+		app:doubleTapZoomStyle="zoomFocusCenter"
 		app:restoreStrategy="deferred" />
 
 	<org.koitharu.kotatsu.core.image.CoilImageView

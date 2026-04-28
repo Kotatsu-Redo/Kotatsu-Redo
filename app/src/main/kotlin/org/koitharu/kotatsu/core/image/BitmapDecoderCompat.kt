@@ -7,7 +7,7 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.createBitmap
-import com.davemorrissey.labs.subscaleview.decoder.ImageDecodeException
+import com.sonai.ssiv.decoder.ImageDecodeException
 import okio.IOException
 import okio.buffer
 import okio.source

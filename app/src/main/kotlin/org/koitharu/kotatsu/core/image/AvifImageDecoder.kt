@@ -14,7 +14,7 @@ import coil3.request.Options
 import coil3.request.maxBitmapSize
 import coil3.util.component1
 import coil3.util.component2
-import com.davemorrissey.labs.subscaleview.decoder.ImageDecodeException
+import com.sonai.ssiv.decoder.ImageDecodeException
 import kotlinx.coroutines.runInterruptible
 import org.aomedia.avif.android.AvifDecoder
 import org.koitharu.kotatsu.core.util.ext.readByteBuffer

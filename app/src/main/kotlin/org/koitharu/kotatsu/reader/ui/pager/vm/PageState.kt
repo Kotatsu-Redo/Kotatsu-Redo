@@ -1,6 +1,6 @@
 package org.koitharu.kotatsu.reader.ui.pager.vm
 
-import com.davemorrissey.labs.subscaleview.ImageSource
+import com.sonai.ssiv.ImageSource
 
 sealed class PageState {
 

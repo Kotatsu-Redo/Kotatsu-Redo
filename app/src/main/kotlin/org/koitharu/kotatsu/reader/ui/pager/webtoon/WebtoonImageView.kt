@@ -7,7 +7,7 @@ import android.graphics.PointF
 import android.util.AttributeSet
 import androidx.core.view.ancestors
 import androidx.recyclerview.widget.RecyclerView
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+import com.sonai.ssiv.SubsamplingScaleImageView
 import org.koitharu.kotatsu.core.util.ext.resolveDp
 import kotlin.math.roundToInt
 

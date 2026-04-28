@@ -5,7 +5,7 @@ import android.content.res.Resources
 import android.database.sqlite.SQLiteFullException
 import androidx.annotation.DrawableRes
 import coil3.network.HttpException
-import com.davemorrissey.labs.subscaleview.decoder.ImageDecodeException
+import com.sonai.ssiv.decoder.ImageDecodeException
 import kotlinx.coroutines.CancellationException
 import okhttp3.Response
 import okhttp3.internal.http2.StreamResetException

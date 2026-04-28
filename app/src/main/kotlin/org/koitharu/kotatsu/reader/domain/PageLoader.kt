@@ -16,7 +16,7 @@ import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
 import coil3.request.transformations
 import coil3.toBitmap
-import com.davemorrissey.labs.subscaleview.ImageSource
+import com.sonai.ssiv.ImageSource
 import dagger.hilt.android.ActivityRetainedLifecycle
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.CoroutineExceptionHandler

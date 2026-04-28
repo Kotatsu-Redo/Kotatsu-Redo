@@ -71,7 +71,10 @@ android {
 				'META-INF/NOTICE.md'
 			]
 		}
-	}
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
 	sourceSets {
 		androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
 		main.java.srcDirs += 'src/main/kotlin/'

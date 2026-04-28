@@ -4,7 +4,7 @@ import android.graphics.PointF
 import android.view.Gravity
 import android.widget.FrameLayout
 import androidx.lifecycle.LifecycleOwner
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+import com.sonai.ssiv.SubsamplingScaleImageView
 import org.koitharu.kotatsu.core.exceptions.resolve.ExceptionResolver
 import org.koitharu.kotatsu.core.model.ZoomMode
 import org.koitharu.kotatsu.core.os.NetworkState
