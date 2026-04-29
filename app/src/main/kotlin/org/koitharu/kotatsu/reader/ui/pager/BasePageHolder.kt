@@ -11,12 +11,11 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
-import com.sonai.ssiv.DefaultOnImageEventListener
+import com.sonai.ssiv.OnImageEventListener
 import com.sonai.ssiv.SubsamplingScaleImageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.resolve.ExceptionResolver
 import org.koitharu.kotatsu.core.image.CoilImageView
@@ -42,7 +41,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 	networkState: NetworkState,
 	exceptionResolver: ExceptionResolver,
 	lifecycleOwner: LifecycleOwner,
-) : LifecycleAwareViewHolder(binding.root, lifecycleOwner), DefaultOnImageEventListener, ComponentCallbacks2 {
+) : LifecycleAwareViewHolder(binding.root, lifecycleOwner), OnImageEventListener, ComponentCallbacks2 {
 
 	protected val viewModel = PageViewModel(
 		loader = loader,
@@ -70,7 +69,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 	init {
 		lifecycleScope.launch(Dispatchers.Main) {
 			ssiv.bindToLifecycle(this@BasePageHolder)
-			ssiv.isEagerLoadingEnabled = !context.isLowRamDevice()
+			ssiv.setEagerLoadingEnabled(!context.isLowRamDevice())
 			ssiv.addOnImageEventListener(viewModel)
 			ssiv.addOnImageEventListener(this@BasePageHolder)
 		}
@@ -203,7 +202,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 			}
 
 			is PageState.Loading -> {
-				if (state.preview != null && ssiv.getState() == null) {
+				if (state.preview != null && ssiv.state == null) {
 					ssiv.setImage(state.preview)
 				}
 			}
@@ -220,7 +219,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 		}
 		viewModel.state.update { currentState ->
 			if (currentState is PageState.Loaded) {
-				PageState.Shown(loadedState.source, loadedState.isConverted)
+				PageState.Shown(loadedState.uri, loadedState.source, loadedState.isConverted)
 			} else {
 				currentState
 			}
@@ -228,11 +227,6 @@ abstract class BasePageHolder<B : ViewBinding>(
 	}
 
 	protected fun SubsamplingScaleImageView.applyDownSampling(isForeground: Boolean) {
-		downSampling = when {
-			isForeground || !settings.isReaderOptimizationEnabled -> 1
-			BuildConfig.DEBUG -> 32
-			context.isLowRamDevice() -> 8
-			else -> 4
-		}
+		downSampling = !(isForeground || !settings.isReaderOptimizationEnabled)
 	}
 }

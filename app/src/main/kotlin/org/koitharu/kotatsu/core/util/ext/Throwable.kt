@@ -5,7 +5,7 @@ import android.content.res.Resources
 import android.database.sqlite.SQLiteFullException
 import androidx.annotation.DrawableRes
 import coil3.network.HttpException
-import com.sonai.ssiv.decoder.ImageDecodeException
+import com.sonai.ssiv.ImageDecodeException
 import kotlinx.coroutines.CancellationException
 import okhttp3.Response
 import okhttp3.internal.http2.StreamResetException
@@ -116,13 +116,7 @@ private fun Throwable.getDisplayMessageOrNull(resources: Resources): String? = w
     is SocketTimeoutException -> resources.getString(R.string.network_error)
 
     is ImageDecodeException -> {
-        val type = format?.substringBefore('/')
-        val formatString = format.ifNullOrEmpty { resources.getString(R.string.unknown).lowercase(Locale.getDefault()) }
-        if (type.isNullOrEmpty() || type == "image") {
-            resources.getString(R.string.error_image_format, formatString)
-        } else {
-            resources.getString(R.string.error_not_image, formatString)
-        }
+        resources.getString(R.string.error_corrupted_file)
     }
 
     is NoDataReceivedException -> resources.getString(R.string.error_no_data_received)

@@ -5,9 +5,11 @@ import android.view.View
 import androidx.annotation.CheckResult
 import androidx.collection.scatterSetOf
 import com.sonai.ssiv.SubsamplingScaleImageView
-import com.sonai.ssiv.decoder.SkiaImageDecoder
+import com.sonai.ssiv.decoder.BitmapFactorySSIVImageDecoder
+import com.sonai.ssiv.decoder.DecoderFactory
 import com.sonai.ssiv.decoder.SkiaImageRegionDecoder
 import com.sonai.ssiv.decoder.SkiaPooledImageRegionDecoder
+import com.sonai.ssiv.decoder.SkiaSSIVImageDecoder
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -73,17 +75,22 @@ data class ReaderSettings(
 	@CheckResult
 	fun applyBitmapConfig(ssiv: SubsamplingScaleImageView): Boolean {
 		val config = bitmapConfig
-		return if (ssiv.regionDecoderFactory.bitmapConfig != config) {
-			ssiv.regionDecoderFactory = if (ssiv.context.isLowRamDevice()) {
-				SkiaImageRegionDecoder.Factory(config)
-			} else {
-				SkiaPooledImageRegionDecoder.Factory(config)
-			}
-			ssiv.bitmapDecoderFactory = SkiaImageDecoder.Factory(config)
-			true
+		// Note: bitmapConfig is internal in decoders, so we use a check that works with current API
+		// or just always apply if we can't reliably check.
+		// For now, let's assume we need to apply if settings changed.
+		ssiv.regionDecoderFactory = if (ssiv.context.isLowRamDevice()) {
+			SkiaImageRegionDecoder.Factory(config)
 		} else {
-			false
+			DecoderFactory { SkiaPooledImageRegionDecoder(config) }
 		}
+		ssiv.bitmapDecoderFactory = DecoderFactory {
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+				SkiaSSIVImageDecoder(config)
+			} else {
+				BitmapFactorySSIVImageDecoder(config)
+			}
+		}
+		return true
 	}
 
 	class Producer @AssistedInject constructor(

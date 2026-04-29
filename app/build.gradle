@@ -14,7 +14,7 @@ plugins {
 
 android {
 	compileSdk = 37
-	buildToolsVersion = '35.0.0'
+	buildToolsVersion = '37.0.0'
 	namespace = 'org.koitharu.kotatsu'
 
     dependenciesInfo {

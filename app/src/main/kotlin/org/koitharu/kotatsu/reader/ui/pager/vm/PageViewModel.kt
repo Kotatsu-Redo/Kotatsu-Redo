@@ -3,7 +3,7 @@ package org.koitharu.kotatsu.reader.ui.pager.vm
 import android.graphics.Rect
 import android.net.Uri
 import androidx.annotation.WorkerThread
-import com.sonai.ssiv.DefaultOnImageEventListener
+import com.sonai.ssiv.OnImageEventListener
 import com.sonai.ssiv.ImageSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ class PageViewModel(
 	private val networkState: NetworkState,
 	private val exceptionResolver: ExceptionResolver,
 	private val isWebtoon: Boolean,
-) : DefaultOnImageEventListener {
+) : OnImageEventListener {
 
 	private val scope = loader.loaderScope + Dispatchers.Main.immediate
 	private var job: Job? = null
@@ -82,7 +82,7 @@ class PageViewModel(
 	override fun onImageLoaded() {
 		state.update { currentState ->
 			if (currentState is PageState.Loaded) {
-				PageState.Shown(currentState.source, currentState.isConverted)
+				PageState.Shown(currentState.uri, currentState.source, currentState.isConverted)
 			} else {
 				currentState
 			}
@@ -94,8 +94,8 @@ class PageViewModel(
 
 		state.update { currentState ->
 			if (currentState is PageState.Loaded) {
-				val uri = (currentState.source as? ImageSource.Uri)?.uri
-				if (!currentState.isConverted && uri != null && e is IOException) {
+				val uri = currentState.uri
+				if (!currentState.isConverted && e is IOException) {
 					tryConvert(uri, e)
 					PageState.Converting()
 				} else {
@@ -107,7 +107,7 @@ class PageViewModel(
 		}
 	}
 
-	private fun tryConvert(uri: Uri, e: Exception) {
+	private fun tryConvert(uri: Uri, e: Throwable) {
 		val prevJob = job
 		job = scope.launch(Dispatchers.Default) {
 			prevJob?.join()
@@ -119,7 +119,7 @@ class PageViewModel(
 				} else {
 					null
 				}
-				state.value = PageState.Loaded(newUri.toImageSource(cachedBounds), isConverted = true)
+				state.value = PageState.Loaded(newUri, newUri.toImageSource(cachedBounds), isConverted = true)
 			} catch (ce: CancellationException) {
 				throw ce
 			} catch (e2: Throwable) {
@@ -150,7 +150,7 @@ class PageViewModel(
 			} else {
 				null
 			}
-			state.value = PageState.Loaded(uri.toImageSource(cachedBounds), isConverted = false)
+			state.value = PageState.Loaded(uri, uri.toImageSource(cachedBounds), isConverted = false)
 		} catch (e: CancellationException) {
 			throw e
 		} catch (e: Throwable) {

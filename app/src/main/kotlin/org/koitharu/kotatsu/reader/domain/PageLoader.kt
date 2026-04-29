@@ -161,7 +161,7 @@ class PageLoader @Inject constructor(
 		}
 		coil.diskCache?.let { cache ->
 			cache.openSnapshot(preview)?.use { snapshot ->
-				return ImageSource.file(snapshot.data.toFile())
+				return ImageSource.uri(snapshot.data.toFile().toUri())
 			}
 		}
 		return null
@@ -212,7 +212,7 @@ class PageLoader @Inject constructor(
 	}
 
 	suspend fun getTrimmedBounds(uri: Uri): Rect? = runCatchingCancellable {
-		edgeDetector.getBounds(ImageSource.uri(uri))
+		edgeDetector.getBounds(uri)
 	}.onFailure { error ->
 		error.printStackTraceDebug()
 	}.getOrNull()

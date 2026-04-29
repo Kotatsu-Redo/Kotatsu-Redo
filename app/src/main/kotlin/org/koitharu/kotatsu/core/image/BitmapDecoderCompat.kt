@@ -7,7 +7,7 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.createBitmap
-import com.sonai.ssiv.decoder.ImageDecodeException
+import com.sonai.ssiv.ImageDecodeException
 import okio.IOException
 import okio.buffer
 import okio.source
@@ -86,14 +86,12 @@ object BitmapDecoderCompat {
 	}.getOrNull()
 
 	private fun checkBitmapNotNull(bitmap: Bitmap?, format: String?): Bitmap =
-		bitmap ?: throw ImageDecodeException(null, format)
+		bitmap ?: throw ImageDecodeException("Bitmap decoding failed for format $format")
 
 	private fun decodeAvif(bytes: ByteBuffer): Bitmap {
 		val info = Info()
 		if (!AvifDecoder.getInfo(bytes, bytes.remaining(), info)) {
 			throw ImageDecodeException(
-				null,
-				FORMAT_AVIF,
 				"Requested to decode byte buffer which cannot be handled by AvifDecoder",
 			)
 		}
@@ -101,7 +99,7 @@ object BitmapDecoderCompat {
 		val bitmap = createBitmap(info.width, info.height, config)
 		if (!AvifDecoder.decode(bytes, bytes.remaining(), bitmap)) {
 			bitmap.recycle()
-			throw ImageDecodeException(null, FORMAT_AVIF)
+			throw ImageDecodeException("AVIF decoding failed")
 		}
 		return bitmap
 	}

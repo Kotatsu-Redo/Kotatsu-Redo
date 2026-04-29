@@ -10,7 +10,7 @@ import androidx.core.graphics.alpha
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
-import com.sonai.ssiv.ImageSource
+import android.net.Uri
 import com.sonai.ssiv.decoder.SkiaPooledImageRegionDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -28,10 +28,10 @@ import kotlin.math.min
 class EdgeDetector(private val context: Context) {
 
 	private val mutex = Mutex()
-	private val cache = SynchronizedSieveCache<ImageSource, Rect>(CACHE_SIZE)
+	private val cache = SynchronizedSieveCache<Uri, Rect>(CACHE_SIZE)
 
-	suspend fun getBounds(imageSource: ImageSource): Rect? {
-		cache[imageSource]?.let { rect ->
+	suspend fun getBounds(uri: Uri): Rect? {
+		cache[uri]?.let { rect ->
 			return if (rect.isEmpty) null else rect
 		}
 		return mutex.withLock {
@@ -39,7 +39,7 @@ class EdgeDetector(private val context: Context) {
 				val decoder = SkiaPooledImageRegionDecoder(Bitmap.Config.RGB_565)
 				try {
 					val size = runInterruptible {
-						decoder.init(context, imageSource)
+						decoder.init(context, uri)
 					}
 					val scaleFactor = calculateScaleFactor(size)
 					val sampleSize = (1f / scaleFactor).toInt().coerceAtLeast(1)
@@ -79,7 +79,7 @@ class EdgeDetector(private val context: Context) {
 				}
 			}
 		}.also {
-			cache.put(imageSource, it ?: EMPTY_RECT)
+			cache.put(uri, it ?: EMPTY_RECT)
 		}
 	}
 

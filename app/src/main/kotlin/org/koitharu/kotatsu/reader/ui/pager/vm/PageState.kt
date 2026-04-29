@@ -1,5 +1,6 @@
 package org.koitharu.kotatsu.reader.ui.pager.vm
 
+import android.net.Uri
 import com.sonai.ssiv.ImageSource
 
 sealed class PageState {
@@ -12,13 +13,15 @@ sealed class PageState {
 	) : PageState()
 
 	data class Loaded(
+		val uri: Uri,
 		val source: ImageSource,
 		val isConverted: Boolean,
 	) : PageState()
 
-	class Converting() : PageState()
+	class Converting : PageState()
 
 	data class Shown(
+		val uri: Uri,
 		val source: ImageSource,
 		val isConverted: Boolean,
 	) : PageState()
