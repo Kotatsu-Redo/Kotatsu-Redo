@@ -22,6 +22,7 @@ import org.koitharu.kotatsu.favourites.domain.model.Cover
 import org.koitharu.kotatsu.list.domain.ListFilterOption
 import org.koitharu.kotatsu.list.domain.ListSortOrder
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_COMPLETED
+import org.koitharu.kotatsu.parsers.model.MangaParserSource
 
 @Dao
 abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
@@ -143,6 +144,28 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 	@Query("SELECT manga.source AS count FROM favourites LEFT JOIN manga ON manga.manga_id = favourites.manga_id WHERE favourites.category_id = :categoryId GROUP BY manga.source ORDER BY COUNT(manga.source) DESC LIMIT :limit")
 	abstract suspend fun findPopularSources(categoryId: Long, limit: Int): List<String>
 
+	@Query(
+		"""SELECT tags.title FROM tags
+		LEFT JOIN manga_tags ON tags.tag_id = manga_tags.tag_id
+		INNER JOIN favourites ON favourites.manga_id = manga_tags.manga_id
+		WHERE favourites.deleted_at = 0
+		GROUP BY tags.title
+		ORDER BY COUNT(manga_tags.manga_id) DESC
+		LIMIT :limit""",
+	)
+	abstract suspend fun findPopularTagTitles(limit: Int): List<String>
+
+	@Query(
+		"""SELECT tags.title FROM tags
+		LEFT JOIN manga_tags ON tags.tag_id = manga_tags.tag_id
+		INNER JOIN favourites ON favourites.manga_id = manga_tags.manga_id
+		WHERE favourites.category_id = :categoryId AND favourites.deleted_at = 0
+		GROUP BY tags.title
+		ORDER BY COUNT(manga_tags.manga_id) DESC
+		LIMIT :limit""",
+	)
+	abstract suspend fun findPopularTagTitles(categoryId: Long, limit: Int): List<String>
+
 	fun dump(): Flow<FavouriteManga> = flow {
 		val window = 10
 		var offset = 0
@@ -247,8 +270,22 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 		ListFilterOption.Macro.NEW_CHAPTERS -> "(SELECT chapters_new FROM tracks WHERE tracks.manga_id = favourites.manga_id) > 0"
 		ListFilterOption.Macro.NSFW -> "manga.nsfw = 1"
 		is ListFilterOption.Tag -> "EXISTS(SELECT * FROM manga_tags WHERE favourites.manga_id = manga_tags.manga_id AND tag_id = ${option.tagId})"
+		is ListFilterOption.TagTitle -> "EXISTS(SELECT * FROM manga_tags LEFT JOIN tags ON tags.tag_id = manga_tags.tag_id WHERE favourites.manga_id = manga_tags.manga_id AND tags.title = ${sqlEscapeString(option.titleText)})"
 		ListFilterOption.Downloaded -> "EXISTS(SELECT * FROM local_index WHERE local_index.manga_id = favourites.manga_id)"
 		is ListFilterOption.Source -> "manga.source = ${sqlEscapeString(option.mangaSource.name)}"
+		is ListFilterOption.ContentType -> contentTypeCondition(option)
 		else -> null
+	}
+
+	private fun contentTypeCondition(option: ListFilterOption.ContentType): String {
+		val sources = MangaParserSource.entries
+			.asSequence()
+			.filter { it.contentType == option.contentType }
+			.joinToString(
+				prefix = "manga.source IN (",
+				postfix = ")",
+				transform = { sqlEscapeString(it.name) },
+			)
+		return sources.takeUnless { it == "manga.source IN ()" } ?: "0"
 	}
 }

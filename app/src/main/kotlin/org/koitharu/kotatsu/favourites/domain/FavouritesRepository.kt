@@ -96,6 +96,16 @@ class FavouritesRepository @Inject constructor(
 			.distinctUntilChanged()
 	}
 
+	suspend fun findPopularTagTitles(categoryId: Long, limit: Int): List<String> {
+		return db.getFavouritesDao().run {
+			if (categoryId == 0L) {
+				findPopularTagTitles(limit)
+			} else {
+				findPopularTagTitles(categoryId, limit)
+			}
+		}
+	}
+
 	fun observeCategories(): Flow<List<FavouriteCategory>> {
 		return db.getFavouriteCategoriesDao().observeAll().mapItems {
 			it.toFavouriteCategory()

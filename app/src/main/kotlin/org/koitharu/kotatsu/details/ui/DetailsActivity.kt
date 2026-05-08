@@ -150,6 +150,7 @@ class DetailsActivity :
 		super.onCreate(savedInstanceState)
 		setContentView(ActivityDetailsBinding.inflate(layoutInflater))
 		infoBinding = LayoutDetailsTableBinding.bind(viewBinding.root)
+		configureTransparentAppBar()
 		setDisplayHomeAsUp(isEnabled = true, showUpAsClose = false)
 		supportActionBar?.setDisplayShowTitleEnabled(false)
 		viewBinding.chipFavorite.setOnClickListener(this)
@@ -558,11 +559,17 @@ class DetailsActivity :
 			GradientDrawable.Orientation.TOP_BOTTOM,
 			intArrayOf(surfaceColor, halfAlpha, Color.TRANSPARENT, Color.TRANSPARENT, halfAlpha, surfaceColor),
 		)
-		viewBinding.appbar.setBackgroundColor(ColorUtils.setAlphaComponent(surfaceColor, 180))
+		configureTransparentAppBar()
 		viewBinding.scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
 			bgView.translationY = -scrollY.toFloat()
 		}
 		bgView.isVisible = true
+	}
+
+	private fun configureTransparentAppBar() {
+		viewBinding.appbar.setBackgroundColor(Color.TRANSPARENT)
+		viewBinding.appbar.setStatusBarForegroundColor(Color.TRANSPARENT)
+		viewBinding.toolbar.setBackgroundColor(Color.TRANSPARENT)
 	}
 
 	private fun String.withEstimatedTime(time: ReadingTime?): String {

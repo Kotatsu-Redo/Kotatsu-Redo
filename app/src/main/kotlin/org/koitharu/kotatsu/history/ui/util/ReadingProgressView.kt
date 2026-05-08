@@ -44,10 +44,10 @@ class ReadingProgressView @JvmOverloads constructor(
 					NONE -> ""
 
 					PERCENT_READ -> percentPattern.format(ReadingProgress.percentToString(value.percent))
-					PERCENT_LEFT -> "-" + percentPattern.format(ReadingProgress.percentToString(value.percentLeft))
+					PERCENT_LEFT -> percentPattern.format(ReadingProgress.percentToString(value.percentLeft))
 
 					CHAPTERS_READ -> value.chapters.toString()
-					CHAPTERS_LEFT -> "-" + value.chaptersLeft.toString()
+					CHAPTERS_LEFT -> value.chaptersLeft.toString()
 				}
 			}
 		}
