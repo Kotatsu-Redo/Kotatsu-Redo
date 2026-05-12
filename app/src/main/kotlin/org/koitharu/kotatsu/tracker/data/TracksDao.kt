@@ -58,7 +58,10 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
 	@Query("DELETE FROM tracks")
 	abstract suspend fun clear()
 
-	@Query("UPDATE tracks SET chapters_new = 0")
+	@Query(
+		"UPDATE tracks SET chapters_new = 0, last_chapter_id = COALESCE(" +
+			"(SELECT chapter_id FROM history WHERE history.manga_id = tracks.manga_id AND history.deleted_at = 0), 0)",
+	)
 	abstract suspend fun clearCounters()
 
 	@Query("UPDATE tracks SET chapters_new = 0 WHERE manga_id = :mangaId")

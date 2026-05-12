@@ -37,7 +37,7 @@ class MangaPickerViewModel @Inject constructor(
 	override val content: StateFlow<List<ListModel>>
 		get() = flow {
 			emit(loadList())
-		}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState))
+		}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState()))
 
 	override fun onRefresh() = Unit
 

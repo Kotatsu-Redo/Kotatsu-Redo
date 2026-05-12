@@ -21,6 +21,13 @@
 
 	<SwitchPreferenceCompat
 		android:defaultValue="false"
+		android:key="no_auto_captcha"
+		android:order="103"
+		android:summary="@string/disable_captcha_auto_solve_summary"
+		android:title="@string/disable_captcha_auto_solve" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
 		android:key="slowdown"
 		android:order="105"
 		android:summary="@string/download_slowdown_summary"

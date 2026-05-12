@@ -252,15 +252,24 @@ class TrackingRepository @Inject constructor(
 				lastError = updates.error?.toString(),
 			)
 
-			is MangaUpdates.Success -> TrackEntity(
-				mangaId = mangaId,
-				lastChapterId = updates.manga.getChapters(updates.branch).lastOrNull()?.id ?: NO_ID,
-				newChapters = if (updates.isValid) newChapters + updates.newChapters.size else 0,
-				lastCheckTime = System.currentTimeMillis(),
-				lastChapterDate = updates.lastChapterDate().ifZero { lastChapterDate },
-				lastResult = if (updates.isNotEmpty()) TrackEntity.RESULT_HAS_UPDATE else TrackEntity.RESULT_NO_UPDATE,
-				lastError = null,
-			)
+			is MangaUpdates.Success -> {
+				val chapters = updates.manga.getChapters(updates.branch)
+				TrackEntity(
+					mangaId = mangaId,
+					lastChapterId = chapters.lastOrNull()?.id ?: NO_ID,
+					// Cap at the total chapter count: the unread counter can never exceed how many
+					// chapters exist, even if a transient detection glitch tries to inflate it.
+					newChapters = if (updates.isValid) {
+						(newChapters + updates.newChapters.size).coerceIn(0, chapters.size)
+					} else {
+						0
+					},
+					lastCheckTime = System.currentTimeMillis(),
+					lastChapterDate = updates.lastChapterDate().ifZero { lastChapterDate },
+					lastResult = if (updates.isNotEmpty()) TrackEntity.RESULT_HAS_UPDATE else TrackEntity.RESULT_NO_UPDATE,
+					lastError = null,
+				)
+			}
 		}
 	}
 

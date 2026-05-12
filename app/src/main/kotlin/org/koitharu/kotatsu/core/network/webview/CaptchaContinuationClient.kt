@@ -37,6 +37,7 @@ class CaptchaContinuationClient(
             }
 
             val client = OkHttpClient.Builder()
+                .cookieJar(cookieJar)
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(15, TimeUnit.SECONDS)
                 .build()

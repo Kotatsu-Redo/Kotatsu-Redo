@@ -78,7 +78,7 @@ class ScrobblingSelectorViewModel @Inject constructor(
 				},
 			)
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState()))
 
 	val selectedItemId = MutableStateFlow(NO_ID)
 	val onClose = MutableEventFlow<Unit>()

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import android.provider.Settings
 import androidx.annotation.CheckResult
 import androidx.core.app.NotificationChannelCompat
@@ -91,11 +92,17 @@ class TrackWorker @AssistedInject constructor(
 	override suspend fun doWork(): Result {
 		notificationHelper.updateChannels()
 		val isForeground = trySetForeground()
+		// Full run when manually triggered (TAG_ONESHOT), regardless of whether the
+		// foreground service promotion succeeded — Android may refuse the promotion
+		// on certain OEMs, but the user explicitly asked for an immediate full check.
+		val isFullRun = TAG_ONESHOT in tags
+		Log.i(LOG_TAG, "doWork: tags=$tags isForeground=$isForeground isFullRun=$isFullRun")
 		return try {
-			doWorkImpl(isFullRun = isForeground && TAG_ONESHOT in tags)
+			doWorkImpl(isFullRun = isFullRun)
 		} catch (e: CancellationException) {
 			throw e
 		} catch (e: Throwable) {
+			Log.w(LOG_TAG, "doWork failed", e)
 			e.printStackTraceDebug()
 			Result.failure()
 		} finally {
@@ -107,14 +114,18 @@ class TrackWorker @AssistedInject constructor(
 
 	private suspend fun doWorkImpl(isFullRun: Boolean): Result {
 		if (!settings.isTrackerEnabled) {
+			Log.i(LOG_TAG, "doWorkImpl: tracker disabled, skipping")
 			return Result.success()
 		}
-		val tracks = getTracksUseCase(if (isFullRun) Int.MAX_VALUE else BATCH_SIZE)
+		val limit = if (isFullRun) Int.MAX_VALUE else BATCH_SIZE
+		val tracks = getTracksUseCase(limit)
+		Log.i(LOG_TAG, "doWorkImpl: isFullRun=$isFullRun limit=$limit -> fetched ${tracks.size} track(s) to check")
 		if (tracks.isEmpty()) {
 			return Result.success()
 		}
 
 		val notifications = checkUpdatesAsync(tracks)
+		Log.i(LOG_TAG, "doWorkImpl: checked ${tracks.size} track(s), ${notifications.size} produced notifications")
 		if (notifications.isNotEmpty() && applicationContext.checkNotificationPermission(null)) {
 			val groupNotification = notificationHelper.createGroupNotification(notifications)
 			notifications.forEach { notificationManager.notify(it.tag, it.id, it.notification) }
@@ -151,13 +162,26 @@ class TrackWorker @AssistedInject constructor(
 			}
 			when (it) {
 				is MangaUpdates.Failure -> {
+					Log.w(
+						LOG_TAG,
+						"[${it.manga.id}] \"${it.manga.title}\" check failed: " +
+							"${it.error?.javaClass?.simpleName} ${it.error?.message}",
+					)
 					val e = it.error
 					if (e is CloudFlareException) {
-						captchaHandler.handle(e)
+						// Don't block the update check on solving captchas; just notify the user
+						captchaHandler.handle(e, tryAutoResolve = false)
 					}
 				}
 
-				is MangaUpdates.Success -> processDownload(it)
+				is MangaUpdates.Success -> {
+					Log.i(
+						LOG_TAG,
+						"[${it.manga.id}] \"${it.manga.title}\" checked: isValid=${it.isValid} " +
+							"newChapters=${it.newChapters.size}",
+					)
+					processDownload(it)
+				}
 			}
 		}.mapNotNull {
 			when (it) {
@@ -334,6 +358,7 @@ class TrackWorker @AssistedInject constructor(
 
 	private companion object {
 
+		const val LOG_TAG = "TrackWorker"
 		const val WORKER_CHANNEL_ID = "track_worker"
 		const val WORKER_NOTIFICATION_ID = 35
 		const val TAG = "tracking"

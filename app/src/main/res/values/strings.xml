@@ -164,6 +164,7 @@
     <string name="silent">Silent</string>
     <string name="captcha_required">CAPTCHA required</string>
     <string name="captcha_solve">Solve</string>
+    <string name="captcha_solving">Solving captcha automatically…</string>
     <string name="clear_cookies">Clear cookies</string>
     <string name="cookies_cleared">All cookies were removed</string>
     <string name="clear_feed">Clear feed</string>
@@ -830,6 +831,8 @@
     <string name="global_search">Global search</string>
     <string name="disable_captcha_notifications">Disable captcha notifications</string>
     <string name="disable_captcha_notifications_summary">You will not receive notifications about solving CAPTCHA for this source but this can lead to breaking background operations (checking for new chapters, obtaining recommendations, etc)</string>
+    <string name="disable_captcha_auto_solve">Disable automatic CAPTCHA solving</string>
+    <string name="disable_captcha_auto_solve_summary">Don\'t try to solve CAPTCHA silently in the background. You will be asked to solve it manually instead.</string>
     <string name="chapter_volume_number">Vol %1$s Chapter %2$s</string>
     <string name="chapter_number">Chapter %s</string>
     <string name="unnamed_chapter">Unnamed chapter</string>

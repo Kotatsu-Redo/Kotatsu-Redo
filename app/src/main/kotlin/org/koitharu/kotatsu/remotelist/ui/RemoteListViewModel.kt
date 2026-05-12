@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.core.exceptions.CloudFlareException
+import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler
 import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.model.distinctById
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
@@ -60,6 +62,7 @@ open class RemoteListViewModel @Inject constructor(
 	private val exploreRepository: ExploreRepository,
 	sourcesRepository: MangaSourcesRepository,
 	mangaDataRepository: MangaDataRepository,
+	private val captchaHandler: CaptchaHandler,
 	@LocalStorageChanges localStorageChanges: SharedFlow<LocalManga?>
 ) : MangaListViewModel(settings, mangaDataRepository, localStorageChanges), FilterCoordinator.Owner {
 
@@ -72,6 +75,7 @@ open class RemoteListViewModel @Inject constructor(
 	private val mangaList = MutableStateFlow<List<Manga>?>(null)
 	private val hasNextPage = MutableStateFlow(false)
 	private val listError = MutableStateFlow<Throwable?>(null)
+	private val isResolvingCaptcha = MutableStateFlow(false)
 	private var loadingJob: Job? = null
 	private var randomJob: Job? = null
 
@@ -80,7 +84,8 @@ open class RemoteListViewModel @Inject constructor(
 		observeListModeWithTriggers(),
 		listError,
 		hasNextPage,
-	) { list, mode, error, hasNext ->
+		isResolvingCaptcha,
+	) { list, mode, error, hasNext, resolvingCaptcha ->
 		buildList(list?.size?.plus(2) ?: 2) {
 			when {
 				list.isNullOrEmpty() && error != null -> add(
@@ -90,7 +95,7 @@ open class RemoteListViewModel @Inject constructor(
 					),
 				)
 
-				list == null -> add(LoadingState)
+				list == null -> add(LoadingState(if (resolvingCaptcha) R.string.captcha_solving else 0))
 				list.isEmpty() -> add(createEmptyState(canResetFilter = filterCoordinator.isFilterApplied))
 				else -> {
 					mapMangaList(this, list, mode)
@@ -103,7 +108,7 @@ open class RemoteListViewModel @Inject constructor(
 			}
 			onBuildList(this)
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState()))
 
 	init {
 		filterCoordinator.observe()
@@ -147,11 +152,7 @@ open class RemoteListViewModel @Inject constructor(
 		return launchLoadingJob(Dispatchers.Default) {
 			try {
 				listError.value = null
-				val list = repository.getList(
-					offset = if (append) mangaList.value.sizeOrZero() else 0,
-					order = filterState.sortOrder,
-					filter = filterState.listFilter,
-				)
+				val list = getListResolvingCaptcha(filterState, append)
 				val prevList = mangaList.value.orEmpty()
 				if (!append) {
 					mangaList.value = list.distinctById()
@@ -175,6 +176,37 @@ open class RemoteListViewModel @Inject constructor(
 			}
 		}.also { loadingJob = it }
 	}
+
+	/**
+	 * Loads a page and, on a CloudFlare captcha, tries to solve it silently and retries once
+	 * before letting the error propagate to the UI.
+	 */
+	private suspend fun getListResolvingCaptcha(
+		filterState: FilterCoordinator.Snapshot,
+		append: Boolean,
+	): List<Manga> {
+		val offset = if (append) mangaList.value.sizeOrZero() else 0
+		return try {
+			repository.getList(offset = offset, order = filterState.sortOrder, filter = filterState.listFilter)
+		} catch (e: Exception) {
+			val cfException = e.findCloudFlareException() ?: throw e
+			isResolvingCaptcha.value = true
+			val resolved = try {
+				captchaHandler.tryResolveAutomatically(cfException)
+			} finally {
+				isResolvingCaptcha.value = false
+			}
+			if (resolved) {
+				repository.getList(offset = offset, order = filterState.sortOrder, filter = filterState.listFilter)
+			} else {
+				// Auto-solving failed/timed out — surface the captcha so the user can resolve it manually
+				throw cfException
+			}
+		}
+	}
+
+	private fun Throwable.findCloudFlareException(): CloudFlareException? =
+		generateSequence(this) { it.cause?.takeIf { c -> c !== it } }.filterIsInstance<CloudFlareException>().firstOrNull()
 
 	protected open fun createEmptyState(canResetFilter: Boolean) = EmptyState(
 		icon = R.drawable.ic_empty_common,

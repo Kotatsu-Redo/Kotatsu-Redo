@@ -199,7 +199,9 @@ abstract class MangaListFragment :
 	private fun resolveException(e: Throwable) {
 		if (ExceptionResolver.canResolve(e)) {
 			viewLifecycleScope.launch {
-				if (exceptionResolver.resolve(e)) {
+				// The list error state already means an automatic attempt was made or skipped,
+				// so go straight to the manual resolver instead of retrying it silently again.
+				if (exceptionResolver.resolve(e, tryAutoResolve = false)) {
 					viewModel.onRetry()
 				}
 			}

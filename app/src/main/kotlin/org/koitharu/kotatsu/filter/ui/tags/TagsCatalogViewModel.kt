@@ -45,13 +45,13 @@ class TagsCatalogViewModel @AssistedInject constructor(
 		filterProperty.map { it.selectedItems },
 	) { available, cached, selected ->
 		buildList(available, cached, selected)
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState()))
 
 	val content = combine(tags, searchQuery) { raw, query ->
 		raw.filter { x ->
 			x !is TagCatalogItem || x.tag.title.contains(query, ignoreCase = true)
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState()))
 
 	fun handleTagClick(tag: MangaTag, isChecked: Boolean) {
 		if (isExcluded) {

@@ -68,7 +68,7 @@ class AlternativesViewModel @Inject constructor(
 		when {
 			list.isEmpty() -> listOf(
 				when {
-					loading -> LoadingState
+					loading -> LoadingState()
 					else -> EmptyState(
 						icon = R.drawable.ic_empty_common,
 						textPrimary = R.string.nothing_found,
@@ -82,7 +82,7 @@ class AlternativesViewModel @Inject constructor(
 			includeDisabled -> list
 			else -> list + ButtonFooter(R.string.search_disabled_sources)
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState()))
 
 	init {
 		doSearch(throughDisabledSources = false)

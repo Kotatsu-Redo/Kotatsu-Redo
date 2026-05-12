@@ -12,6 +12,7 @@ import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.util.ext.findActivity
 import org.koitharu.kotatsu.core.util.ext.viewLifecycleScope
@@ -33,6 +34,20 @@ abstract class ErrorObserver(
 
 	protected fun canResolve(error: Throwable): Boolean {
 		return resolver != null && ExceptionResolver.canResolve(error)
+	}
+
+	/**
+	 * For CloudFlare captcha errors, silently start resolving instead of showing
+	 * a "captcha required" message — the resolver falls back to the interactive
+	 * screen only if the headless attempt fails.
+	 * @return `true` if auto-resolution was started and no error UI should be shown.
+	 */
+	protected fun tryAutoResolve(error: Throwable): Boolean {
+		if (error is CloudFlareProtectedException && canResolve(error)) {
+			resolve(error)
+			return true
+		}
+		return false
 	}
 
 	protected fun router() = fragment?.router ?: (activity as? FragmentActivity)?.router

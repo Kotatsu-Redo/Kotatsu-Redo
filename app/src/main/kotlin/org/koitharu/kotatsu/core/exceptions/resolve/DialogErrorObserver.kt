@@ -23,6 +23,9 @@ class DialogErrorObserver(
 	) : this(host, fragment, null, null)
 
 	override suspend fun emit(value: Throwable) {
+		if (tryAutoResolve(value)) {
+			return
+		}
 		val listener = DialogListener(value)
 		val dialogBuilder = MaterialAlertDialogBuilder(activity ?: host.context)
 			.setMessage(value.getDisplayMessage(host.context.resources))

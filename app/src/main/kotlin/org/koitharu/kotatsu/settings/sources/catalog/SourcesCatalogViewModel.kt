@@ -72,7 +72,7 @@ class SourcesCatalogViewModel @Inject constructor(
 		db.invalidationTrackerFlow(TABLE_SOURCES),
 	) { q, f, ps, _ ->
 		buildSourcesList(f, q, ps)
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState()))
 
 	init {
 		repository.clearNewSourcesBadge()

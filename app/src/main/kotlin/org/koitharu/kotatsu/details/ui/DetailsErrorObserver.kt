@@ -25,6 +25,9 @@ class DetailsErrorObserver(
 ) {
 
 	override suspend fun emit(value: Throwable) {
+		if (tryAutoResolve(value)) {
+			return
+		}
 		val snackbar = Snackbar.make(host, value.getDisplayMessage(host.context.resources), Snackbar.LENGTH_SHORT)
 		snackbar.setAnchorView(activity.viewBinding.containerBottomSheet)
 		if (value is NotFoundException || value is UnsupportedSourceException) {

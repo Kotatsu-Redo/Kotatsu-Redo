@@ -51,7 +51,7 @@ class BookmarksViewModel @Inject constructor(
 			.map { mapList(m, it) }
 	}.withErrorHandling()
 		.filterNotNull()
-		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState))
+		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, listOf(LoadingState()))
 
 	override suspend fun emit(value: MangaDetails?) {
 		manga.value = value?.toManga()

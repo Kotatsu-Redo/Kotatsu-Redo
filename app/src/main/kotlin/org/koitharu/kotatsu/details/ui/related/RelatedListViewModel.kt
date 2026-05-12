@@ -54,11 +54,11 @@ class RelatedListViewModel @Inject constructor(
 	) { list, mode, error ->
 		when {
 			list.isNullOrEmpty() && error != null -> listOf(error.toErrorState(canRetry = true))
-			list == null -> listOf(LoadingState)
+			list == null -> listOf(LoadingState())
 			list.isEmpty() -> listOf(createEmptyState())
 			else -> mangaListMapper.toListModelList(list, mode)
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState))
+	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, listOf(LoadingState()))
 
 	init {
 		loadList()
