@@ -31,13 +31,13 @@ import java.util.concurrent.TimeUnit
 
 @HiltWorker
 class LocalStorageCleanupWorker @AssistedInject constructor(
-	@Assisted appContext: Context,
-	@Assisted params: WorkerParameters,
+	@Assisted context: Context,
+	@Assisted workerParameters: WorkerParameters,
 	private val settings: AppSettings,
 	private val localMangaRepository: LocalMangaRepository,
 	private val dataRepository: MangaDataRepository,
 	private val deleteReadChaptersUseCase: DeleteReadChaptersUseCase,
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(context, workerParameters) {
 
 	override suspend fun doWork(): Result {
 		if (settings.isAutoLocalChaptersCleanupEnabled) {

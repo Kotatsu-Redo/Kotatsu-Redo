@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
 		applicationId 'io.github.kotatsuredo.kotatsu'
-		minSdk = 23
+		minSdk = 29
 		targetSdk = 36
 		versionCode = 2024
         versionName = '9.7.4'
@@ -179,9 +179,8 @@ dependencies {
 	implementation libs.adapterdelegates.viewbinding
 
 	implementation libs.hilt.android
-	ksp libs.hilt.compiler
+	ksp libs.hilt.android.compiler
 	implementation libs.androidx.hilt.work
-	ksp libs.androidx.hilt.compiler
 
 	implementation libs.coil.core
 	implementation libs.coil.network
@@ -195,8 +194,6 @@ dependencies {
 
 	implementation libs.acra.http
 	implementation libs.acra.dialog
-
-	implementation libs.conscrypt.android
 
 	debugImplementation libs.leakcanary.android
 	nightlyImplementation libs.leakcanary.android

@@ -102,8 +102,8 @@ import javax.inject.Inject
 
 @HiltWorker
 class DownloadWorker @AssistedInject constructor(
-	@Assisted appContext: Context,
-	@Assisted params: WorkerParameters,
+	@Assisted context: Context,
+	@Assisted workerParameters: WorkerParameters,
 	@MangaHttpClient private val okHttp: OkHttpClient,
 	@PageCache private val cache: LocalStorageCache,
 	private val localMangaRepository: LocalMangaRepository,
@@ -115,11 +115,11 @@ class DownloadWorker @AssistedInject constructor(
 	private val slowdownDispatcher: DownloadSlowdownDispatcher,
 	private val imageProxyInterceptor: ImageProxyInterceptor,
 	notificationFactoryFactory: DownloadNotificationFactory.Factory,
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(context, workerParameters) {
 
-	private val task = DownloadTask(params.inputData)
-	private val notificationFactory = notificationFactoryFactory.create(uuid = params.id, isSilent = task.isSilent)
-	private val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+	private val task = DownloadTask(workerParameters.inputData)
+	private val notificationFactory = notificationFactoryFactory.create(uuid = workerParameters.id, isSilent = task.isSilent)
+	private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
 	@Volatile
 	private var lastPublishedState: DownloadState? = null

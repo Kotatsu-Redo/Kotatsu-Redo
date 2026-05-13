@@ -90,8 +90,8 @@ import androidx.appcompat.R as appcompatR
 
 @HiltWorker
 class SuggestionsWorker @AssistedInject constructor(
-	@Assisted appContext: Context,
-	@Assisted params: WorkerParameters,
+	@Assisted context: Context,
+	@Assisted workerParameters: WorkerParameters,
 	private val coil: ImageLoader,
 	private val suggestionRepository: SuggestionRepository,
 	private val historyRepository: HistoryRepository,
@@ -101,9 +101,9 @@ class SuggestionsWorker @AssistedInject constructor(
 	private val workManager: WorkManager,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val sourcesRepository: MangaSourcesRepository,
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(context, workerParameters) {
 
-	private val notificationManager by lazy { NotificationManagerCompat.from(appContext) }
+	private val notificationManager by lazy { NotificationManagerCompat.from(context) }
 
 	override suspend fun doWork(): Result {
 		trySetForeground()
