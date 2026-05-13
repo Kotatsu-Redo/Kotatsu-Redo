@@ -179,9 +179,8 @@ dependencies {
 	implementation libs.adapterdelegates.viewbinding
 
 	implementation libs.hilt.android
-	ksp libs.hilt.compiler
+	ksp libs.hilt.android.compiler
 	implementation libs.androidx.hilt.work
-	ksp libs.androidx.hilt.compiler
 
 	implementation libs.coil.core
 	implementation libs.coil.network
