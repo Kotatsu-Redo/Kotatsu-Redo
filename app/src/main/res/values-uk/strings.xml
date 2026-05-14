@@ -802,8 +802,6 @@
     <string name="share_backup">Поділитись резервною копією</string>
     <string name="creating_backup">Створення резервної копії</string>
     <string name="collapse_long_description">Згорнути довгий опис</string>
-    <string name="adblock_summary">Блокування реклами у вбудованому браузері (бета)</string>
-    <string name="adblock">Блокувати рекламу у браузері</string>
     <string name="expand">Розгорнути</string>
     <string name="collapse">Згорнути</string>
     <string name="changelog_summary">Історія змін для нещодавно випущених версій</string>

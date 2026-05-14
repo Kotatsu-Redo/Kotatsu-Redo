@@ -1,13 +1,14 @@
 package org.koitharu.kotatsu.local.ui
 
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.model.toChipModel
-import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
@@ -50,7 +51,7 @@ class LocalListViewModel @Inject constructor(
 	private val localStorageManager: LocalStorageManager,
 	sourcesRepository: MangaSourcesRepository,
 	mangaDataRepository: MangaDataRepository,
-	captchaHandler: CaptchaHandler,
+	@ApplicationContext appContext: Context,
 ) : RemoteListViewModel(
 	savedStateHandle = savedStateHandle,
 	mangaRepositoryFactory = mangaRepositoryFactory,
@@ -60,7 +61,7 @@ class LocalListViewModel @Inject constructor(
 	exploreRepository = exploreRepository,
 	sourcesRepository = sourcesRepository,
 	mangaDataRepository = mangaDataRepository,
-	captchaHandler = captchaHandler,
+	appContext = appContext,
 	localStorageChanges = localStorageChanges,
 ), SharedPreferences.OnSharedPreferenceChangeListener, QuickFilterListener {
 

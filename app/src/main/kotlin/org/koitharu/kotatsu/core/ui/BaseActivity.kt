@@ -57,16 +57,27 @@ abstract class BaseActivity<B : ViewBinding> :
 		super.attachBaseContext(newBase)
 	}
 
+	/**
+	 * If true (default), apply the app's color-scheme theme overlay on top of the manifest theme.
+	 * Override to false for activities whose manifest theme must be preserved as-is — e.g.
+	 * `CloudFlareHiddenActivity`, which needs its translucent theme intact.
+	 */
+	protected open val applyColorSchemeTheme: Boolean = true
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		val settings = entryPoint.settings
 		isAmoledTheme = settings.isAmoledTheme
-		setTheme(settings.colorScheme.styleResId)
-		if (isAmoledTheme) {
-			setTheme(R.style.ThemeOverlay_Kotatsu_Amoled)
+		if (applyColorSchemeTheme) {
+			setTheme(settings.colorScheme.styleResId)
+			if (isAmoledTheme) {
+				setTheme(R.style.ThemeOverlay_Kotatsu_Amoled)
+			}
 		}
 		putDataToExtras(intent)
 		exceptionResolver = entryPoint.exceptionResolverFactory.create(this)
-		enableEdgeToEdge()
+		if (applyColorSchemeTheme) {
+			enableEdgeToEdge()
+		}
 		super.onCreate(savedInstanceState)
 	}
 

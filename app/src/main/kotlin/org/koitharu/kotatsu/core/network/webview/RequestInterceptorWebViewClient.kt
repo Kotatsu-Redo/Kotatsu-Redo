@@ -5,12 +5,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.WorkerThread
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.koitharu.kotatsu.browser.BrowserCallback
 import org.koitharu.kotatsu.browser.BrowserClient
-import org.koitharu.kotatsu.core.network.webview.adblock.AdBlock
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -20,10 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class RequestInterceptorWebViewClient(
     callback: BrowserCallback,
-    adBlock: AdBlock?,
     private val config: InterceptionConfig,
     private val interceptor: WebViewRequestInterceptor,
-) : BrowserClient(callback, adBlock) {
+) : BrowserClient(callback) {
 
     private val capturedRequests = Collections.synchronizedList(mutableListOf<InterceptedRequest>())
     private val mutex = Mutex()
@@ -36,7 +32,6 @@ class RequestInterceptorWebViewClient(
         view: WebView?,
         request: WebResourceRequest?
     ): WebResourceResponse? {
-        // Always call parent first for ad blocking and other functionality
         val parentResponse = super.shouldInterceptRequest(view, request)
 
         // Capture request if still within timeout and capturing

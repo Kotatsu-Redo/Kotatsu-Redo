@@ -81,41 +81,22 @@ class CaptchaHandler @Inject constructor(
 		handleException(source, null, notify = true, tryAutoResolve = false)
 	}
 
-	/**
-	 * Tries to solve the CloudFlare challenge silently in a headless WebView.
-	 * @return `true` if the challenge was passed and no user interaction is required.
-	 */
-	@CheckResult
-	suspend fun tryResolveAutomatically(exception: CloudFlareException): Boolean = withContext(Dispatchers.Default) {
-		if (exception.source == UnknownMangaSource) {
-			return@withContext false
-		}
-		if (SourceSettings(context, exception.source).isCaptchaAutoResolveDisabled) {
-			return@withContext false
-		}
-		if (webViewExecutor.tryResolveCaptcha(exception, RESOLVE_TIMEOUT)) {
-			runCatchingCancellable { discard(exception.source) }.onFailure { it.printStackTraceDebug() }
-			true
-		} else {
-			false
-		}
-	}
-
 	override fun onError(request: ImageRequest, result: ErrorResult) {
 		super.onError(request, result)
 		val e = result.throwable
 		if (e is CloudFlareException) {
 			val scope = request.lifecycle?.coroutineScope ?: processLifecycleScope
 			scope.launch {
-				if (
-					handleException(
-						source = e.source,
-						exception = e,
-						notify = request.extras[suppressCaptchaKey] != true,
-					)
-				) {
-					coilProvider.get().enqueue(request) // TODO check if ok
-				}
+				// Don't run the silent auto-resolve from coil's error path: failed favicon / cover loads
+				// would each queue up an attempt and (now that the WebView is window-attached) flash a
+				// full-screen overlay on the user. Auto-resolve only happens for explicit interactions
+				// (opening a source, opening a manga, reading) via ExceptionResolver / the hidden activity.
+				handleException(
+					source = e.source,
+					exception = e,
+					notify = request.extras[suppressCaptchaKey] != true,
+					tryAutoResolve = false,
+				)
 			}
 		}
 	}

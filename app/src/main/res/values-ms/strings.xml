@@ -823,8 +823,6 @@
     <string name="changelog_summary">Perubahan sejarah untuk versi yang dikeluarkan baru -baru ini</string>
     <string name="collapse">Runtuh</string>
     <string name="expand">Berkembang</string>
-    <string name="adblock">Blok iklan dalam penyemak imbas</string>
-    <string name="adblock_summary">Blok Iklan di Pelayar Terbina (Beta)</string>
     <string name="collapse_long_description">Kejutan panjang runtuh</string>
     <string name="creating_backup">Membuat sandaran</string>
     <string name="share_backup">Kongsi sandaran</string>

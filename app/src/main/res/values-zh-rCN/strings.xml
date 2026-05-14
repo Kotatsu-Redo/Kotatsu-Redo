@@ -816,8 +816,6 @@
     <string name="hide_from_main_screen">从主页面中隐藏</string>
     <string name="collapse">折叠</string>
     <string name="expand">展开</string>
-    <string name="adblock">屏蔽广告</string>
-    <string name="adblock_summary">屏蔽内置浏览器内显示的广告 (实验性)</string>
     <string name="theme_name_expressive">印象 (实验性)</string>
     <string name="collapse_long_description">折叠过长简介</string>
     <string name="changelog_summary">最近已发布版本的更新日志</string>

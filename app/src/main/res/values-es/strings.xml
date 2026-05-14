@@ -821,8 +821,6 @@
     <string name="changelog">Registro de cambios</string>
     <string name="changelog_summary">Historial de cambios de las versiones publicadas recientemente</string>
     <string name="collapse">Plegar</string>
-    <string name="adblock">Bloquear anuncios en el navegador</string>
-    <string name="adblock_summary">Bloquear anuncios en el navegador integrado (beta)</string>
     <string name="collapse_long_description">Plegar descripción larga</string>
     <string name="creating_backup">Creando copia de seguridad</string>
     <string name="share_backup">Compartir copia de seguridad</string>

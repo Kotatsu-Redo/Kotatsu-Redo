@@ -822,8 +822,6 @@
     <string name="changelog_summary">Историја промена за недавно објављене верзије</string>
     <string name="collapse">Склопи</string>
     <string name="expand">Прошири</string>
-    <string name="adblock">Блокирај огласе у прегледачу</string>
-    <string name="adblock_summary">Блокирај рекламе у уграђеном прегледачу (бета)</string>
     <string name="collapse_long_description">Склопи дугачак опис</string>
     <string name="creating_backup">Прављење резервне копије</string>
     <string name="share_backup">Дели резервну копију</string>

@@ -819,9 +819,7 @@
     <string name="theme_name_expressive">Выразны (Тэст)</string>
     <string name="additional_action_required">Патрабуюцца дадатковыя дзеянні</string>
     <string name="hide_from_main_screen">Схаваць з галоўнага экрана</string>
-    <string name="adblock">Блакаваць рэкламу ў браўзэры</string>
     <string name="collapse_long_description">Згарнуць доўгае апісанне</string>
-    <string name="adblock_summary">Блакаванне рэкламы ва ўбудаваным браўзэры (бэта)</string>
     <string name="changelog">Часопіс змен</string>
     <string name="changelog_summary">Гісторыя змен для нядаўна выпушчаных версій</string>
     <string name="reader_navigation_inverted">Інвертаваць элементы кіравання навігацыяй</string>

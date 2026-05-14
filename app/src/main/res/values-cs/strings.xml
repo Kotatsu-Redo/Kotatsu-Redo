@@ -802,8 +802,6 @@
     <string name="search_everywhere">Hledat všude</string>
     <string name="expand">Rozbalit</string>
     <string name="collapse">Sbalit</string>
-    <string name="adblock">Blokuje reklamy v prohlížeči</string>
-    <string name="adblock_summary">Blokuje reklamy ve vestavěném prohlížeči (beta)</string>
     <string name="manga_override_hint">Tyto změny ovlivní způsob, jakým se manga v aplikaci zobrazuje</string>
     <string name="dont_ask_again">Neptat se znovu</string>
     <string name="share_backup">Sdílet zálohu</string>

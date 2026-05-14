@@ -5,6 +5,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.AndroidRuntimeException
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -26,17 +28,21 @@ import org.koitharu.kotatsu.core.exceptions.CloudFlareException
 import org.koitharu.kotatsu.core.network.CommonHeaders
 import org.koitharu.kotatsu.core.network.cookies.MutableCookieJar
 import org.koitharu.kotatsu.core.network.proxy.ProxyProvider
-import org.koitharu.kotatsu.core.network.webview.adblock.AdBlock
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.parser.ParserMangaRepository
+import org.koitharu.kotatsu.core.ui.util.ForegroundActivityHolder
 import org.koitharu.kotatsu.core.util.ext.configureForParser
+import org.koitharu.kotatsu.core.util.ext.prepareDetachedParserViewport
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.sanitizeHeaderValue
 import org.koitharu.kotatsu.parsers.config.ConfigKey
 import org.koitharu.kotatsu.parsers.model.MangaSource
+import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
 import org.koitharu.kotatsu.parsers.util.nullIfEmpty
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import java.lang.ref.WeakReference
+import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -49,12 +55,16 @@ class WebViewExecutor @Inject constructor(
 	@ApplicationContext private val context: Context,
 	private val proxyProvider: ProxyProvider,
 	private val cookieJar: MutableCookieJar,
-	private val adBlock: AdBlock,
+	private val foregroundActivityHolder: ForegroundActivityHolder,
 	private val mangaRepositoryFactoryProvider: Provider<MangaRepository.Factory>,
 ) {
 
 	private var webViewCached: WeakReference<WebView>? = null
 	private val mutex = Mutex()
+
+	// host -> epoch ms until which we skip new resolve attempts for that host (set after a recent failure).
+	// Avoids the "burst of failed images each triggers its own 12 s WebView attempt" cascade.
+	private val recentFailureUntil = ConcurrentHashMap<String, Long>()
 
 	val defaultUserAgent: String? by lazy {
 		try {
@@ -168,35 +178,120 @@ class WebViewExecutor @Inject constructor(
         }
     }
 
-    suspend fun tryResolveCaptcha(exception: CloudFlareException, timeout: Long): Boolean = mutex.withLock {
-		runCatchingCancellable { proxyProvider.applyWebViewConfig() }.onFailure { it.printStackTraceDebug() }
-		withContext(Dispatchers.Main.immediate) {
-			val webView = obtainWebView()
-			try {
-				exception.source.getUserAgent()?.let {
-					webView.settings.userAgentString = it
+    suspend fun tryResolveCaptcha(exception: CloudFlareException, timeout: Long): Boolean {
+		val cooldownHost = runCatching { URI(exception.url).host?.lowercase() }.getOrNull()
+		if (cooldownHost != null) {
+			val now = System.currentTimeMillis()
+			val skipUntil = recentFailureUntil[cooldownHost]
+			if (skipUntil != null) {
+				if (skipUntil > now) {
+					Log.d(TAG, "Skipping captcha auto-resolve for $cooldownHost (cooled down for ${skipUntil - now}ms)")
+					return false
 				}
-				val resolved = withTimeoutOrNull(timeout) {
-					suspendCancellableCoroutine { cont ->
-						webView.webViewClient = createCloudFlareClient(webView, exception, cont)
-						webView.loadUrl(exception.url)
-					}
-				}
-				if (resolved == null) {
-					Log.w(TAG, "Captcha auto-resolve timed out for ${exception.url}, dumping page HTML:")
-					dumpPageHtml(webView)
-				}
-				resolved == true
-			} catch (e: CancellationException) {
-				throw e
-			} catch (e: Exception) {
-				exception.addSuppressed(e)
-				e.printStackTraceDebug()
-				false
-			} finally {
-				webView.reset()
+				recentFailureUntil.remove(cooldownHost)
 			}
 		}
+		val resolved = mutex.withLock {
+			// Re-check cooldown after acquiring the mutex: a previous waiter may have just failed for the same host.
+			if (cooldownHost != null) {
+				val skipUntil = recentFailureUntil[cooldownHost]
+				if (skipUntil != null && skipUntil > System.currentTimeMillis()) {
+					return@withLock false
+				}
+			}
+			runCatchingCancellable { proxyProvider.applyWebViewConfig() }.onFailure { it.printStackTraceDebug() }
+			withContext(Dispatchers.Main.immediate) {
+				// Build a fresh WebView against the foreground Activity (NOT the cached app-context one), so it
+				// matches CloudFlareActivity's WebView — Cloudflare/Turnstile fingerprints differ between
+				// app-context and Activity-context WebViews. Falls back to the cached one if no Activity is
+				// available (e.g. background path).
+				val activity = foregroundActivityHolder.current
+				val webView: WebView
+				val host: ViewGroup?
+				val isThrowaway: Boolean
+				if (activity != null) {
+					webView = WebView(activity).apply { configureForParser(null) }
+					host = attachToHost(webView, activity)
+					isThrowaway = true
+				} else {
+					webView = obtainWebView()
+					host = null
+					isThrowaway = false
+				}
+				try {
+					exception.source.getUserAgent()?.let {
+						webView.settings.userAgentString = it
+					}
+					val resolved = withTimeoutOrNull(timeout) {
+						suspendCancellableCoroutine { cont ->
+							webView.webViewClient = createCloudFlareClient(webView, exception, cont)
+							webView.loadUrl(exception.url)
+						}
+					}
+					if (resolved == null) {
+						Log.w(TAG, "Captcha auto-resolve timed out for ${exception.url}, dumping page HTML:")
+						dumpPageHtml(webView)
+					}
+					resolved == true
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					exception.addSuppressed(e)
+					e.printStackTraceDebug()
+					false
+				} finally {
+					if (isThrowaway) {
+						runCatching { webView.stopLoading() }
+						webView.webViewClient = WebViewClient()
+						host?.let { detachFromHost(webView, it) }
+						runCatching { webView.destroy() }
+					} else {
+						webView.reset()
+					}
+				}
+			}
+		}
+		if (cooldownHost != null) {
+			if (resolved) {
+				recentFailureUntil.remove(cooldownHost)
+			} else {
+				recentFailureUntil[cooldownHost] = System.currentTimeMillis() + FAILURE_COOLDOWN_MS
+			}
+		}
+		return resolved
+	}
+
+	/**
+	 * Cloudflare Turnstile only completes when the WebView is actually attached to a real window — a detached
+	 * WebView reliably returns the `rBxl / GPZI` anti-bot rejection. Attach the WebView to the foreground
+	 * Activity's content view (full size, on top) for the duration of the auto-resolve so it has a real
+	 * Surface, real layout, and is visible to the user while the challenge runs.
+	 *
+	 * @return the container we attached to (so we can remove the WebView again), or `null` if no Activity was
+	 *         available. In that case we fall back to the detached-WebView behaviour.
+	 */
+	@MainThread
+	private fun attachToHost(webView: WebView, activity: android.app.Activity): ViewGroup? {
+		val content = activity.findViewById<ViewGroup>(android.R.id.content) ?: return null
+		runCatching {
+			(webView.parent as? ViewGroup)?.removeView(webView)
+			webView.alpha = 1f
+			webView.visibility = View.VISIBLE
+			webView.bringToFront()
+			content.addView(
+				webView,
+				ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
+			)
+		}.onFailure {
+			it.printStackTraceDebug()
+			return null
+		}
+		return content
+	}
+
+	@MainThread
+	private fun detachFromHost(webView: WebView, host: ViewGroup) {
+		runCatching { host.removeView(webView) }.onFailure { it.printStackTraceDebug() }
 	}
 
 	/**
@@ -214,12 +309,20 @@ class WebViewExecutor @Inject constructor(
 			handler.removeCallbacksAndMessages(null)
 			if (continuation.isActive) continuation.resume(result)
 		}
+		val initialClearance = CloudFlareHelper.getClearanceCookie(cookieJar, exception.url)
 		val challengeDeadline = System.currentTimeMillis() + MAX_CHALLENGE_MS
 		// CloudFlareClient only signals success when the clearance cookie *changes*. Probe the page state so we can
 		// (a) finish the instant the real page is shown, and (b) give up on a stuck challenge before the hard timeout.
 		val check = object : Runnable {
 			override fun run() {
 				if (!continuation.isActive) return
+				// Some sources (e.g. utoon) only ever land cf_clearance via Cloudflare's PAT / managed-challenge
+				// side-channel while Turnstile itself reports an error. Catch that the moment the cookie appears.
+				val clearance = CloudFlareHelper.getClearanceCookie(cookieJar, exception.url)
+				if (clearance != null && clearance != initialClearance) {
+					resumeOnce(true)
+					return
+				}
 				webView.evaluateJavascript(CF_STATE_JS) { raw ->
 					if (!continuation.isActive) return@evaluateJavascript
 					when (raw?.removeSurrounding("\"")) {
@@ -253,9 +356,9 @@ class WebViewExecutor @Inject constructor(
 			override fun onLoopDetected() = Unit
 		}
 		return if (needsCloudFlareInterception(exception.source)) {
-			CloudFlareInterceptClient(cookieJar, callback, adBlock, exception.url)
+			CloudFlareInterceptClient(cookieJar, callback, exception.url)
 		} else {
-			CloudFlareClient(cookieJar, callback, adBlock, exception.url)
+			CloudFlareClient(cookieJar, callback, exception.url)
 		}
 	}
 
@@ -283,6 +386,7 @@ class WebViewExecutor @Inject constructor(
     @MainThread
     private fun obtainWebView(): WebView = webViewCached?.get() ?: WebView(context).also {
         it.configureForParser(null)
+        it.prepareDetachedParserViewport()
         webViewCached = WeakReference(it)
     }
 
@@ -313,23 +417,8 @@ class WebViewExecutor @Inject constructor(
 		const val CHALLENGE_POLL_INTERVAL_MS = 700L
 		const val MAX_CHALLENGE_MS = 11_000L // give up on a stuck challenge just before the hard timeout
 
-		// Returns 'ok' once the real page is shown, 'error' when hard-blocked, 'wait' while a challenge runs.
-		const val CF_STATE_JS = """
-			(function(){
-				try {
-					var href = (document.location && document.location.href) || '';
-					if (href === '' || href === 'about:blank') return 'wait';
-					if (document.readyState !== 'interactive' && document.readyState !== 'complete') return 'wait';
-					var t = (document.title || '').toLowerCase();
-					if (t.indexOf('attention required') !== -1 || t.indexOf('access denied') !== -1) return 'error';
-					if (t.indexOf('just a moment') !== -1 || t.indexOf('un instant') !== -1 ||
-						t.indexOf('einen moment') !== -1 || t.indexOf('un momento') !== -1 ||
-						t.indexOf('один момент') !== -1) return 'wait';
-					if (document.querySelector('#challenge-running, #challenge-stage, #cf-challenge-running, .cf-browser-verification, #turnstile-wrapper, #cf-please-wait, script[src*="challenge-platform"]')) return 'wait';
-					if (!document.body || document.body.children.length === 0) return 'wait';
-					return 'ok';
-				} catch (e) { return 'wait'; }
-			})()
-		"""
+		// After a failed auto-resolve for a host, skip new attempts for this long so a burst of failing
+		// requests (favicon + catalog + chapters + …) doesn't queue up multiple full timeouts.
+		const val FAILURE_COOLDOWN_MS = 30_000L
 	}
 }
