@@ -812,8 +812,6 @@
     <string name="page_switch_timer">A página mudará a cada ~%d segundos</string>
     <string name="error_non_file_uri">O caminho selecionado não pode ser usado porque não denota um arquivo ou diretório</string>
     <string name="collapse">Recolher</string>
-    <string name="adblock">Bloquear anúncios no navegador</string>
-    <string name="adblock_summary">Bloqueia anúncios no navegador embutido (beta)</string>
     <string name="theme_name_expressive">Expressivo (Teste)</string>
     <string name="additional_action_required">É necessária uma ação adicional</string>
     <string name="hide_from_main_screen">Ocultar na tela inicial</string>

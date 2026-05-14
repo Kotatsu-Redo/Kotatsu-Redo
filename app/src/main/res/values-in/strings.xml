@@ -811,7 +811,6 @@
     <string name="theme_name_expressive">Ekspresif (Test)</string>
     <string name="page_switch_timer">Halaman akan berganti setiap ~%d detik</string>
     <string name="expand">Memperluas</string>
-    <string name="adblock">Blokir iklan di browser</string>
     <string name="dont_ask_again">Jangan bertanya lagi</string>
     <string name="incognito_for_nsfw">Mode penyamaran untuk manga NSFW</string>
     <string name="incognito_mode_hint_nsfw">Manga ini mungkin mengandung konten dewasa. Apakah Anda ingin menggunakan mode penyamaran?</string>
@@ -824,7 +823,6 @@
     <string name="reader_multitask_summary">Memungkinkan anda untuk tetap membuka beberapa \"pembaca\" dengan manga yang berbeda pada saat yang sama</string>
     <string name="manga_override_hint">Perubahan ini akan memengaruhi cara manga ditampilkan di aplikasi</string>
     <string name="additional_action_required">Tindakan tambahan diperlukan</string>
-    <string name="adblock_summary">Blokir iklan di browser bawaan (beta)</string>
     <string name="theme_name_totoro">Totoro</string>
     <string name="theme_name_itsuka">Itsuka</string>
     <string name="reader_multitask">Buka pembaca secara terpisah</string>

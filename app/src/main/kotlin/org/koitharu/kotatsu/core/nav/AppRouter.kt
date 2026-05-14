@@ -30,6 +30,7 @@ import org.koitharu.kotatsu.backups.ui.restore.RestoreDialogFragment
 import org.koitharu.kotatsu.bookmarks.ui.AllBookmarksActivity
 import org.koitharu.kotatsu.browser.BrowserActivity
 import org.koitharu.kotatsu.browser.cloudflare.CloudFlareActivity
+import org.koitharu.kotatsu.browser.cloudflare.CloudFlareHiddenActivity
 import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
 import org.koitharu.kotatsu.core.image.CoilMemoryCacheKey
 import org.koitharu.kotatsu.core.model.FavouriteCategory
@@ -714,14 +715,23 @@ class AppRouter private constructor(
                     }
                 }
 
-        fun cloudFlareResolveIntent(context: Context, exception: CloudFlareProtectedException): Intent =
-            Intent(context, CloudFlareActivity::class.java).apply {
+        fun cloudFlareResolveIntent(
+            context: Context,
+            exception: CloudFlareProtectedException,
+            hidden: Boolean = false,
+        ): Intent {
+            val target = if (hidden) CloudFlareHiddenActivity::class.java else CloudFlareActivity::class.java
+            return Intent(context, target).apply {
                 data = exception.url.toUri()
                 putExtra(KEY_SOURCE, exception.source.name)
                 exception.headers[CommonHeaders.USER_AGENT]?.let {
                     putExtra(KEY_USER_AGENT, it)
                 }
+                if (hidden) {
+                    putExtra(CloudFlareActivity.EXTRA_HIDDEN, true)
+                }
             }
+        }
 
         fun browserIntent(
             context: Context,
