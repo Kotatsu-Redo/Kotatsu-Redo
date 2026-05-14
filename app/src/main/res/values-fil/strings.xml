@@ -818,8 +818,6 @@
     <string name="hide_from_main_screen">Itago mula sa main screen</string>
     <string name="collapse">Paliitin</string>
     <string name="expand">Palakihin</string>
-    <string name="adblock">I-block ang mga ad sa browser</string>
-    <string name="adblock_summary">I-block ang mga patalastas (ad) sa built-in na browser (beta)</string>
     <string name="changelog_summary">Kasaysayan ng mga pagbabago para sa mga kamakailang inilabas na bersyon</string>
     <string name="collapse_long_description">Itago ang mahabang paglalarawan</string>
     <string name="creating_backup">Ginagawa ang backup</string>

@@ -79,6 +79,22 @@
 	<!--== Default Theme ==-->
 	<style name="Theme.Kotatsu" parent="Base.Theme.Kotatsu" />
 
+	<!-- Used by CloudFlareHiddenActivity: same WebView pipeline, no visible UI. -->
+	<style name="Theme.Kotatsu.CloudFlareHidden" parent="Theme.Kotatsu">
+		<item name="android:windowBackground">@android:color/transparent</item>
+		<item name="android:windowIsTranslucent">true</item>
+		<item name="android:windowIsFloating">false</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowAnimationStyle">@null</item>
+		<item name="android:windowDisablePreview">true</item>
+		<item name="android:windowContentOverlay">@null</item>
+		<item name="android:colorBackground">@android:color/transparent</item>
+		<item name="android:statusBarColor">@android:color/transparent</item>
+		<item name="android:navigationBarColor">@android:color/transparent</item>
+		<item name="windowActionBar">false</item>
+		<item name="windowNoTitle">true</item>
+	</style>
+
 	<!-- Base ThemeOverlay -->
 	<style name="ThemeOverlay.Kotatsu" parent="ThemeOverlay.Material3.Light" />
 

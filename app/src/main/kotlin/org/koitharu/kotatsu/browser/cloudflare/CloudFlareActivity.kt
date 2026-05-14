@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.yield
@@ -20,6 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.browser.BaseBrowserActivity
 import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
+import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaAutoResolveCoordinator
 import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler
 import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.nav.AppRouter
@@ -35,9 +38,15 @@ import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
+open class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 
 	private var pendingResult = RESULT_CANCELED
+	private val isHidden: Boolean by lazy { intent?.getBooleanExtra(EXTRA_HIDDEN, false) == true }
+	private val isAutoResolve: Boolean by lazy { intent?.getBooleanExtra(EXTRA_AUTO_RESOLVE, false) == true }
+	private var resultNotified = false
+	private var hiddenTimeoutJob: Job? = null
+	private var clearancePollJob: Job? = null
+	private var initialClearance: String? = null
 
 	@Inject
 	lateinit var cookieJar: MutableCookieJar
@@ -45,10 +54,34 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 	@Inject
 	lateinit var captchaHandler: CaptchaHandler
 
+	@Inject
+	lateinit var captchaAutoResolveCoordinator: CaptchaAutoResolveCoordinator
+
 	private lateinit var cfClient: CloudFlareClient
 
 	override fun onCreate2(savedInstanceState: Bundle?, source: MangaSource, repository: ParserMangaRepository?) {
-		setDisplayHomeAsUp(isEnabled = true, showUpAsClose = true)
+		if (isHidden) {
+			// Hide every UI element but keep the WebView attached to a real window so Cloudflare/Turnstile
+			// sees a real Surface (otherwise it would reject the headless attempt the same way a 1×1 detached
+			// WebView gets rejected).
+			supportActionBar?.hide()
+			viewBinding.root.alpha = 0f
+			// Let touches and input focus reach the activity below so the user can keep using the app while
+			// the silent solve is running.
+			window.addFlags(
+				android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+					android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+			)
+			// Safety net: if Cloudflare can't pass the challenge silently, bail so the caller can retry
+			// in visible mode instead of hanging here forever.
+			hiddenTimeoutJob = lifecycleScope.launch {
+				delay(HIDDEN_TIMEOUT_MS)
+				viewBinding.webView.stopLoading()
+				finishAfterTransition()
+			}
+		} else {
+			setDisplayHomeAsUp(isEnabled = true, showUpAsClose = true)
+		}
 		val url = intent?.dataString
 		if (url.isNullOrEmpty()) {
 			finishAfterTransition()
@@ -61,10 +94,10 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 
 		cfClient = if (needsInterception) {
 			Log.d(TAG, "Using CloudFlareInterceptClient with header filtering")
-			CloudFlareInterceptClient(cookieJar, this, adBlock, url)
+			CloudFlareInterceptClient(cookieJar, this, url)
 		} else {
 			Log.d(TAG, "Using regular CloudFlareClient (no interception)")
-			CloudFlareClient(cookieJar, this, adBlock, url)
+			CloudFlareClient(cookieJar, this, url)
 		}
 
 		viewBinding.webView.webViewClient = cfClient
@@ -77,6 +110,23 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 			if (savedInstanceState == null) {
 				onTitleChanged(getString(R.string.loading_), url)
 				viewBinding.webView.loadUrl(url)
+			}
+		}
+		// CloudFlareClient only fires onCheckPassed when onPageStarted sees the clearance cookie change.
+		// Cloudflare's PAT / managed-challenge flow can hand out clearance without an explicit redirect,
+		// so poll the cookie directly. NOTE: we deliberately do NOT poll the page state via
+		// evaluateJavascript — repeatedly injecting scripts is an anti-bot signal that Turnstile picks up
+		// on, causing the challenge to loop on the user. JS state is instead checked once per navigation
+		// inside onPageLoaded().
+		initialClearance = CloudFlareHelper.getClearanceCookie(cookieJar, url)
+		clearancePollJob = lifecycleScope.launch {
+			while (true) {
+				delay(CLEARANCE_POLL_INTERVAL_MS)
+				val current = CloudFlareHelper.getClearanceCookie(cookieJar, url)
+				if (current != null && current != initialClearance) {
+					onCheckPassed()
+					return@launch
+				}
 			}
 		}
 	}
@@ -103,6 +153,19 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 
 	override fun finish() {
 		setResult(pendingResult)
+		// In auto-resolve mode the originating Fragment / Activity may already be dead, so its
+		// ActivityResultLauncher won't deliver the result. Notify the singleton coordinator instead so
+		// the result reaches every screen that's still awaiting it.
+		if (isAutoResolve && !resultNotified) {
+			resultNotified = true
+			val sourceName = intent?.getStringExtra(AppRouter.KEY_SOURCE)
+			if (sourceName != null) {
+				captchaAutoResolveCoordinator.notifyResolveResult(
+					MangaSource(sourceName),
+					pendingResult == RESULT_OK,
+				)
+			}
+		}
 		super.finish()
 	}
 
@@ -110,6 +173,24 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 
 	override fun onPageLoaded() {
 		viewBinding.progressBar.isInvisible = true
+		// Title + URL check (one-shot per navigation, no JS injection so Turnstile can't see it):
+		// catches sites where the WebView passes CloudFlare without ever changing the clearance cookie.
+		// HTTP status (when CloudFlareInterceptClient replays the main-frame request) is handled
+		// separately in [onMainFrameResponseSuccess].
+		if (pendingResult == RESULT_OK) return
+		val currentUrl = viewBinding.webView.url.orEmpty()
+		// Still on a CloudFlare intermediate (challenge / orchestrator) — don't close yet.
+		if (currentUrl.isEmpty() || currentUrl.contains("/cdn-cgi/")) return
+		val title = viewBinding.webView.title?.lowercase().orEmpty()
+		if (title.isEmpty()) return
+		if (CF_CHALLENGE_TITLES.any { it in title }) return
+		onCheckPassed()
+	}
+
+	override fun onMainFrameResponseSuccess() {
+		// CloudFlareInterceptClient just got a 2xx for the main-frame request → real page, not an
+		// interstitial. Fire immediately rather than waiting for the cookie poll / navigation events.
+		if (pendingResult != RESULT_OK) onCheckPassed()
 	}
 
 	override fun onLoopDetected() {
@@ -190,8 +271,38 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 		}
 	}
 
+	/**
+	 * Same as [Contract] but launches the activity in hidden mode (translucent window, no UI),
+	 * used to auto-resolve CloudFlare without showing the captcha screen.
+	 */
+	class HiddenContract : ActivityResultContract<CloudFlareProtectedException, Boolean>() {
+		override fun createIntent(context: Context, input: CloudFlareProtectedException): Intent {
+			return AppRouter.cloudFlareResolveIntent(context, input, hidden = true)
+		}
+
+		override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+			return resultCode == RESULT_OK
+		}
+	}
+
 	companion object {
 
 		const val TAG = "CloudFlareActivity"
+		const val EXTRA_HIDDEN = "hidden"
+		const val EXTRA_AUTO_RESOLVE = "auto_resolve"
+		private const val HIDDEN_TIMEOUT_MS = 15_000L
+		private const val CLEARANCE_POLL_INTERVAL_MS = 700L
+
+		// Lowercase substrings of titles Cloudflare uses on its challenge interstitial. As long as the
+		// current title is non-empty and doesn't contain one of these, we treat the page as "real".
+		private val CF_CHALLENGE_TITLES = listOf(
+			"just a moment",
+			"un instant",
+			"einen moment",
+			"un momento",
+			"один момент",
+			"attention required",
+			"access denied",
+		)
 	}
 }

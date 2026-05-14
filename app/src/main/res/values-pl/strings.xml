@@ -818,8 +818,6 @@
     <string name="badges_in_lists">Plakietki na listach</string>
     <string name="collapse">Zwiń</string>
     <string name="expand">Rozwiń</string>
-    <string name="adblock">Blokuj reklamy w przeglądarce</string>
-    <string name="adblock_summary">Blokuj reklamy we wbudowanej przeglądarce (beta)</string>
     <string name="creating_backup">Tworzenie kopii zapasowej</string>
     <string name="collapse_long_description">Zwiń długi opis</string>
     <string name="changelog">Lista zmian</string>

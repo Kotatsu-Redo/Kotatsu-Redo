@@ -734,8 +734,6 @@
     <string name="changelog_summary">最近リリースされたバージョンの変更履歴</string>
     <string name="collapse">折りたたむ</string>
     <string name="expand">拡張する</string>
-    <string name="adblock">ブラウザで広告をブロックする</string>
-    <string name="adblock_summary">組み込みブラウザでの広告ブロック（ベータ版）</string>
     <string name="collapse_long_description">長い説明を折りたたむ</string>
     <string name="creating_backup">バックアップを作成する</string>
     <string name="share_backup">バックアップを共有する</string>

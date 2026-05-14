@@ -821,8 +821,6 @@
     <string name="theme_name_expressive">Expressif (Test)</string>
     <string name="collapse">Réduire</string>
     <string name="expand">Développer</string>
-    <string name="adblock">Bloquer les publicités dans le navigateur</string>
-    <string name="adblock_summary">Bloquer les publicités dans le navigateur intégré (bêta)</string>
     <string name="share_backup">Partager la sauvegarde</string>
     <string name="creating_backup">Création de sauvegarde</string>
     <string name="collapse_long_description">Réduire la description longue</string>

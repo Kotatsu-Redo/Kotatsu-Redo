@@ -820,8 +820,6 @@
     <string name="error_non_file_uri">O caminho escolhido não pode ser usado porque não indica um ficheiro ou diretório</string>
     <string name="collapse">Recolher</string>
     <string name="expand">Expandir</string>
-    <string name="adblock">Bloquear anúncios no navegador</string>
-    <string name="adblock_summary">Bloquear anúncios no navegador integrado (beta)</string>
     <string name="collapse_long_description">Recolher descrição longa</string>
     <string name="creating_backup">Criando backup</string>
     <string name="share_backup">Compartilhar backup</string>

@@ -46,6 +46,7 @@ class ExceptionResolver private constructor(
     private val host: Host,
     private val settings: AppSettings,
     private val captchaHandler: CaptchaHandler,
+    private val captchaCoordinator: CaptchaAutoResolveCoordinator,
     private val scrobblerAuthHelperProvider: Provider<ScrobblerAuthHelper>,
 ) {
     private val continuations = MutableScatterMap<String, Continuation<Boolean>>(1)
@@ -129,9 +130,10 @@ class ExceptionResolver private constructor(
             host.withContext {
                 Toast.makeText(this, R.string.captcha_solving, Toast.LENGTH_LONG).show()
             }
-            if (captchaHandler.tryResolveAutomatically(e)) {
-                return true
-            }
+            // Delegated to the singleton coordinator: it owns the activity lifecycle, so the result
+            // is delivered even if this Fragment / Activity dies while CloudFlareActivity is still
+            // running. Same-source duplicate calls await the in-flight resolve.
+            return captchaCoordinator.resolve(e.source, e)
         }
         return suspendCoroutine { cont ->
             continuations[CloudFlareActivity.TAG] = cont
@@ -177,6 +179,7 @@ class ExceptionResolver private constructor(
     class Factory @Inject constructor(
         private val settings: AppSettings,
         private val captchaHandler: CaptchaHandler,
+        private val captchaCoordinator: CaptchaAutoResolveCoordinator,
         private val scrobblerAuthHelperProvider: Provider<ScrobblerAuthHelper>,
     ) {
 
@@ -184,6 +187,7 @@ class ExceptionResolver private constructor(
             host = Host.FragmentHost(fragment),
             settings = settings,
             captchaHandler = captchaHandler,
+            captchaCoordinator = captchaCoordinator,
             scrobblerAuthHelperProvider = scrobblerAuthHelperProvider,
         )
 
@@ -191,6 +195,7 @@ class ExceptionResolver private constructor(
             host = Host.ActivityHost(activity),
             settings = settings,
             captchaHandler = captchaHandler,
+            captchaCoordinator = captchaCoordinator,
             scrobblerAuthHelperProvider = scrobblerAuthHelperProvider,
         )
     }

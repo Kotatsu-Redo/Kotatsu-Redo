@@ -824,8 +824,6 @@
     <string name="changelog_summary">Povijest promjena za nedavno objavljene verzije</string>
     <string name="collapse">Sažmi</string>
     <string name="expand">Proširi</string>
-    <string name="adblock">Blokiraj oglase u pregledniku</string>
-    <string name="adblock_summary">Blokiraj oglase u ugrađenom pregledniku (beta)</string>
     <string name="collapse_long_description">Sažmi dugi opis</string>
     <string name="creating_backup">Izrada sigurnosne kopije</string>
     <string name="share_backup">Dijeli sigurnosnu kopiju</string>

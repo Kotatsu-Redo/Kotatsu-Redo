@@ -23,8 +23,11 @@ import android.net.ConnectivityManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
+import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
 import android.webkit.CookieManager
+import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.CheckResult
@@ -210,6 +213,9 @@ fun Context.ensureRamAtLeast(requiredSize: Long) {
 fun WebView.configureForParser(userAgentOverride: String?) = with(settings) {
 	javaScriptEnabled = true
 	domStorageEnabled = true
+	useWideViewPort = true
+	loadWithOverviewMode = true
+	cacheMode = WebSettings.LOAD_DEFAULT
 	mediaPlaybackRequiresUserGesture = false
 	if (WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) {
 		WebViewCompat.setAudioMuted(this@configureForParser, true)
@@ -222,6 +228,18 @@ fun WebView.configureForParser(userAgentOverride: String?) = with(settings) {
 	val cookieManager = CookieManager.getInstance()
 	cookieManager.setAcceptCookie(true)
 	cookieManager.setAcceptThirdPartyCookies(this@configureForParser, true)
+}
+
+fun WebView.prepareDetachedParserViewport() {
+	if (width > 0 && height > 0) {
+		return
+	}
+	layoutParams = ViewGroup.LayoutParams(1080, 1920)
+	measure(
+		View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+		View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+	)
+	layout(0, 0, 1080, 1920)
 }
 
 fun Context.restartApplication() {
