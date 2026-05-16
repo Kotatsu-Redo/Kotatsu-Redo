@@ -173,24 +173,6 @@ open class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 
 	override fun onPageLoaded() {
 		viewBinding.progressBar.isInvisible = true
-		// Title + URL check (one-shot per navigation, no JS injection so Turnstile can't see it):
-		// catches sites where the WebView passes CloudFlare without ever changing the clearance cookie.
-		// HTTP status (when CloudFlareInterceptClient replays the main-frame request) is handled
-		// separately in [onMainFrameResponseSuccess].
-		if (pendingResult == RESULT_OK) return
-		val currentUrl = viewBinding.webView.url.orEmpty()
-		// Still on a CloudFlare intermediate (challenge / orchestrator) — don't close yet.
-		if (currentUrl.isEmpty() || currentUrl.contains("/cdn-cgi/")) return
-		val title = viewBinding.webView.title?.lowercase().orEmpty()
-		if (title.isEmpty()) return
-		if (CF_CHALLENGE_TITLES.any { it in title }) return
-		onCheckPassed()
-	}
-
-	override fun onMainFrameResponseSuccess() {
-		// CloudFlareInterceptClient just got a 2xx for the main-frame request → real page, not an
-		// interstitial. Fire immediately rather than waiting for the cookie poll / navigation events.
-		if (pendingResult != RESULT_OK) onCheckPassed()
 	}
 
 	override fun onLoopDetected() {
@@ -292,17 +274,5 @@ open class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 		const val EXTRA_AUTO_RESOLVE = "auto_resolve"
 		private const val HIDDEN_TIMEOUT_MS = 15_000L
 		private const val CLEARANCE_POLL_INTERVAL_MS = 700L
-
-		// Lowercase substrings of titles Cloudflare uses on its challenge interstitial. As long as the
-		// current title is non-empty and doesn't contain one of these, we treat the page as "real".
-		private val CF_CHALLENGE_TITLES = listOf(
-			"just a moment",
-			"un instant",
-			"einen moment",
-			"un momento",
-			"один момент",
-			"attention required",
-			"access denied",
-		)
 	}
 }

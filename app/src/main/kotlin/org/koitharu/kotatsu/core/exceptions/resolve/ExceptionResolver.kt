@@ -127,12 +127,10 @@ class ExceptionResolver private constructor(
 
     private suspend fun resolveCF(e: CloudFlareProtectedException, tryAutoResolve: Boolean): Boolean {
         if (tryAutoResolve) {
-            host.withContext {
-                Toast.makeText(this, R.string.captcha_solving, Toast.LENGTH_LONG).show()
-            }
-            // Delegated to the singleton coordinator: it owns the activity lifecycle, so the result
-            // is delivered even if this Fragment / Activity dies while CloudFlareActivity is still
-            // running. Same-source duplicate calls await the in-flight resolve.
+            // Delegated to the singleton coordinator: it owns the activity lifecycle (so the result is
+            // delivered even if this Fragment / Activity dies while CloudFlareActivity is still
+            // running) AND owns the user-facing toast (so duplicate calls that just await the
+            // in-flight resolve don't pile new toasts on top of the loading state).
             return captchaCoordinator.resolve(e.source, e)
         }
         return suspendCoroutine { cont ->

@@ -20,6 +20,7 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.BadBackupFormatException
 import org.koitharu.kotatsu.core.exceptions.CaughtException
 import org.koitharu.kotatsu.core.exceptions.CloudFlareBlockedException
+import org.koitharu.kotatsu.core.exceptions.CloudFlareException
 import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
 import org.koitharu.kotatsu.core.exceptions.EmptyHistoryException
 import org.koitharu.kotatsu.core.exceptions.EmptyMangaException
@@ -157,6 +158,12 @@ fun Throwable.getDisplayIcon(): Int = when (this) {
     is InteractiveActionRequiredException -> R.drawable.ic_interaction_large
     else -> R.drawable.ic_error_large
 }
+
+/** Walks the exception cause chain and returns the first [CloudFlareException] found, or `null`. */
+fun Throwable.findCloudFlareException(): CloudFlareException? =
+    generateSequence(this) { it.cause?.takeIf { c -> c !== it } }
+        .filterIsInstance<CloudFlareException>()
+        .firstOrNull()
 
 fun Throwable.getCauseUrl(): String? = when (this) {
     is ParseException -> url

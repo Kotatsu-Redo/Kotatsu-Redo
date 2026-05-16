@@ -32,6 +32,7 @@ import org.koitharu.kotatsu.core.prefs.ListMode
 import org.koitharu.kotatsu.core.prefs.SourceSettings
 import org.koitharu.kotatsu.core.util.ext.MutableEventFlow
 import org.koitharu.kotatsu.core.util.ext.call
+import org.koitharu.kotatsu.core.util.ext.findCloudFlareException
 import org.koitharu.kotatsu.core.util.ext.getCauseUrl
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
@@ -209,8 +210,14 @@ open class RemoteListViewModel @Inject constructor(
 			// Only fire the auto-resolve handoff if the per-source "Disable automatic CAPTCHA solving"
 			// setting is OFF. When it's on we just throw, the standard error state shows, and the user
 			// goes through the normal "Solve" → visible CloudFlareActivity flow.
+			//
+			// Also skip the event if a resolve is already in progress for this source — otherwise rapid
+			// successive loadList calls (filter coordinator emissions, retries, …) would each spawn
+			// their own Fragment-observer coroutine, all of which would award the same in-flight resolve
+			// but pile up toasts/UI churn on the way there.
 			if (
 				cfException is CloudFlareProtectedException &&
+				!isResolvingCaptcha.value &&
 				!SourceSettings(appContext, source).isCaptchaAutoResolveDisabled
 			) {
 				onCaptchaRequired.call(cfException)
@@ -219,8 +226,6 @@ open class RemoteListViewModel @Inject constructor(
 		}
 	}
 
-	private fun Throwable.findCloudFlareException(): CloudFlareException? =
-		generateSequence(this) { it.cause?.takeIf { c -> c !== it } }.filterIsInstance<CloudFlareException>().firstOrNull()
 
 	protected open fun createEmptyState(canResetFilter: Boolean) = EmptyState(
 		icon = R.drawable.ic_empty_common,

@@ -40,11 +40,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
 import org.koitharu.kotatsu.core.exceptions.resolve.DialogErrorObserver
 import org.koitharu.kotatsu.core.exceptions.resolve.SnackbarErrorObserver
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.prefs.AppSettings
+import org.koitharu.kotatsu.core.prefs.SourceSettings
+import org.koitharu.kotatsu.core.util.ext.findCloudFlareException
 import org.koitharu.kotatsu.core.prefs.ReaderMode
 import org.koitharu.kotatsu.core.ui.BaseFullscreenActivity
 import org.koitharu.kotatsu.core.ui.dialog.buildAlertDialog
@@ -145,30 +148,63 @@ class ReaderActivity :
             }
         }
 
-        viewModel.onLoadingError.observeEvent(
-            this,
-            DialogErrorObserver(
-                host = viewBinding.container,
-                fragment = null,
-                resolver = exceptionResolver,
-                onResolved = { isResolved ->
-                    if (isResolved) {
-                        viewModel.reload()
-                    } else if (viewModel.content.value.pages.isEmpty()) {
-                        dispatchNavigateUp()
-                    }
-                },
-            ),
+        val loadingErrorDialog = DialogErrorObserver(
+            host = viewBinding.container,
+            fragment = null,
+            resolver = exceptionResolver,
+            onResolved = { isResolved ->
+                if (isResolved) {
+                    viewModel.reload()
+                } else if (viewModel.content.value.pages.isEmpty()) {
+                    dispatchNavigateUp()
+                }
+            },
         )
-        viewModel.onError.observeEvent(
-            this,
-            SnackbarErrorObserver(
-                host = viewBinding.container,
-                fragment = null,
-                resolver = exceptionResolver,
-                onResolved = null,
-            ),
+        viewModel.onLoadingError.observeEvent(this) { error ->
+            // Chapter / page load is an explicit user action ("opening a chapter to read"), so auto-resolve
+            // is appropriate here. If the per-source auto-solve toggle is on (or it's not a CF error),
+            // fall back to the standard dialog observer with the manual "Solve" button.
+            val cf = error.findCloudFlareException()
+            val source = cf?.source
+            val autoDisabled = source != null && SourceSettings(this@ReaderActivity, source).isCaptchaAutoResolveDisabled
+            if (cf is CloudFlareProtectedException && !autoDisabled) {
+                val resolved = exceptionResolver.resolve(cf, tryAutoResolve = true)
+                if (resolved) {
+                    viewModel.reload()
+                } else {
+                    // Auto-resolve failed — fall back to the manual "Solve" dialog so the user can retry.
+                    loadingErrorDialog.emit(error)
+                }
+            } else {
+                loadingErrorDialog.emit(error)
+            }
+        }
+        val errorSnackbar = SnackbarErrorObserver(
+            host = viewBinding.container,
+            fragment = null,
+            resolver = exceptionResolver,
+            onResolved = null,
         )
+        viewModel.onError.observeEvent(this) { error ->
+            // Same auto-resolve treatment as onLoadingError: errors fired *after* the manga is already
+            // loaded (chapter changes mid-reading, prefetch failures, page download failures) should
+            // auto-resolve too if the per-source toggle allows it — otherwise the user gets a snackbar
+            // with the manual "Solve" action instead.
+            val cf = error.findCloudFlareException()
+            val source = cf?.source
+            val autoDisabled = source != null &&
+                SourceSettings(this@ReaderActivity, source).isCaptchaAutoResolveDisabled
+            if (cf is CloudFlareProtectedException && !autoDisabled) {
+                val resolved = exceptionResolver.resolve(cf, tryAutoResolve = true)
+                if (resolved) {
+                    viewModel.reload()
+                } else {
+                    errorSnackbar.emit(error)
+                }
+            } else {
+                errorSnackbar.emit(error)
+            }
+        }
         viewModel.readerMode.observe(this, Lifecycle.State.STARTED, this::onInitReader)
         viewModel.onPageSaved.observeEvent(this, PagesSavedObserver(viewBinding.container))
         viewModel.uiState.zipWithPrevious().observe(this, this::onUiStateChanged)

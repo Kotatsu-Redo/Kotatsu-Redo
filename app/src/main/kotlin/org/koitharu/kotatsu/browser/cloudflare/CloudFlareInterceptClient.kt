@@ -74,15 +74,6 @@ class CloudFlareInterceptClient(
 
 			val response = client.newCall(requestBuilder.build()).execute()
 
-			// If the replayed main-frame request returns a normal 2xx, CloudFlare let us through —
-			// we got the real page, not an interstitial. Signal success right here (on the main thread)
-			// so the activity can self-close without waiting for the cookie poll / navigation listener.
-			if (request.isForMainFrame && response.code in 200..299) {
-				android.os.Handler(android.os.Looper.getMainLooper()).post {
-					callback.onMainFrameResponseSuccess()
-				}
-			}
-
 			val contentType = response.header("Content-Type")
 			val mimeType: String
 			val charset: String?
