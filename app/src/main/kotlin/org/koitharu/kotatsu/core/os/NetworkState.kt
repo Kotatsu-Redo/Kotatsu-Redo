@@ -6,7 +6,6 @@ import android.net.ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.os.Build
 import coil3.network.ConnectivityChecker
 import kotlinx.coroutines.flow.first
 import org.koitharu.kotatsu.core.prefs.AppSettings
@@ -47,8 +46,7 @@ class NetworkState(
 		return connectivityManager.isActiveNetworkMetered
 	}
 
-	fun isDataSaverEnabled(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
-		&& connectivityManager.restrictBackgroundStatus == RESTRICT_BACKGROUND_STATUS_ENABLED
+	fun isDataSaverEnabled(): Boolean = connectivityManager.restrictBackgroundStatus == RESTRICT_BACKGROUND_STATUS_ENABLED
 
 	fun isRestricted() = isMetered() && isDataSaverEnabled()
 
