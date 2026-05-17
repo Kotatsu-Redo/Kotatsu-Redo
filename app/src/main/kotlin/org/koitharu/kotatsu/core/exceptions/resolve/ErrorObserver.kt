@@ -12,7 +12,6 @@ import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.koitharu.kotatsu.core.exceptions.CloudFlareProtectedException
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.util.ext.findActivity
 import org.koitharu.kotatsu.core.util.ext.viewLifecycleScope
@@ -37,18 +36,15 @@ abstract class ErrorObserver(
 	}
 
 	/**
-	 * For CloudFlare captcha errors, silently start resolving instead of showing
-	 * a "captcha required" message — the resolver falls back to the interactive
-	 * screen only if the headless attempt fails.
-	 * @return `true` if auto-resolution was started and no error UI should be shown.
+	 * Hook for CloudFlare captcha errors. Used to silently start the resolve flow from any screen
+	 * that observed an error event — which turned out to be too aggressive: it triggered the
+	 * full-screen CloudFlare WebView from reader / tracker / suggestions / favourites whenever any
+	 * background-ish flow on those screens hit a CF error. Now a no-op by default; the only screens
+	 * that should auto-resolve are those that handle it explicitly (e.g. the catalog via its
+	 * `onCaptchaRequired` event). Other screens will just show the standard "Solve" error UI.
 	 */
-	protected fun tryAutoResolve(error: Throwable): Boolean {
-		if (error is CloudFlareProtectedException && canResolve(error)) {
-			resolve(error)
-			return true
-		}
-		return false
-	}
+	@Suppress("UNUSED_PARAMETER")
+	protected fun tryAutoResolve(error: Throwable): Boolean = false
 
 	protected fun router() = fragment?.router ?: (activity as? FragmentActivity)?.router
 

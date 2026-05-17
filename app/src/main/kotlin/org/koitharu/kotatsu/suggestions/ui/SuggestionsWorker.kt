@@ -285,7 +285,9 @@ class SuggestionsWorker @AssistedInject constructor(
 		list.take(MAX_SOURCE_RESULTS)
 	}.onFailure { e ->
 		if (e is CloudFlareException) {
-			captchaHandler.handle(e)
+			// Background suggestion fetch: just record state, no headless WebView attempt — would
+			// otherwise pop the captcha overlay on users mid-reading.
+			captchaHandler.handle(e, tryAutoResolve = false)
 		}
 		e.printStackTraceDebug()
 	}.getOrDefault(emptyList())
