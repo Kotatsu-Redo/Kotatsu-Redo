@@ -12,7 +12,6 @@ import android.widget.Checkable
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
-import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.children
 import androidx.core.view.descendants
 import androidx.core.view.isVisible
@@ -169,11 +168,7 @@ fun BaseProgressIndicator<*>.showOrHide(value: Boolean) {
 }
 
 fun View.setTooltipCompat(tooltip: CharSequence?) {
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-		tooltipText = tooltip
-	} else if (!isLongClickable) { // don't use TooltipCompat if has a LongClickListener
-		TooltipCompat.setTooltipText(this, tooltip)
-	}
+	tooltipText = tooltip
 }
 
 fun View.setTooltipCompat(@StringRes tooltipResId: Int) = setTooltipCompat(context.getString(tooltipResId))
