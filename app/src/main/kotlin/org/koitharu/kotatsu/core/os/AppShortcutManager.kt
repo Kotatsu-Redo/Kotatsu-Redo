@@ -3,7 +3,6 @@ package org.koitharu.kotatsu.core.os
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ShortcutManager
-import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -113,8 +112,7 @@ class AppShortcutManager @Inject constructor(
 	}
 
 	fun isDynamicShortcutsAvailable(): Boolean {
-		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 &&
-			context.getSystemService(ShortcutManager::class.java).maxShortcutCountPerActivity > 0
+		return context.getSystemService(ShortcutManager::class.java).maxShortcutCountPerActivity > 0
 	}
 
 	private suspend fun updateShortcutsImpl() = runCatchingCancellable {
