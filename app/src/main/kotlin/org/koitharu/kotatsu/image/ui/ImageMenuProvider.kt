@@ -1,7 +1,5 @@
 package org.koitharu.kotatsu.image.ui
 
-import android.Manifest
-import android.os.Build
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -20,14 +18,6 @@ class ImageMenuProvider(
 	private val viewModel: ImageViewModel,
 ) : MenuProvider {
 
-	private val permissionLauncher = activity.registerForActivityResult(
-		ActivityResultContracts.RequestPermission(),
-	) { isGranted ->
-		if (isGranted) {
-			saveImage()
-		}
-	}
-
 	private val saveLauncher = activity.registerForActivityResult(
 		ActivityResultContracts.CreateDocument("image/png"),
 	) { uri ->
@@ -42,11 +32,7 @@ class ImageMenuProvider(
 
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
 		R.id.action_save -> {
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-				permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-			} else {
-				saveImage()
-			}
+			saveImage()
 			true
 		}
 
