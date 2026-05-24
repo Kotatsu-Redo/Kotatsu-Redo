@@ -21,6 +21,7 @@ import kotlinx.coroutines.plus
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.bookmarks.domain.BookmarksRepository
 import org.koitharu.kotatsu.core.model.getPreferredBranch
+import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.nav.MangaIntent
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ListMode
@@ -145,8 +146,15 @@ class DetailsViewModel @Inject constructor(
 
 	val relatedManga: StateFlow<List<MangaListModel>> = manga.mapLatest {
 		if (it != null && settings.isRelatedMangaEnabled) {
+			val related = relatedMangaUseCase(it).orEmpty().let { list ->
+				if (settings.isNsfwContentDisabled) {
+					list.filterNot { manga -> manga.isNsfw() }
+				} else {
+					list
+				}
+			}
 			mangaListMapper.toListModelList(
-				manga = relatedMangaUseCase(it).orEmpty(),
+				manga = related,
 				mode = ListMode.GRID,
 			)
 		} else {
