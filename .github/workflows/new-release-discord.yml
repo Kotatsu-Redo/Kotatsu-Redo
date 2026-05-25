@@ -10,6 +10,24 @@ jobs:
     name: Notify Discord - New Release
     runs-on: ubuntu-latest
     steps:
+      - name: Build description with assets
+        id: build
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
+          ASSETS_JSON: ${{ toJSON(github.event.release.assets) }}
+        run: |
+          BODY="${RELEASE_BODY:-No release notes provided.}"
+          BODY=$(printf '%s' "$BODY" | awk '{lines[NR]=$0} END{while(NR>0 && lines[NR]~/^[[:space:]]*$/) NR--; for(i=1;i<=NR;i++) print lines[i]}')
+          ASSETS=$(echo "$ASSETS_JSON" | jq -r '.[] | "- [\(.name)](\(.browser_download_url))"')
+          DESC="${BODY}"$'\n\n'"> ℹ️ This app supports in-app updates - Open Settings and tap **Check for updates** instead of downloading manually."
+          if [ -n "$ASSETS" ]; then
+            DESC="${DESC}"$'\n\n'"**Downloads**"$'\n'"${ASSETS}"
+          fi
+          {
+            echo "description<<EOF"
+            echo "$DESC"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Send release embed to Discord
         uses: tsickert/discord-webhook@v7.0.0
         with:
@@ -17,7 +35,7 @@ jobs:
           content: "<@&1435675462759088168>"
           embed-title: "🚀 New Release: ${{ github.event.repository.name }} v${{ github.event.release.tag_name }}"
           embed-url: "${{ github.event.release.html_url }}"
-          embed-description: "${{ github.event.release.body }}"
+          embed-description: ${{ steps.build.outputs.description }}
           embed-color: 3447003
           embed-author-name: "${{ github.actor }}"
           embed-author-icon-url: "https://github.com/${{ github.actor }}.png"
@@ -29,13 +47,31 @@ jobs:
     name: Notify Discord - Pre-Release
     runs-on: ubuntu-latest
     steps:
+      - name: Build description with assets
+        id: build
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
+          ASSETS_JSON: ${{ toJSON(github.event.release.assets) }}
+        run: |
+          BODY="${RELEASE_BODY:-No release notes provided.}"
+          BODY=$(printf '%s' "$BODY" | awk '{lines[NR]=$0} END{while(NR>0 && lines[NR]~/^[[:space:]]*$/) NR--; for(i=1;i<=NR;i++) print lines[i]}')
+          ASSETS=$(echo "$ASSETS_JSON" | jq -r '.[] | "- [\(.name)](\(.browser_download_url))"')
+          DESC="${BODY}"$'\n\n'"> ℹ️ This app supports in-app updates for pre-releases - Open Settings and tap **Check for updates** instead of downloading manually."
+          if [ -n "$ASSETS" ]; then
+            DESC="${DESC}"$'\n\n'"**Downloads**"$'\n'"${ASSETS}"
+          fi
+          {
+            echo "description<<EOF"
+            echo "$DESC"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Send prerelease embed to Discord
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
-          embed-title: "🧪 Pre-Release: ${{ github.event.repository.name }} ${{ github.event.release.tag_name }}"
+          embed-title: "🧪 Pre-Release: ${{ github.event.repository.name }} v${{ github.event.release.tag_name }}"
           embed-url: "${{ github.event.release.html_url }}"
-          embed-description: "${{ github.event.release.body }}"
+          embed-description: ${{ steps.build.outputs.description }}
           embed-color: 15105570
           embed-author-name: "${{ github.actor }}"
           embed-author-icon-url: "https://github.com/${{ github.actor }}.png"
