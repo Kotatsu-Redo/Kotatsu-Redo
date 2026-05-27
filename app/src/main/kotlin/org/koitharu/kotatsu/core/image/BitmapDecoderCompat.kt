@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.graphics.ImageDecoder
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.graphics.createBitmap
 import com.davemorrissey.labs.subscaleview.decoder.ImageDecodeException
 import okio.IOException
@@ -30,13 +29,9 @@ object BitmapDecoderCompat {
 	private const val FORMAT_AVIF = "avif"
 
 	@Blocking
-	fun decode(file: File): Bitmap = when (val format = probeMimeType(file)?.subtype) {
+	fun decode(file: File): Bitmap = when (probeMimeType(file)?.subtype) {
 		FORMAT_AVIF -> file.source().buffer().use { decodeAvif(it.readByteBuffer()) }
-		else -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-			ImageDecoder.decodeBitmap(ImageDecoder.createSource(file))
-		} else {
-			checkBitmapNotNull(BitmapFactory.decodeFile(file.absolutePath), format)
-		}
+		else -> ImageDecoder.decodeBitmap(ImageDecoder.createSource(file))
 	}
 
 	@Blocking
@@ -44,11 +39,6 @@ object BitmapDecoderCompat {
 		val format = type?.subtype
 		if (format == FORMAT_AVIF) {
 			return decodeAvif(stream.toByteBuffer())
-		}
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-			val opts = BitmapFactory.Options()
-			opts.inMutable = isMutable
-			return checkBitmapNotNull(BitmapFactory.decodeStream(stream, null, opts), format)
 		}
 		val byteBuffer = stream.toByteBuffer()
 		return if (AvifDecoder.isAvifImage(byteBuffer)) {
@@ -85,9 +75,6 @@ object BitmapDecoderCompat {
 		options.outMimeType?.toMimeTypeOrNull()
 	}.getOrNull()
 
-	private fun checkBitmapNotNull(bitmap: Bitmap?, format: String?): Bitmap =
-		bitmap ?: throw ImageDecodeException(null, format)
-
 	private fun decodeAvif(bytes: ByteBuffer): Bitmap {
 		val info = Info()
 		if (!AvifDecoder.getInfo(bytes, bytes.remaining(), info)) {
@@ -106,7 +93,6 @@ object BitmapDecoderCompat {
 		return bitmap
 	}
 
-	@RequiresApi(Build.VERSION_CODES.P)
 	private class DecoderConfigListener(
 		private val isMutable: Boolean,
 	) : ImageDecoder.OnHeaderDecodedListener {

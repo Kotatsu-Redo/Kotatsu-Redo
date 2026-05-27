@@ -76,7 +76,7 @@ import androidx.appcompat.R as appcompatR
 @HiltWorker
 class TrackWorker @AssistedInject constructor(
 	@Assisted context: Context,
-	@Assisted workerParams: WorkerParameters,
+	@Assisted workerParameters: WorkerParameters,
 	private val captchaHandler: CaptchaHandler,
 	private val notificationHelper: TrackerNotificationHelper,
 	private val settings: AppSettings,
@@ -85,7 +85,7 @@ class TrackWorker @AssistedInject constructor(
 	private val workManager: WorkManager,
 	private val localRepositoryLazy: Lazy<LocalMangaRepository>,
 	private val downloadSchedulerLazy: Lazy<DownloadWorker.Scheduler>,
-) : CoroutineWorker(context, workerParams) {
+) : CoroutineWorker(context, workerParameters) {
 
 	private val notificationManager by lazy { NotificationManagerCompat.from(applicationContext) }
 

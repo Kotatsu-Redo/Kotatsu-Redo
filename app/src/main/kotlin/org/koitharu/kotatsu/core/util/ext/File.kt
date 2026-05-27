@@ -3,7 +3,6 @@ package org.koitharu.kotatsu.core.util.ext
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.storage.StorageManager
 import android.provider.OpenableColumns
@@ -41,10 +40,8 @@ fun ZipFile.readText(entry: ZipEntry) = getInputStream(entry).use { output ->
 
 fun File.getStorageName(context: Context): String = runCatching {
 	val manager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-		manager.getStorageVolume(this)?.getDescription(context)?.let {
-			return@runCatching it
-		}
+	manager.getStorageVolume(this)?.getDescription(context)?.let {
+		return@runCatching it
 	}
 	when {
 		Environment.isExternalStorageEmulated(this) -> context.getString(R.string.internal_storage)
@@ -80,32 +77,20 @@ suspend fun File.computeSize(): Long = runInterruptible(Dispatchers.IO) {
 
 inline fun <R> File.withChildren(block: (children: Sequence<File>) -> R): R = FileSequence(this).use(block)
 
-fun FileSequence(dir: File): FileSequence = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-	FileSequence.StreamImpl(dir)
-} else {
-	FileSequence.ListImpl(dir)
-}
+fun FileSequence(dir: File): FileSequence = FileSequence.StreamImpl(dir)
 
 val File.creationTime
-	get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-		toPath().readAttributes<BasicFileAttributes>().creationTime().toMillis()
-	} else {
-		lastModified()
-	}
+	get() = toPath().readAttributes<BasicFileAttributes>().creationTime().toMillis()
 
 @OptIn(ExperimentalPathApi::class)
-fun File.walkCompat(includeDirectories: Boolean): Sequence<File> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-	// Use lazy loading on Android 8.0 and later
+fun File.walkCompat(includeDirectories: Boolean): Sequence<File> {
+	// Use lazy loading
 	val walk = if (includeDirectories) {
 		toPath().walk(PathWalkOption.INCLUDE_DIRECTORIES)
 	} else {
 		toPath().walk()
 	}
-	walk.map { it.toFile() }
-} else {
-	// Directories are excluded by default in Path.walk(), so do it here as well
-	val walk = walk()
-	if (includeDirectories) walk else walk.filter { it.isFile }
+	return walk.map { it.toFile() }
 }
 
 val File.normalizedExtension: String?
