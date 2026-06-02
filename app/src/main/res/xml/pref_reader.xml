@@ -112,6 +112,43 @@
 		android:key="reader_crop"
 		android:title="@string/crop_pages" />
 
+	<PreferenceCategory
+		android:title="@string/e_ink"
+		app:allowDividerAbove="true">
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:key="eink_flash"
+			android:summary="@string/flash_on_page_change_summary"
+			android:title="@string/flash_on_page_change" />
+
+		<org.koitharu.kotatsu.settings.utils.SliderPreference
+			android:dependency="eink_flash"
+			android:key="eink_flash_duration"
+			android:stepSize="50"
+			android:title="@string/flash_duration"
+			android:valueFrom="100"
+			android:valueTo="1000"
+			app:defaultValue="300" />
+
+		<org.koitharu.kotatsu.settings.utils.SliderPreference
+			android:dependency="eink_flash"
+			android:key="eink_flash_every"
+			android:stepSize="1"
+			android:title="@string/flash_every"
+			android:valueFrom="1"
+			android:valueTo="10"
+			app:defaultValue="1"
+			app:tickVisible="true" />
+
+		<ListPreference
+			android:dependency="eink_flash"
+			android:key="eink_flash_color"
+			android:title="@string/flash_with"
+			app:useSimpleSummaryProvider="true" />
+
+	</PreferenceCategory>
+
 	<SwitchPreferenceCompat
 		android:defaultValue="true"
 		android:key="reader_fullscreen"

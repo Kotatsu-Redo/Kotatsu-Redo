@@ -14,8 +14,28 @@ import org.koitharu.kotatsu.list.domain.ListFilterOption
 abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
 
 	@Transaction
-	@Query("SELECT * FROM tracks ORDER BY last_check_time ASC LIMIT :limit OFFSET :offset")
-	abstract suspend fun findAll(offset: Int, limit: Int): List<TrackWithManga>
+	@Query(
+		"""
+		SELECT * FROM tracks
+		WHERE last_check_time = 0
+			OR last_chapter_date >= :minActivityTime
+			OR EXISTS(
+				SELECT 1 FROM history
+				WHERE history.manga_id = tracks.manga_id
+					AND history.deleted_at = 0
+					AND history.updated_at >= :minActivityTime
+			)
+			OR EXISTS(
+				SELECT 1 FROM favourites
+				WHERE favourites.manga_id = tracks.manga_id
+					AND favourites.deleted_at = 0
+					AND favourites.created_at >= :minActivityTime
+			)
+		ORDER BY last_check_time ASC
+		LIMIT :limit OFFSET :offset
+		""",
+	)
+	abstract suspend fun findAll(offset: Int, limit: Int, minActivityTime: Long): List<TrackWithManga>
 
 	@Transaction
 	@Query("SELECT * FROM tracks ORDER BY last_check_time DESC")
@@ -66,6 +86,9 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
 
 	@Query("UPDATE tracks SET chapters_new = 0 WHERE manga_id = :mangaId")
 	abstract suspend fun clearCounter(mangaId: Long)
+
+	@Query("UPDATE tracks SET chapters_new = 0 WHERE chapters_new > 0 AND last_chapter_date > 0 AND last_chapter_date < :minChapterDate")
+	abstract suspend fun clearStaleCounters(minChapterDate: Long)
 
 	@Query("DELETE FROM tracks WHERE manga_id = :mangaId")
 	abstract suspend fun delete(mangaId: Long)

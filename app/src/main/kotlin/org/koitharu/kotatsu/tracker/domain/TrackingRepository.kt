@@ -28,6 +28,7 @@ import org.koitharu.kotatsu.tracker.data.toTrackingLogItem
 import org.koitharu.kotatsu.tracker.domain.model.MangaTracking
 import org.koitharu.kotatsu.tracker.domain.model.MangaUpdates
 import org.koitharu.kotatsu.tracker.domain.model.TrackingLogItem
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
@@ -77,8 +78,8 @@ class TrackingRepository @Inject constructor(
 			.onStart { gcIfNotCalled() }
 	}
 
-	suspend fun getTracks(offset: Int, limit: Int): List<MangaTracking> {
-		return db.getTracksDao().findAll(offset = offset, limit = limit)
+	suspend fun getTracks(offset: Int, limit: Int, minActivityTime: Long): List<MangaTracking> {
+		return db.getTracksDao().findAll(offset = offset, limit = limit, minActivityTime = minActivityTime)
 			.filter { track ->
 				// Check if source has disabled chapter updates via ConfigKey
 				val manga = track.manga.toManga(emptySet(), null)
@@ -150,6 +151,7 @@ class TrackingRepository @Inject constructor(
 
 	suspend fun gc() = db.withTransaction {
 		db.getTracksDao().gc()
+		db.getTracksDao().clearStaleCounters(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(MAX_STALE_UPDATE_DAYS))
 		db.getTrackLogsDao().run {
 			gc()
 			trim(MAX_LOG_SIZE)
@@ -277,5 +279,10 @@ class TrackingRepository @Inject constructor(
 		if (isGcCalled.compareAndSet(false, true)) {
 			gc()
 		}
+	}
+
+	private companion object {
+
+		const val MAX_STALE_UPDATE_DAYS = 90L
 	}
 }

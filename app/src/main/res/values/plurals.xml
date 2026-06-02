@@ -12,6 +12,10 @@
 		<item quantity="one">%1$d chapter</item>
 		<item quantity="other">%1$d chapters</item>
 	</plurals>
+	<plurals name="pages">
+		<item quantity="one">%1$d page</item>
+		<item quantity="other">%1$d pages</item>
+	</plurals>
 	<plurals name="minutes_ago">
 		<item quantity="one">%1$d minute ago</item>
 		<item quantity="other">%1$d minutes ago</item>
