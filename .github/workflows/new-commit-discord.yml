@@ -9,13 +9,27 @@ jobs:
   discordNotification:
     runs-on: ubuntu-latest
     steps:
+      - name: Build commit description
+        id: build
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          MSG="${COMMIT_MSG:-No commit message.}"
+          if [ ${#MSG} -gt 1000 ]; then
+            MSG="${MSG:0:1000}..."
+          fi
+          {
+            echo "description<<EOF"
+            echo "$MSG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Send commit embed to Discord
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           embed-title: "New Commit: ${{ github.event.repository.name }}"
           embed-url: "${{ github.event.head_commit.url }}"
-          embed-description: "${{ github.event.head_commit.message }}"
+          embed-description: ${{ steps.build.outputs.description }}
           embed-color: 5814783
           embed-author-name: "${{ github.actor }}"
           embed-author-icon-url: "https://github.com/${{ github.actor }}.png"

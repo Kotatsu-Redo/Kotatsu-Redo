@@ -8,13 +8,27 @@ jobs:
   discordNotification:
     runs-on: ubuntu-latest
     steps:
+      - name: Build issue description
+        id: build
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          BODY="${ISSUE_BODY:-No description provided.}"
+          if [ ${#BODY} -gt 1000 ]; then
+            BODY="${BODY:0:1000}..."
+          fi
+          {
+            echo "description<<EOF"
+            echo "$BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Send issue embed to Discord
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           embed-title: "New Issue: ${{ github.event.issue.title }}"
           embed-url: "${{ github.event.issue.html_url }}"
-          embed-description: "${{ github.event.issue.body }}"
+          embed-description: ${{ steps.build.outputs.description }}
           embed-color: 5814783
           embed-author-name: "${{ github.event.issue.user.login }}"
           embed-author-icon-url: "${{ github.event.issue.user.avatar_url }}"
