@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.core.model.MangaHistory
 import org.koitharu.kotatsu.bookmarks.domain.Bookmark
 import org.koitharu.kotatsu.bookmarks.domain.BookmarksRepository
 import org.koitharu.kotatsu.core.exceptions.EmptyMangaException
@@ -52,12 +53,14 @@ import org.koitharu.kotatsu.details.ui.pager.EmptyMangaReason
 import org.koitharu.kotatsu.download.ui.worker.DownloadWorker
 import org.koitharu.kotatsu.history.data.HistoryRepository
 import org.koitharu.kotatsu.history.domain.HistoryUpdateUseCase
+import org.koitharu.kotatsu.list.domain.ReadingProgress
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_NONE
 import org.koitharu.kotatsu.local.data.LocalStorageChanges
 import org.koitharu.kotatsu.local.domain.DeleteLocalMangaUseCase
 import org.koitharu.kotatsu.local.domain.model.LocalManga
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
+import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.util.ifNullOrEmpty
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -69,6 +72,7 @@ import org.koitharu.kotatsu.reader.ui.config.ReaderSettings
 import org.koitharu.kotatsu.reader.ui.pager.ReaderUiState
 import org.koitharu.kotatsu.scrobbling.discord.ui.DiscordRpc
 import org.koitharu.kotatsu.stats.domain.StatsCollector
+import org.koitharu.kotatsu.tracker.domain.TrackingRepository
 import java.time.Instant
 import javax.inject.Inject
 
@@ -80,6 +84,7 @@ class ReaderViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val dataRepository: MangaDataRepository,
     private val historyRepository: HistoryRepository,
+    private val trackingRepository: TrackingRepository,
     private val bookmarksRepository: BookmarksRepository,
     settings: AppSettings,
     private val pageLoader: PageLoader,
@@ -600,18 +605,57 @@ class ReaderViewModel @Inject constructor(
             // specified branch is requested
             return if (ReaderIntent.EXTRA_BRANCH in savedStateHandle) {
                 if (chapter.branch == requestedBranch) {
-                    ReaderState(history)
+                    getTrackedUnreadState(manga, history, chapter) ?: ReaderState(history)
                 } else {
                     ReaderState(manga, requestedBranch)
                 }
             } else {
-                ReaderState(history)
+                getTrackedUnreadState(manga, history, chapter) ?: ReaderState(history)
             }
         }
 
         // start from beginning
         val preferredBranch = requestedBranch ?: manga.getPreferredBranch(null)
         return ReaderState(manga, preferredBranch)
+    }
+
+    private suspend fun getTrackedUnreadState(
+        manga: Manga,
+        history: MangaHistory,
+        historyChapter: MangaChapter,
+    ): ReaderState? {
+        val newChapters = trackingRepository.getNewChaptersCount(manga.id)
+        if (newChapters <= 0) {
+            return null
+        }
+        val chapters = manga.getChapters(historyChapter.branch)
+        if (chapters.isEmpty()) {
+            return null
+        }
+        val firstUnreadIndex = (chapters.size - newChapters).coerceIn(0, chapters.lastIndex)
+        val historyIndex = chapters.indexOfFirst { it.id == history.chapterId }
+        if (historyIndex != firstUnreadIndex - 1) {
+            return null
+        }
+        if (history.estimatedReadChaptersCount() < firstUnreadIndex) {
+            return null
+        }
+        return ReaderState(
+            chapterId = chapters[firstUnreadIndex].id,
+            page = 0,
+            scroll = 0,
+        )
+    }
+
+    private fun MangaHistory.estimatedReadChaptersCount(): Int {
+        if (chaptersCount <= 0 || !ReadingProgress.isValid(percent)) {
+            return 0
+        }
+        return if (ReadingProgress.isCompleted(percent)) {
+            chaptersCount
+        } else {
+            (percent * chaptersCount).toInt().coerceIn(0, chaptersCount)
+        }
     }
 
     private fun Exception.mergeWith(other: Exception?): Exception = if (other == null) {

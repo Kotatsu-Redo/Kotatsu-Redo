@@ -265,13 +265,12 @@ class CheckNewChaptersUseCase @Inject constructor(
 		val index = chapters.indexOfFirst { it.id == chapterId }
 		return when {
 			index >= 0 -> index + 1
-			ReadingProgress.isCompleted(percent) -> chapters.size
 			else -> estimatedReadChaptersCount().coerceAtMost(chapters.size)
 		}
 	}
 
 	private fun MangaHistory.estimatedReadChaptersCount(): Int {
-		if (chaptersCount <= 0) {
+		if (chaptersCount <= 0 || !ReadingProgress.isValid(percent)) {
 			return 0
 		}
 		return if (ReadingProgress.isCompleted(percent)) {
