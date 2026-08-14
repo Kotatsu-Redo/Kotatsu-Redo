@@ -29,6 +29,34 @@
 
 		</com.google.android.material.appbar.CollapsingToolbarLayout>
 
+		<com.google.android.material.progressindicator.LinearProgressIndicator
+			android:id="@+id/progress_sources"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:indeterminate="true"
+			android:visibility="gone"
+			app:hideAnimationBehavior="escape"
+			app:showAnimationBehavior="inward" />
+
+		<HorizontalScrollView
+			android:id="@+id/scrollView_summary"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:clipToPadding="false"
+			android:paddingHorizontal="12dp"
+			android:scrollbars="none">
+
+			<org.koitharu.kotatsu.core.ui.widgets.ChipsView
+				android:id="@+id/chips_summary"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:paddingVertical="4dp"
+				app:chipStyle="@style/Widget.Kotatsu.Chip.Filter"
+				app:singleLine="true"
+				tools:ignore="SpeakableTextPresentCheck" />
+
+		</HorizontalScrollView>
+
 	</com.google.android.material.appbar.AppBarLayout>
 
 	<androidx.recyclerview.widget.RecyclerView

@@ -1,5 +1,6 @@
 package org.koitharu.kotatsu.alternatives.domain
 
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -19,6 +20,7 @@ import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.search.domain.SearchKind
 import org.koitharu.kotatsu.search.domain.SearchV2Helper
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 private const val MAX_PARALLELISM = 4
@@ -31,37 +33,75 @@ class AlternativesUseCase @Inject constructor(
 	private val presetsRepository: SourcePresetsRepository,
 ) {
 
-	suspend operator fun invoke(manga: Manga, throughDisabledSources: Boolean): Flow<Manga> {
-		val sources = getSources(manga.source, throughDisabledSources)
+	suspend operator fun invoke(manga: Manga, options: AlternativesSearchOptions): Flow<AlternativeSearchEvent> {
+		val query = options.query.trim()
+		if (query.isEmpty()) {
+			return emptyFlow()
+		}
+		val sources = getSources(manga.source, options)
 		if (sources.isEmpty()) {
 			return emptyFlow()
 		}
 		val semaphore = Semaphore(MAX_PARALLELISM)
 		return channelFlow {
+			val completedSources = AtomicInteger()
+			send(AlternativeSearchEvent.Progress(0, sources.size))
 			for (source in sources) {
 				launch {
-					val searchHelper = searchHelperFactory.create(source)
-					val list = runCatchingCancellable {
-						semaphore.withPermit {
-							searchHelper(manga.title, SearchKind.TITLE)?.manga
-						}
-					}.getOrNull()
-					list?.forEach { m ->
-						if (m.id != manga.id) {
-							launch {
-								val details = runCatchingCancellable {
-									mangaRepositoryFactory.create(m.source).getDetails(m)
-								}.getOrDefault(m)
-								send(details)
+					try {
+						val searchHelper = searchHelperFactory.create(source)
+						val list = runCatchingCancellable {
+							semaphore.withPermit {
+								searchHelper(query, SearchKind.TITLE)?.manga
+							}
+						}.getOrNull()
+						coroutineScope {
+							list?.forEach { m ->
+								if (m.id != manga.id) {
+									launch {
+										val details = runCatchingCancellable {
+											mangaRepositoryFactory.create(m.source).getDetails(m)
+										}.getOrDefault(m)
+										send(AlternativeSearchEvent.Result(details))
+									}
+								}
 							}
 						}
+					} finally {
+						send(AlternativeSearchEvent.Progress(completedSources.incrementAndGet(), sources.size))
 					}
 				}
 			}
 		}
 	}
 
-	private suspend fun getSources(ref: MangaSource, disabled: Boolean): List<MangaSource> {
+	private suspend fun getSources(ref: MangaSource, options: AlternativesSearchOptions): List<MangaSource> {
+		val sources = when (options.sourceScope) {
+			AlternativeSourceScope.ENABLED -> getEnabledSources()
+			AlternativeSourceScope.PINNED -> sourcesRepository.getPinnedSources().toList()
+			AlternativeSourceScope.ALL -> buildList {
+				addAll(sourcesRepository.getEnabledSources())
+				addAll(sourcesRepository.getDisabledSources())
+			}
+		}
+		return sources.asSequence()
+			.distinctBy(MangaSource::name)
+			.filter { it != ref }
+			.filterNot { settings.isNsfwContentDisabled && it.isNsfw() }
+			.filter { source ->
+				if (!options.sameLanguageOnly && !options.sameContentTypeOnly) {
+					return@filter true
+				}
+				val parserSource = source as? MangaParserSource ?: return@filter false
+				val parserRef = ref as? MangaParserSource ?: return@filter false
+				(!options.sameLanguageOnly || parserSource.locale == parserRef.locale) &&
+					(!options.sameContentTypeOnly || parserSource.contentType == parserRef.contentType)
+			}
+			.sortedWith(compareByDescending<MangaSource> { it.priority(ref) }.thenBy { it.name })
+			.toList()
+	}
+
+	private suspend fun getEnabledSources(): List<MangaSource> {
 		val presetId = settings.activeSourcePresetId
 		if (presetId != 0L) {
 			val preset = presetsRepository.getById(presetId)
@@ -70,14 +110,10 @@ class AlternativesUseCase @Inject constructor(
 				val skipNsfw = settings.isNsfwContentDisabled
 				return sourcesRepository.allMangaSources.filter { source ->
 					source.name in preset.sources && (!skipNsfw || !source.isNsfw())
-				}.sortedByDescending { it.priority(ref) }
+				}
 			}
 		}
-		return if (disabled) {
-			sourcesRepository.getDisabledSources().toList()
-		} else {
-			sourcesRepository.getEnabledSources()
-		}.sortedByDescending { it.priority(ref) }
+		return sourcesRepository.getEnabledSources()
 	}
 
 	private fun MangaSource.priority(ref: MangaSource): Int {

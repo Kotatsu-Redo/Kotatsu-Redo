@@ -8,6 +8,7 @@ import org.koitharu.kotatsu.parsers.model.Manga
 data class MangaAlternativeModel(
 	val mangaModel: MangaGridModel,
 	private val referenceChapters: Int,
+	val isMigrationEnabled: Boolean = true,
 ) : ListModel {
 
 	val manga: Manga
@@ -28,3 +29,8 @@ data class MangaAlternativeModel(
 		null
 	}
 }
+
+data class MangaAlternativeReference(
+	val manga: Manga,
+	val chaptersCount: Int = manga.chaptersCount(),
+)

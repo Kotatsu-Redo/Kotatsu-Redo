@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item
+		android:id="@+id/action_search"
+		android:icon="?actionModeWebSearchDrawable"
+		android:orderInCategory="0"
+		android:title="@string/search"
+		app:actionViewClass="androidx.appcompat.widget.SearchView"
+		app:showAsAction="ifRoom|collapseActionView" />
+
+	<item
+		android:id="@+id/action_alternatives_filter"
+		android:icon="@drawable/ic_filter_menu"
+		android:orderInCategory="1"
+		android:title="@string/filter"
+		app:showAsAction="ifRoom">
+
+		<menu>
+
+			<item
+				android:id="@+id/action_alternatives_sources"
+				android:title="@string/remote_sources">
+
+				<menu>
+
+					<group
+						android:id="@+id/group_alternatives_sources"
+						android:checkableBehavior="single">
+
+						<item
+							android:id="@+id/action_alternatives_sources_enabled"
+							android:title="@string/enabled_sources" />
+
+						<item
+							android:id="@+id/action_alternatives_sources_pinned"
+							android:title="@string/pinned_sources" />
+
+						<item
+							android:id="@+id/action_alternatives_sources_all"
+							android:title="@string/all_sources" />
+
+					</group>
+
+				</menu>
+
+			</item>
+
+			<item
+				android:id="@+id/action_alternatives_same_language"
+				android:checkable="true"
+				android:title="@string/same_language_as_current" />
+
+			<item
+				android:id="@+id/action_alternatives_same_content_type"
+				android:checkable="true"
+				android:title="@string/same_content_type_as_current" />
+
+			<item
+				android:id="@+id/action_alternatives_hide_no_chapters"
+				android:checkable="true"
+				android:title="@string/hide_results_without_chapters" />
+
+			<item
+				android:id="@+id/action_alternatives_sort"
+				android:title="@string/sort_order">
+
+				<menu>
+
+					<group
+						android:id="@+id/group_alternatives_sort"
+						android:checkableBehavior="single">
+
+						<item
+							android:id="@+id/action_alternatives_sort_best_match"
+							android:title="@string/best_match" />
+
+						<item
+							android:id="@+id/action_alternatives_sort_most_chapters"
+							android:title="@string/most_chapters" />
+
+						<item
+							android:id="@+id/action_alternatives_sort_closest_chapters"
+							android:title="@string/closest_chapter_count" />
+
+						<item
+							android:id="@+id/action_alternatives_sort_source_priority"
+							android:title="@string/source_priority" />
+
+					</group>
+
+				</menu>
+
+			</item>
+
+			<item
+				android:id="@+id/action_alternatives_reset"
+				android:title="@string/reset_filter" />
+
+		</menu>
+
+	</item>
+
+</menu>

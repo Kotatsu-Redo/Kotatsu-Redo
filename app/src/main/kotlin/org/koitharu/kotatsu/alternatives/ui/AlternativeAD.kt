@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.core.view.isVisible
+import androidx.appcompat.widget.TooltipCompat
 import androidx.lifecycle.LifecycleOwner
 import coil3.ImageLoader
 import coil3.request.ImageRequest
@@ -49,6 +50,14 @@ fun alternativeAD(
 
 	bind { payloads ->
 		binding.textViewTitle.text = item.mangaModel.title
+		val migrationTooltip = when {
+			!item.isMigrationEnabled -> context.getString(R.string.migration_unavailable_search_in_progress)
+			item.chaptersCount == 0 -> context.getString(R.string.migration_unavailable_no_chapters)
+			else -> null
+		}
+		binding.buttonMigrate.isEnabled = migrationTooltip == null
+		TooltipCompat.setTooltipText(binding.buttonMigrate, migrationTooltip)
+		binding.buttonMigrate.contentDescription = migrationTooltip ?: context.getString(R.string.migrate)
 		with(binding.iconsView) {
 			clearIcons()
 			if (item.mangaModel.isSaved) addIcon(R.drawable.ic_storage)

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.flow.withIndex
@@ -15,7 +16,6 @@ import org.koitharu.kotatsu.core.model.chaptersCount
 import org.koitharu.kotatsu.core.model.parcelable.ParcelableManga
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
-import org.koitharu.kotatsu.core.util.ext.concat
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import java.util.concurrent.TimeUnit
@@ -36,8 +36,14 @@ class AutoFixUseCase @Inject constructor(
 		if (seed.isHealthy()) {
 			return seed to null // no fix required
 		}
-		val replacement = alternativesUseCase(seed, throughDisabledSources = false)
-			.concat(alternativesUseCase(seed, throughDisabledSources = true))
+		val replacement = alternativesUseCase(
+			seed,
+			AlternativesSearchOptions(
+				query = seed.title,
+				sourceScope = AlternativeSourceScope.ALL,
+			),
+		)
+			.mapNotNull { (it as? AlternativeSearchEvent.Result)?.manga }
 			.filter { it.isHealthy() }
 			.runningFold<Manga, Manga?>(null) { best, candidate ->
 				if (best == null || best < candidate) {

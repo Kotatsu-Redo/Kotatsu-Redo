@@ -10,6 +10,7 @@ import com.google.android.material.badge.ExperimentalBadgeUtils
 class OptionsMenuBadgeHelper(
 	private val toolbar: Toolbar,
 	@IdRes private val itemId: Int,
+	private val contentDescription: CharSequence? = null,
 ) {
 
 	private var badge: BadgeDrawable? = null
@@ -31,6 +32,7 @@ class OptionsMenuBadgeHelper(
 
 	private fun showBadge() {
 		val badgeDrawable = badge ?: BadgeDrawable.create(toolbar.context).also {
+			contentDescription?.let(it::setContentDescriptionNumberless)
 			badge = it
 		}
 		BadgeUtils.attachBadgeDrawable(badgeDrawable, toolbar, itemId)
