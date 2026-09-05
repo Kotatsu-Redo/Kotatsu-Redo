@@ -121,6 +121,7 @@
     <string name="size_s">Size: %s</string>
     <string name="clear_updates_feed">Clear updates feed</string>
     <string name="updates_feed_cleared">Cleared</string>
+    <string name="update_removed">Update removed</string>
     <string name="rotate_screen">Rotate screen</string>
     <string name="update">Update</string>
     <string name="feed_will_update_soon">Feed update will start soon</string>
@@ -1002,4 +1003,25 @@
 	<string name="select_languages">Select languages</string>
 	<string name="manage_preset_sources">Manage sources</string>
 	<string name="default_sources">Default</string>
+
+	<!-- "Content not found / removed" prompt shown when opening a manga that the source no longer serves -->
+	<string name="manga_unavailable_title">Content unavailable</string>
+	<string name="manga_unavailable_message">\"%1$s\" could not be loaded from %2$s. It may have been removed or moved to another address.</string>
+	<string name="manga_unavailable_message_no_source">\"%1$s\" could not be loaded. It may have been removed or moved to another address.</string>
+	<string name="manga_unavailable_search_alternatives">Find on other sources</string>
+	<string name="manga_unavailable_hint">Alternatives searches the other enabled sources for the same title, so you can carry on reading where you left off.</string>
+
+	<!-- Keeps adult titles out of the launcher's long-press shortcut menu -->
+	<string name="exclude_nsfw_from_shortcuts">Hide NSFW from shortcuts</string>
+	<string name="exclude_nsfw_from_shortcuts_summary">Adult manga will not appear in the shortcut menu shown when you long press the app icon</string>
+
+	<!-- Auto-download strategy: manga opened within the last month -->
+	<string name="recently_read_manga">Recently read manga</string>
+
+	<!-- Picking a cover from other sources, from the cover editor -->
+	<string name="alternative_covers">Covers from other sources</string>
+	<string name="current_cover">Current cover</string>
+	<string name="use_this_cover">Use this cover</string>
+	<string name="alternative_covers_progress">%1$d / %2$d sources</string>
+	<string name="no_alternative_covers">No other covers found for this title</string>
 </resources>

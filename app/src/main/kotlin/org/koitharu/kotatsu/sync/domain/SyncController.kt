@@ -27,6 +27,7 @@ import org.koitharu.kotatsu.core.db.MangaDatabase
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITES
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITE_CATEGORIES
 import org.koitharu.kotatsu.core.db.TABLE_HISTORY
+import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.util.ext.processLifecycleScope
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -37,6 +38,7 @@ import javax.inject.Singleton
 class SyncController @Inject constructor(
 	@ApplicationContext context: Context,
 	private val dbProvider: Provider<MangaDatabase>,
+	private val settings: AppSettings,
 ) : InvalidationTracker.Observer(arrayOf(TABLE_HISTORY, TABLE_FAVOURITES, TABLE_FAVOURITE_CATEGORIES)) {
 
 	private val authorityHistory = context.getString(R.string.sync_authority_history)
@@ -83,6 +85,42 @@ class SyncController @Inject constructor(
 	fun setEnabled(account: Account, syncFavorites: Boolean, syncHistory: Boolean) {
 		ContentResolver.setSyncAutomatically(account, authorityFavourites, syncFavorites)
 		ContentResolver.setSyncAutomatically(account, authorityHistory, syncHistory)
+		updatePeriodicSync(account, authorityFavourites, syncFavorites)
+		updatePeriodicSync(account, authorityHistory, syncHistory)
+	}
+
+	/**
+	 * Brings the registered periodic syncs in line with the current settings.
+	 *
+	 * Idempotent, and safe to call with no account. Needed on startup as well as on a settings change:
+	 * periodic syncs live in the system, not in the app, so an install that predates this - or one
+	 * whose account was added before it - would otherwise never register one.
+	 */
+	fun updateSyncSchedule() {
+		val account = peekAccount() ?: return
+		for (authority in arrayOf(authorityFavourites, authorityHistory)) {
+			updatePeriodicSync(account, authority, ContentResolver.getSyncAutomatically(account, authority))
+		}
+	}
+
+	/**
+	 * Without this the app only ever syncs when it writes to a synced table, so changes made on another
+	 * device never arrive until something changes locally.
+	 *
+	 * The period is a hint: the system batches periodic syncs with other work and defers them under
+	 * Doze, so one runs roughly, not exactly, this often.
+	 */
+	private fun updatePeriodicSync(account: Account, authority: String, isEnabled: Boolean) {
+		val periodSeconds = TimeUnit.HOURS.toSeconds(settings.syncPeriodHours.toLong())
+		// A fresh Bundle rather than Bundle.EMPTY: the periodic sync extras are retained by the system
+		// and matched on later, and Bundle.EMPTY is an immutable shared instance. An empty bundle still
+		// matches an empty bundle, so add and remove continue to refer to the same periodic sync.
+		// addPeriodicSync replaces any existing entry with matching extras, so this doubles as an update.
+		if (isEnabled && periodSeconds > 0L) {
+			ContentResolver.addPeriodicSync(account, authority, Bundle(), periodSeconds)
+		} else {
+			ContentResolver.removePeriodicSync(account, authority, Bundle())
+		}
 	}
 
 	fun isEnabled(account: Account): Boolean {

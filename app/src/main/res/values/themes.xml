@@ -60,6 +60,9 @@
 		<item name="sideSheetDialogTheme">@style/ThemeOverlay.Kotatsu.SideSheetDialog</item>
 		<item name="recyclerViewStyle">@style/Widget.Kotatsu.RecyclerView</item>
 		<item name="android:dropDownSpinnerStyle">@style/Widget.Kotatsu.Spinner.DropDown</item>
+		<!-- Centres the query text inside inline SearchViews; see the style for why it goes through
+		     autoCompleteTextViewStyle. -->
+		<item name="autoCompleteTextViewStyle">@style/Widget.Kotatsu.AutoCompleteTextView</item>
 		<item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.M3</item>
 		<item name="circularProgressIndicatorStyle">@style/Widget.Kotatsu.CircularProgressIndicator</item>
 		<item name="linearProgressIndicatorStyle">@style/Widget.Kotatsu.LinearProgressIndicator</item>
@@ -116,6 +119,20 @@
 		<item name="android:statusBarColor">@android:color/transparent</item>
 		<item name="android:navigationBarColor">@android:color/transparent</item>
 		<item name="android:windowActionBar">false</item>
+		<item name="android:backgroundDimEnabled">false</item>
+	</style>
+
+	<!--
+		Host for the ACRA crash dialog. The activity itself is invisible; the AlertDialog inside draws
+		everything and provides its own scrim. Inherits Theme.Kotatsu so the dialog picks up the app's
+		colours and follows dark mode, instead of ACRA's default light @android:style/Theme.Dialog.
+	-->
+	<style name="Theme.Kotatsu.CrashDialog" parent="Theme.Kotatsu">
+		<item name="android:windowBackground">@android:color/transparent</item>
+		<item name="android:windowIsTranslucent">true</item>
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowContentOverlay">@null</item>
+		<item name="android:windowAnimationStyle">@null</item>
 		<item name="android:backgroundDimEnabled">false</item>
 	</style>
 

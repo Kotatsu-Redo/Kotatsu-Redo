@@ -58,9 +58,15 @@ class AlternativesUseCase @Inject constructor(
 		return search(manga, sources, query, loadDetails)
 	}
 
+	/**
+	 * @param loadDetails fetch each candidate's details page. Needed for chapter counts, but a caller
+	 * that only wants what the search already returned - a cover, say - should pass `false`: it is one
+	 * extra network round trip per result.
+	 */
 	suspend operator fun invoke(
 		manga: Manga,
 		options: AlternativesSearchOptions,
+		loadDetails: Boolean = true,
 	): Flow<AlternativeSearchEvent> {
 		val query = options.query.trim()
 		if (query.isEmpty()) return emptyFlow()
@@ -90,7 +96,11 @@ class AlternativesUseCase @Inject constructor(
 									loadDetails = false,
 								).collect { candidate ->
 									launch {
-										send(AlternativeSearchEvent.Result(loadDetails(candidate)))
+										send(
+											AlternativeSearchEvent.Result(
+												if (loadDetails) loadDetails(candidate) else candidate,
+											),
+										)
 									}
 								}
 							}

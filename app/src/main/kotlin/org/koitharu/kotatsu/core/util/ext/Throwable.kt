@@ -165,6 +165,26 @@ fun Throwable.findCloudFlareException(): CloudFlareException? =
         .filterIsInstance<CloudFlareException>()
         .firstOrNull()
 
+/**
+ * `true` when the source answered "this title is gone": a 404, or a parser explicitly reporting the
+ * content as unavailable. Walks the cause chain, because loaders wrap parser errors in
+ * [CaughtException] / [WrapperIOException].
+ *
+ * Note this is deliberately narrower than [getDisplayMessage]'s 404 mapping: only errors that mean
+ * *the manga itself* is missing qualify, so callers can offer to look for it on another source.
+ */
+fun Throwable.isContentNotFound(): Boolean = generateSequence(this) { it.cause?.takeIf { c -> c !== it } }
+    .any { e ->
+        when (e) {
+            is NotFoundException,
+            is ContentUnavailableException -> true
+
+            is HttpException -> e.response.code == HttpURLConnection.HTTP_NOT_FOUND
+            is HttpStatusException -> e.statusCode == HttpURLConnection.HTTP_NOT_FOUND
+            else -> false
+        }
+    }
+
 fun Throwable.getCauseUrl(): String? = when (this) {
     is ParseException -> url
     is NotFoundException -> url

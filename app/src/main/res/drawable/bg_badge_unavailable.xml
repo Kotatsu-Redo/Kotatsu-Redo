@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Badge sitting on the corner of the cover in the "content unavailable" dialog. The stroke is the
+     dialog background colour, so the badge reads as punched out of the artwork. -->
+<shape
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:shape="oval">
+	<solid android:color="?attr/colorErrorContainer" />
+	<stroke
+		android:width="3dp"
+		android:color="?attr/colorSurfaceContainerHigh" />
+</shape>

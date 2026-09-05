@@ -2,7 +2,8 @@ package org.koitharu.kotatsu.core.network.webview
 
 /**
  * Returns one of:
- *  - "ok"    — the real page is shown (no Cloudflare interstitial markers, body has content)
+ *  - "ok"    — the real page is shown (no Cloudflare interstitial markers, body has content, which
+ *                may be nothing but text: an ajax endpoint answering "0" is a loaded page)
  *  - "error" — hard-blocked ("Attention Required" / "Access Denied" title)
  *  - "wait"  — page is empty / still loading / still showing a CF challenge
  *
@@ -32,7 +33,12 @@ internal const val CF_STATE_JS = """
 				var rect = node.getBoundingClientRect();
 				if (rect.width > 0 && rect.height > 0) return 'wait';
 			}
-			if (!document.body || document.body.children.length === 0) return 'wait';
+			var body = document.body;
+			if (!body) return 'wait';
+			// An endpoint may legitimately answer with a bare text node - WordPress admin-ajax.php
+			// replies with "0" - and children counts elements only, so an empty element list is not
+			// proof the page is still loading. Only treat it as unfinished when there is no text either.
+			if (body.children.length === 0 && (body.textContent || '').trim().length === 0) return 'wait';
 			return 'ok';
 		} catch (e) { return 'wait'; }
 	})()

@@ -42,6 +42,23 @@
 
 	<!-- Widget styles -->
 
+	<!--
+		AppCompat lays the query field out as a fixed 36dp box inside a 48dp search bar and leaves it
+		on TextView's default TOP gravity, so the query sits high in the field - noticeably above the
+		line the clear and overflow icons sit on, with a wide gap down to the underline. Google Sans's
+		taller ascent makes it worse than it is with Roboto.
+
+		SearchView exposes no attribute for the inner field, but SearchAutoComplete is constructed with
+		autoCompleteTextViewStyle as its default style, so this is the one hook that reaches it. Setting
+		it theme-wide covers every inline search in the app rather than the one screen it was reported
+		on. The only other AutoCompleteTextViews here are the settings preference dialogs, where the
+		field is wrap_content and vertical gravity has nothing to do; TextInputLayout's exposed dropdown
+		menus are unaffected, as they set this attribute through their own theme overlay.
+	-->
+	<style name="Widget.Kotatsu.AutoCompleteTextView" parent="Widget.AppCompat.AutoCompleteTextView">
+		<item name="android:gravity">center_vertical|start</item>
+	</style>
+
 	<style name="Widget.Kotatsu.SearchView" parent="@style/Widget.AppCompat.SearchView">
 		<item name="iconifiedByDefault">false</item>
 		<item name="searchIcon">@null</item>
@@ -697,6 +714,12 @@
 
 	<style name="ShapeAppearanceOverlay.Kotatsu.Cover.Small" parent="">
 		<item name="cornerSize">4dp</item>
+	</style>
+
+	<!-- Cover thumbnail inside the "content unavailable" dialog: rounder than a list cover so it sits
+	     comfortably against the dialog's own corner radius. -->
+	<style name="ShapeAppearanceOverlay.Kotatsu.Cover.Large" parent="">
+		<item name="cornerSize">20dp</item>
 	</style>
 
 	<style name="ShapeAppearanceOverlay.Kotatsu.Circle" parent="">

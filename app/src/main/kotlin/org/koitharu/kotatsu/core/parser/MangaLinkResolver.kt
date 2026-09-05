@@ -3,6 +3,7 @@ package org.koitharu.kotatsu.core.parser
 import android.net.Uri
 import coil3.request.CachePolicy
 import dagger.Reusable
+import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.core.model.MangaSource
 import org.koitharu.kotatsu.core.model.UnknownMangaSource
 import org.koitharu.kotatsu.core.model.isNsfw
@@ -26,7 +27,7 @@ class MangaLinkResolver @Inject constructor(
 ) {
 
 	suspend fun resolve(uri: Uri): Manga {
-		return if (uri.scheme == "kotatsu" || uri.host == "kotatsu.app") {
+		return if (uri.scheme == "kotatsu" || uri.host == "kotatsu.app" || uri.host == BuildConfig.APP_LINK_HOST) {
 			resolveAppLink(uri)
 		} else {
 			resolveExternalLink(uri.toString())
@@ -34,7 +35,10 @@ class MangaLinkResolver @Inject constructor(
 	}
 
 	private suspend fun resolveAppLink(uri: Uri): Manga? {
-		require(uri.pathSegments.singleOrNull() == "manga") { "Invalid url" }
+		// "manga" is the host in kotatsu://manga?..., but the only path segment in
+		// https://kotatsu.app/manga?... and in the internal kotatsu:/manga?id=... short links.
+		// All three are in circulation, so accept any of them.
+		require(uri.host == "manga" || uri.pathSegments.singleOrNull() == "manga") { "Invalid url" }
 		uri.getQueryParameter("id")?.let { mangaId ->
 			// short url
 			return dataRepository.findMangaById(mangaId.toLong(), withChapters = false)
@@ -68,9 +72,14 @@ class MangaLinkResolver @Inject constructor(
 				?.takeIf { it.title.almostEquals(title, 0.2f) }
 				?.let { return it }
 		}
+		// Fetching the details page for the exact url already yields the manga the link points at.
 		val seed = getDetailsNoCache(
 			getSeedManga(source, url ?: return null, title),
 		)
+		// The search below only tries to upgrade that into the source's own list entry, which is a
+		// nice-to-have: it fails whenever the source's search cannot find its own title (punctuation
+		// is a common culprit) or returns urls in a different form. That used to throw
+		// NoSuchElementException out of `first` and break the whole link, so fall back to the seed.
 		return runCatchingCancellable {
 			val seedTitle = seed.title.ifEmpty {
 				seed.altTitle
@@ -78,8 +87,14 @@ class MangaLinkResolver @Inject constructor(
 				seed.author
 			} ?: return@runCatchingCancellable null
 			val seedList = getList(0, null, MangaListFilter(query = seedTitle))
-			seedList.first { x -> x.url == url }
-		}.getOrThrow()
+			seedList.firstOrNull { x -> x.url == url }
+		}.getOrNull()
+			// Prefer an entry the app already knows about. Most parsers derive a manga id from its url,
+			// which is what getSeedManga reproduces, but some derive it from a numeric id instead - for
+			// those the seed would carry a different id than the same manga already has locally, and
+			// splitting the id splits its history and favourites.
+			?: seed.publicUrl.takeIf { it.isNotEmpty() }?.let { dataRepository.findMangaByPublicUrl(it) }
+			?: seed
 	}
 
 	private suspend fun MangaRepository.getDetailsNoCache(manga: Manga): Manga = if (this is CachingMangaRepository) {

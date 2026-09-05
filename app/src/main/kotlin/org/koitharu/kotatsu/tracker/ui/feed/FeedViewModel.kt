@@ -125,6 +125,17 @@ class FeedViewModel @Inject constructor(
 		settings.isFeedHeaderVisible = value
 	}
 
+	fun removeItem(item: FeedItem) {
+		launchJob(Dispatchers.Default) {
+			val removed = repository.removeLog(item.id) ?: return@launchJob
+			onActionDone.call(
+				ReversibleAction(R.string.update_removed) {
+					repository.restoreLog(removed)
+				},
+			)
+		}
+	}
+
 	fun onItemClick(item: FeedItem) {
 		launchJob(Dispatchers.Default, CoroutineStart.ATOMIC) {
 			repository.markAsRead(item.id)

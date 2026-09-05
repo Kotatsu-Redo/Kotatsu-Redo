@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
-	xmlns:android="http://schemas.android.com/apk/res/android">
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
 
 	<Preference
 		android:enabled="@bool/is_sync_enabled"
@@ -9,6 +10,16 @@
 		android:persistent="false"
 		android:summary="@string/sync_title"
 		android:title="@string/sync" />
+
+	<!-- Entries are filled in by SyncSettingsFragment so the intervals can reuse the translated
+	     plurals instead of shipping a hardcoded, untranslated list. -->
+	<ListPreference
+		android:defaultValue="6"
+		android:enabled="false"
+		android:icon="@drawable/ic_timer"
+		android:key="sync_period"
+		android:title="@string/frequency_of_check"
+		app:useSimpleSummaryProvider="true" />
 
 	<Preference
 		android:enabled="false"

@@ -96,12 +96,18 @@ class HistoryRepository @Inject constructor(
 	fun observeAllWithHistory(
 		order: ListSortOrder,
 		filterOptions: Set<ListFilterOption>,
-		limit: Int
+		limit: Int,
+		searchQuery: String = "",
 	): Flow<List<MangaWithHistory>> {
 		if (ListFilterOption.Downloaded in filterOptions) {
-			return localObserver.observeAll(order, filterOptions, limit)
+			// The on-device observer reads the filesystem index rather than the history table, so it
+			// cannot apply a SQL predicate; narrow its results in memory instead.
+			val downloaded = localObserver.observeAll(order, filterOptions, limit)
+			return if (searchQuery.isEmpty()) downloaded else downloaded.map { list ->
+				list.filter { it.manga.title.contains(searchQuery, ignoreCase = true) }
+			}
 		}
-		return db.getHistoryDao().observeAll(order, filterOptions, limit).mapItems {
+		return db.getHistoryDao().observeAll(order, filterOptions, limit, searchQuery).mapItems {
 			MangaWithHistory(
 				it.toManga(),
 				it.history.toMangaHistory(),

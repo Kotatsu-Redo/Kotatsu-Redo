@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	ACRA's "send a report?" prompt, restyled to match the rest of the app.
+
+	Same shape as dialog_manga_unavailable: a tonal hero, a headline, supporting text, then one
+	full-width action and a quiet way out. ACRA's stock dialog is a light @android:style/Theme.Dialog,
+	which looked like a system error from another decade sitting on top of a dark Material app.
+-->
+<androidx.core.widget.NestedScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:clipToPadding="false">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:paddingStart="?dialogPreferredPadding"
+		android:paddingTop="24dp"
+		android:paddingEnd="?dialogPreferredPadding"
+		android:paddingBottom="?dialogPreferredPadding">
+
+		<FrameLayout
+			android:layout_width="72dp"
+			android:layout_height="72dp"
+			android:layout_gravity="center_horizontal"
+			android:background="@drawable/bg_dialog_hero_error">
+
+			<ImageView
+				android:layout_width="36dp"
+				android:layout_height="36dp"
+				android:layout_gravity="center"
+				android:contentDescription="@null"
+				android:src="@drawable/ic_alert_outline"
+				app:tint="?colorOnErrorContainer" />
+
+		</FrameLayout>
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dp"
+			android:gravity="center_horizontal"
+			android:text="@string/error_occurred"
+			android:textAlignment="center"
+			android:textAppearance="?textAppearanceHeadlineSmall"
+			android:textColor="?android:textColorPrimary" />
+
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:gravity="center_horizontal"
+			android:text="@string/crash_text"
+			android:textAlignment="center"
+			android:textAppearance="?textAppearanceBodyMedium"
+			android:textColor="?android:textColorSecondary" />
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@android:id/button1"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="24dp"
+			android:insetTop="0dp"
+			android:insetBottom="0dp"
+			android:minHeight="64dp"
+			android:text="@string/send"
+			app:shapeAppearance="?shapeAppearanceCornerLarge"
+			tools:ignore="VisualLintButtonSize" />
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/button_close"
+			style="?borderlessButtonStyle"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="10dp"
+			android:text="@string/no_thanks" />
+
+	</LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

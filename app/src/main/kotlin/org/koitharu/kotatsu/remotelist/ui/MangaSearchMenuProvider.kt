@@ -16,6 +16,7 @@ import org.koitharu.kotatsu.parsers.model.MangaListFilter
 class MangaSearchMenuProvider(
 	private val filter: FilterCoordinator,
 	private val viewModel: MangaListViewModel,
+	private val onSearchModeChanged: (Boolean) -> Unit,
 ) : MenuProvider, MenuItem.OnActionExpandListener, SearchView.OnQueryTextListener {
 
 	override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -53,10 +54,14 @@ class MangaSearchMenuProvider(
 		(item.actionView as? SearchView)?.run {
 			post { adjustSearchView() }
 		}
+		onSearchModeChanged(true)
 		return true
 	}
 
-	override fun onMenuItemActionCollapse(item: MenuItem): Boolean = true
+	override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+		onSearchModeChanged(false)
+		return true
+	}
 
 	private fun SearchView.adjustSearchView() {
 		imeOptions = if (viewModel.isIncognitoModeEnabled) {

@@ -39,6 +39,12 @@ abstract class TrackLogsDao : MangaQueryBuilder.ConditionCallback {
 	@Query("UPDATE track_logs SET unread = 0 WHERE id = :id")
 	abstract suspend fun markAsRead(id: Long)
 
+	@Query("SELECT * FROM track_logs WHERE id = :id")
+	abstract suspend fun find(id: Long): TrackLogEntity?
+
+	@Query("DELETE FROM track_logs WHERE id = :id")
+	abstract suspend fun delete(id: Long)
+
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	abstract suspend fun insert(entity: TrackLogEntity): Long
 

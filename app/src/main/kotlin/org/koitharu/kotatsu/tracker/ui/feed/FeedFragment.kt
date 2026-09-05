@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil3.ImageLoader
@@ -36,6 +37,7 @@ import org.koitharu.kotatsu.list.ui.size.StaticItemSizeResolver
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.tracker.ui.feed.adapter.FeedAdapter
+import org.koitharu.kotatsu.tracker.ui.feed.adapter.FeedItemTouchCallback
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -76,6 +78,8 @@ class FeedFragment :
 			addItemDecoration(TypedListSpacingDecoration(context, true))
 			RecyclerScrollKeeper(this).attach()
 		}
+		ItemTouchHelper(FeedItemTouchCallback(viewModel::removeItem))
+			.attachToRecyclerView(binding.recyclerView)
 		binding.swipeRefreshLayout.setOnRefreshListener(this)
 		addMenuProvider(FeedMenuProvider(binding.recyclerView, viewModel))
 

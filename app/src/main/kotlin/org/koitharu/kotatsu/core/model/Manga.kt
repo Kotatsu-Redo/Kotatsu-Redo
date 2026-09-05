@@ -10,6 +10,7 @@ import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
 import androidx.core.text.buildSpannedString
 import androidx.core.text.strikeThrough
+import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.model.MangaOverride
 import org.koitharu.kotatsu.core.util.ext.iterator
@@ -129,9 +130,22 @@ val Manga.isLocal: Boolean
 val Manga.isBroken: Boolean
 	get() = source == UnknownMangaSource
 
+/**
+ * Shareable link that opens this manga in the app.
+ *
+ * Points at [BuildConfig.APP_LINK_HOST], served by the worker in `web/`. Https rather than the
+ * `kotatsu://` scheme because chat apps only linkify real urls, and because Android can verify this
+ * domain as an app link and open it without a chooser. Recipients without the app - or with an
+ * unverified build - land on the worker, which bounces them to the `kotatsu://` form.
+ *
+ * The link carries everything needed to find the manga again, so the receiving app resolves it
+ * against its own parser for that source and never calls the host for data.
+ */
 val Manga.appUrl: Uri
-	get() = "https://kotatsu.app/manga".toUri()
-		.buildUpon()
+	get() = Uri.Builder()
+		.scheme("https")
+		.authority(BuildConfig.APP_LINK_HOST)
+		.path("manga")
 		.appendQueryParameter("source", source.name)
 		.appendQueryParameter("name", title)
 		.appendQueryParameter("url", url)

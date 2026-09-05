@@ -23,6 +23,7 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.LocalizedAppContext
 import org.koitharu.kotatsu.core.db.TABLE_HISTORY
 import org.koitharu.kotatsu.core.model.getTitle
+import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.nav.ReaderIntent
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
@@ -51,6 +52,14 @@ class AppShortcutManager @Inject constructor(
 	private val settings: AppSettings,
 ) : InvalidationTracker.Observer(TABLE_HISTORY), SharedPreferences.OnSharedPreferenceChangeListener {
 
+	private companion object {
+
+		/**
+		 * How much extra history to read when adult titles are being filtered out.
+		 */
+		const val HISTORY_OVERFETCH = 4
+	}
+
 	private val iconSize by lazy {
 		Size(ShortcutManagerCompat.getIconMaxWidth(context), ShortcutManagerCompat.getIconMaxHeight(context))
 	}
@@ -72,11 +81,18 @@ class AppShortcutManager @Inject constructor(
 	}
 
 	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-		if (key == AppSettings.KEY_SHORTCUTS) {
-			if (settings.isDynamicShortcutsEnabled) {
+		when (key) {
+			AppSettings.KEY_SHORTCUTS -> if (settings.isDynamicShortcutsEnabled) {
 				onInvalidated(emptySet())
 			} else {
 				clearShortcuts()
+			}
+
+			// Rebuild straight away, so turning the filter on removes what is already on the home screen
+			// instead of waiting for the next history change.
+			AppSettings.KEY_SHORTCUTS_NO_NSFW,
+			AppSettings.KEY_DISABLE_NSFW -> if (settings.isDynamicShortcutsEnabled) {
+				onInvalidated(emptySet())
 			}
 		}
 	}
@@ -119,8 +135,13 @@ class AppShortcutManager @Inject constructor(
 
 	private suspend fun updateShortcutsImpl() = runCatchingCancellable {
 		val maxShortcuts = ShortcutManagerCompat.getMaxShortcutCountPerActivity(context).coerceAtLeast(5)
-		val shortcuts = historyRepository.getList(0, maxShortcuts)
-			.filter { x -> x.title.isNotEmpty() }
+		val skipNsfw = settings.isShortcutsNsfwDisabled || settings.isNsfwContentDisabled
+		// Over-fetch when filtering, so a run of adult titles at the top of the history does not leave
+		// the launcher with only one or two shortcuts.
+		val limit = if (skipNsfw) maxShortcuts * HISTORY_OVERFETCH else maxShortcuts
+		val shortcuts = historyRepository.getList(0, limit)
+			.filter { x -> x.title.isNotEmpty() && (!skipNsfw || !x.isNsfw()) }
+			.take(maxShortcuts)
 			.map { buildShortcutInfo(it) }
 		ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts)
 	}.onFailure {

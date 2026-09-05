@@ -67,6 +67,29 @@
 		android:theme="@style/Theme.Kotatsu"
 		tools:ignore="UnusedAttribute">
 
+		<!--
+			Sentry is initialised by hand in SentryReportSender, inside ACRA's sender process, so that
+			nothing is captured or sent without the user agreeing to it in ACRA's dialog. Its
+			ContentProvider would otherwise auto-init at startup from a manifest DSN that is not there
+			and throw "DSN is required", taking the whole app down before it draws a frame.
+		-->
+		<meta-data
+			android:name="io.sentry.auto-init"
+			android:value="false" />
+
+		<!--
+			Must run in ACRA's :acra process like ACRA's own dialog does: the app process has just crashed,
+			so it is not around to host this.
+		-->
+		<activity
+			android:name="org.koitharu.kotatsu.core.ui.CrashReportActivity"
+			android:excludeFromRecents="true"
+			android:exported="false"
+			android:finishOnTaskLaunch="true"
+			android:launchMode="singleInstance"
+			android:process=":acra"
+			android:theme="@style/Theme.Kotatsu.CrashDialog" />
+
 		<activity
 			android:name="org.koitharu.kotatsu.main.ui.MainActivity"
 			android:exported="true">
@@ -84,7 +107,22 @@
 			<intent-filter>
 				<action android:name="${applicationId}.action.VIEW_MANGA" />
 			</intent-filter>
+			<!--
+				Two separate filters on purpose: autoVerify applies to the whole filter, so putting our
+				own host next to kotatsu.app would make verification of ours depend on a domain this
+				fork does not control. Only the first can ever verify.
+			-->
 			<intent-filter android:autoVerify="true">
+				<action android:name="android.intent.action.VIEW" />
+
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+
+				<data android:scheme="https" />
+				<data android:host="${appLinkHost}" />
+				<data android:path="/manga" />
+			</intent-filter>
+			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
 
 				<category android:name="android.intent.category.DEFAULT" />
@@ -226,6 +264,10 @@
 		<activity
 			android:name="org.koitharu.kotatsu.explore.ui.preset.SourcePresetListActivity"
 			android:label="@string/source_presets" />
+		<activity
+			android:name="org.koitharu.kotatsu.alternatives.ui.covers.AlternativeCoversActivity"
+			android:label="@string/alternative_covers" />
+
 		<activity
 			android:name="org.koitharu.kotatsu.settings.override.OverrideConfigActivity"
 			android:label="@string/edit" />

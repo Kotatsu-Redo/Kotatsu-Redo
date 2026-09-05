@@ -188,6 +188,21 @@ class TrackingRepository @Inject constructor(
 
 	suspend fun markAsRead(trackLogId: Long) = db.getTrackLogsDao().markAsRead(trackLogId)
 
+	/**
+	 * Deletes a single feed entry and returns it, so the caller can offer to put it back.
+	 * Returns null if it was already gone.
+	 */
+	suspend fun removeLog(trackLogId: Long): TrackLogEntity? = db.withTransaction {
+		val dao = db.getTrackLogsDao()
+		dao.find(trackLogId)?.also { dao.delete(trackLogId) }
+	}
+
+	/** Reinserts an entry removed by [removeLog]; the entity carries its original id, so it goes back
+	 *  in the same place in the feed rather than to the top. */
+	suspend fun restoreLog(entity: TrackLogEntity) {
+		db.getTrackLogsDao().insert(entity)
+	}
+
 	suspend fun gc() = db.withTransaction {
 		db.getTracksDao().gc()
 		db.getTracksDao().clearStaleCounters(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(MAX_STALE_UPDATE_DAYS))

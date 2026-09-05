@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+
+	<com.google.android.material.appbar.MaterialToolbar
+		android:id="@+id/toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize" />
+
+	<!-- Determinate: "23 of 48 sources" is the only honest answer to "how long is this" when the work
+	     is one request per source. -->
+	<com.google.android.material.progressindicator.LinearProgressIndicator
+		android:id="@+id/progress"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:indeterminate="false"
+		app:trackCornerRadius="0dp" />
+
+	<!-- The whole point of the screen: the candidate shown big enough to actually judge. -->
+	<org.koitharu.kotatsu.image.ui.CoverImageView
+		android:id="@+id/imageView_preview"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1"
+		android:background="?colorSurfaceContainer"
+		android:contentDescription="@null"
+		android:padding="@dimen/screen_padding"
+		android:scaleType="fitCenter"
+		tools:src="@tools:sample/backgrounds/scenic" />
+
+	<TextView
+		android:id="@+id/textView_status"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_horizontal"
+		android:paddingHorizontal="@dimen/screen_padding"
+		android:paddingTop="@dimen/margin_small"
+		android:textAppearance="?textAppearanceBodyMedium"
+		tools:text="MangaDex" />
+
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/recyclerView"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:clipToPadding="false"
+		android:orientation="horizontal"
+		android:paddingHorizontal="@dimen/list_spacing_small"
+		app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+		tools:itemCount="4"
+		tools:listitem="@layout/item_cover_alternative" />
+
+	<TextView
+		android:id="@+id/textView_empty"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center"
+		android:padding="@dimen/screen_padding"
+		android:text="@string/no_alternative_covers"
+		android:textAppearance="?textAppearanceBodyMedium"
+		android:textColor="?android:textColorSecondary"
+		android:visibility="gone"
+		tools:visibility="visible" />
+
+	<Button
+		android:id="@+id/button_apply"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginHorizontal="@dimen/screen_padding"
+		android:layout_marginTop="@dimen/margin_small"
+		android:layout_marginBottom="@dimen/margin_normal"
+		android:enabled="false"
+		android:minHeight="56dp"
+		android:text="@string/use_this_cover" />
+
+</LinearLayout>

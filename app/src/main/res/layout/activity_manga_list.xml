@@ -17,6 +17,7 @@
 			style="?attr/collapsingToolbarLayoutMediumStyle"
 			android:layout_width="match_parent"
 			android:layout_height="?attr/collapsingToolbarLayoutMediumSize"
+			app:expandedTitleMarginBottom="@dimen/appbar_expanded_title_margin_bottom"
 			app:layout_scrollFlags="scroll|enterAlways"
 			app:toolbarId="@id/toolbar">
 

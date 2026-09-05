@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown in the search bar only while a library screen is being filtered. -->
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item
+		android:id="@+id/action_clear_screen_filter"
+		android:icon="@drawable/abc_ic_clear_material"
+		android:title="@string/reset_filter"
+		app:showAsAction="ifRoom" />
+
+</menu>

@@ -9,7 +9,6 @@ import org.koitharu.kotatsu.filter.data.PersistableFilter
 import org.koitharu.kotatsu.filter.ui.model.FilterHeaderModel
 import org.koitharu.kotatsu.filter.ui.model.FilterProperty
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
-import org.koitharu.kotatsu.parsers.model.MangaListFilterCapabilities
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.parsers.util.toTitleCase
@@ -29,7 +28,6 @@ class FilterHeaderProducer @Inject constructor(
         ) { saved, tags, snapshot ->
             val chipList = createChipsList(
                 source = filterCoordinator.mangaSource,
-                capabilities = filterCoordinator.capabilities,
                 savedFilters = saved,
                 tagsProperty = tags,
                 snapshot = snapshot.listFilter,
@@ -45,14 +43,17 @@ class FilterHeaderProducer @Inject constructor(
 
     private suspend fun createChipsList(
         source: MangaSource,
-        capabilities: MangaListFilterCapabilities,
         savedFilters: FilterProperty<PersistableFilter>,
         tagsProperty: FilterProperty<MangaTag>,
         snapshot: MangaListFilter,
         limit: Int,
     ): List<ChipsView.ChipModel> {
         val result = ArrayDeque<ChipsView.ChipModel>(savedFilters.availableItems.size + limit + 3)
-        if (snapshot.query.isNullOrEmpty() || capabilities.isSearchWithFiltersSupported) {
+        // While a search is running the header is about the search, not about browsing: no category
+        // suggestions and no "genres" opener. Only the closeable chips below stay, so the query and any
+        // applied filters can still be removed from here. This holds even for sources that can combine
+        // search with filters - the offer is what is unwanted, not the capability.
+        if (snapshot.query.isNullOrEmpty()) {
             val selectedTags = tagsProperty.selectedItems.toMutableSet()
             var tags = if (selectedTags.isEmpty()) {
                 searchRepository.getTagsSuggestion("", limit, source)

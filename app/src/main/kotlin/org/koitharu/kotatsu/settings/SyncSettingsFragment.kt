@@ -4,6 +4,7 @@ import android.accounts.AccountManager
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentResultListener
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -12,7 +13,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.nav.router
+import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
+import org.koitharu.kotatsu.core.util.ext.getQuantityStringSafe
 import org.koitharu.kotatsu.core.util.ext.viewLifecycleScope
 import org.koitharu.kotatsu.sync.data.SyncSettings
 import org.koitharu.kotatsu.sync.domain.SyncController
@@ -30,6 +33,25 @@ class SyncSettingsFragment : BasePreferenceFragment(R.string.sync_settings), Fra
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		addPreferencesFromResource(R.xml.pref_sync)
+		bindSyncPeriodEntries()
+	}
+
+	/**
+	 * Builds the interval list at runtime from the shared [AppSettings.SYNC_PERIODS], so the labels come
+	 * from strings that are already translated rather than a hardcoded English array.
+	 */
+	private fun bindSyncPeriodEntries() {
+		val preference = findPreference<ListPreference>(AppSettings.KEY_SYNC_PERIOD) ?: return
+		val periods = AppSettings.SYNC_PERIODS
+		preference.entryValues = Array(periods.size) { periods[it].toString() }
+		preference.entries = Array(periods.size) { i ->
+			val hours = periods[i]
+			if (hours == 0) {
+				getString(R.string.disabled)
+			} else {
+				resources.getQuantityStringSafe(R.plurals.hours, hours, hours)
+			}
+		}
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -117,6 +139,9 @@ class SyncSettingsFragment : BasePreferenceFragment(R.string.sync_settings), Fra
 			}
 			findPreference<Preference>(SyncSettings.KEY_SYNC_URL)?.isEnabled = account != null
 			findPreference<Preference>(SyncSettings.KEY_LOGOUT)?.isEnabled = account != null
+			// Nothing to schedule until an account exists and at least one authority is turned on.
+			findPreference<Preference>(AppSettings.KEY_SYNC_PERIOD)?.isEnabled =
+				account != null && syncController.isEnabled(account)
 		}
 	}
 }

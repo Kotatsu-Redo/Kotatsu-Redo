@@ -152,6 +152,14 @@
             android:summary="@string/history_shortcuts_summary"
             android:title="@string/history_shortcuts" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:dependency="dynamic_shortcuts"
+            android:icon="@drawable/ic_sfw"
+            android:key="shortcuts_no_nsfw"
+            android:summary="@string/exclude_nsfw_from_shortcuts_summary"
+            android:title="@string/exclude_nsfw_from_shortcuts" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/privacy">

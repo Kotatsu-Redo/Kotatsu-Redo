@@ -39,6 +39,15 @@
 	<dimen name="webtoon_pages_gap">24dp</dimen>
 	<dimen name="details_bs_peek_height">120dp</dimen>
 	<dimen name="spinner_height">56dp</dimen>
+	<!--
+		Expanded title offset for the source app bar, where the sort selector shares the title's line.
+		The selector is centred in a bottom-aligned actionBarSize row, so it sits 32dp above the app bar
+		bottom; Material's default 16dp margin leaves the title's ink centre only 19dp above it, because
+		Google Sans Bold's descent hangs below the bounds CollapsingTextHelper lays the title out in.
+		29dp puts the two centres together. Measured on the running app, not derived - the number is
+		font dependent, so re-measure if the title typeface changes.
+	-->
+	<dimen name="appbar_expanded_title_margin_bottom">29dp</dimen>
 	<dimen name="category_covers_height">86dp</dimen>
 
 	<dimen name="search_suggestions_manga_height">142dp</dimen>
@@ -93,4 +102,7 @@
 
 	<dimen name="chip_icon_corner">3dp</dimen>
 	<dimen name="read_button_min_width">92dp</dimen>
+
+	<!-- Ring marking the cover currently shown in the big preview. -->
+	<dimen name="cover_selection_stroke">3dp</dimen>
 </resources>

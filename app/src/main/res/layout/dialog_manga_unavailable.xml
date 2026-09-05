@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	"Content unavailable" prompt, shown when opening a manga whose source answers 404 / removed.
+
+	Laid out the M3 Expressive way rather than as a stock alert: a hero (the cover the user just
+	tapped, with an error badge punched into its corner), a headline, supporting text, and one
+	full-width action button instead of a row of tiny text buttons.
+-->
+<androidx.core.widget.NestedScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:clipToPadding="false">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:paddingStart="?dialogPreferredPadding"
+		android:paddingTop="24dp"
+		android:paddingEnd="?dialogPreferredPadding"
+		android:paddingBottom="?dialogPreferredPadding">
+
+		<FrameLayout
+			android:id="@+id/container_cover"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal">
+
+			<org.koitharu.kotatsu.image.ui.CoverImageView
+				android:id="@+id/imageView_cover"
+				android:layout_width="108dp"
+				android:layout_height="152dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="12dp"
+				android:background="?colorSurfaceContainer"
+				android:contentDescription="@null"
+				android:scaleType="centerCrop"
+				app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Cover.Large"
+				tools:src="@tools:sample/backgrounds/scenic" />
+
+			<FrameLayout
+				android:layout_width="40dp"
+				android:layout_height="40dp"
+				android:layout_gravity="bottom|end"
+				android:background="@drawable/bg_badge_unavailable">
+
+				<ImageView
+					android:layout_width="22dp"
+					android:layout_height="22dp"
+					android:layout_gravity="center"
+					android:contentDescription="@null"
+					android:src="@drawable/ic_error_small"
+					app:tint="?colorOnErrorContainer" />
+
+			</FrameLayout>
+
+		</FrameLayout>
+
+		<TextView
+			android:id="@+id/textView_title"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="20dp"
+			android:gravity="center_horizontal"
+			android:textAlignment="center"
+			android:textAppearance="?textAppearanceHeadlineSmall"
+			android:textColor="?android:textColorPrimary"
+			tools:text="@string/manga_unavailable_title" />
+
+		<TextView
+			android:id="@+id/textView_message"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:gravity="center_horizontal"
+			android:textAlignment="center"
+			android:textAppearance="?textAppearanceBodyMedium"
+			android:textColor="?android:textColorSecondary"
+			tools:text="@string/manga_unavailable_message" />
+
+		<TextView
+			android:id="@+id/textView_hint"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="12dp"
+			android:gravity="center_horizontal"
+			android:text="@string/manga_unavailable_hint"
+			android:textAlignment="center"
+			android:textAppearance="?textAppearanceBodySmall"
+			android:textColor="?android:textColorTertiary"
+			tools:ignore="TextContrastCheck" />
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@android:id/button1"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="24dp"
+			android:insetTop="0dp"
+			android:insetBottom="0dp"
+			android:minHeight="64dp"
+			android:text="@string/manga_unavailable_search_alternatives"
+			app:icon="@drawable/ic_replace"
+			app:iconGravity="textStart"
+			app:shapeAppearance="?shapeAppearanceCornerLarge" />
+
+		<com.google.android.material.button.MaterialButton
+			android:id="@+id/button_close"
+			style="?borderlessButtonStyle"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="10dp"
+			android:text="@string/close" />
+
+	</LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

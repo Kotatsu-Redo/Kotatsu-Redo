@@ -16,10 +16,8 @@ import okhttp3.internal.platform.PlatformRegistry
 import org.acra.ACRA
 import org.acra.ReportField
 import org.acra.config.dialog
-import org.acra.config.httpSender
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
-import org.acra.sender.HttpSender
 import org.conscrypt.Conscrypt
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
@@ -27,6 +25,8 @@ import org.koitharu.kotatsu.core.db.MangaDatabase
 import org.koitharu.kotatsu.core.os.AppValidator
 import org.koitharu.kotatsu.core.os.RomCompat
 import org.koitharu.kotatsu.core.prefs.AppSettings
+import org.koitharu.kotatsu.core.ui.CrashReportActivity
+import org.koitharu.kotatsu.core.util.SentryInitializer
 import org.koitharu.kotatsu.core.util.ext.processLifecycleScope
 import org.koitharu.kotatsu.local.data.LocalStorageChanges
 import org.koitharu.kotatsu.local.data.index.LocalMangaIndex
@@ -79,6 +79,9 @@ open class BaseApp : Application(), Configuration.Provider {
 		if (ACRA.isACRASenderServiceProcess()) {
 			return
 		}
+		// The app process is the one that can hang, so ANR reporting is armed here. Everything else
+		// Sentry could do stays off; see SentryInitializer.
+		SentryInitializer.ensureInitialized(this, enableAnr = true)
 		AppCompatDelegate.setDefaultNightMode(settings.theme)
 		// TLS 1.3 support for Android < 10
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -101,15 +104,15 @@ open class BaseApp : Application(), Configuration.Provider {
 		if (ACRA.isACRASenderServiceProcess()) {
 			return
 		}
+		if (BuildConfig.SENTRY_DSN.isEmpty()) {
+			// No reporting endpoint configured for this build, so don't ask the user to send anything.
+			return
+		}
 		initAcra {
 			buildConfigClass = BuildConfig::class.java
 			reportFormat = StringFormat.JSON
-			httpSender {
-				uri = getString(R.string.url_error_report)
-				basicAuthLogin = getString(R.string.acra_login)
-				basicAuthPassword = getString(R.string.acra_password)
-				httpMethod = HttpSender.Method.POST
-			}
+			// Reports are delivered by SentryReportSender, registered through
+			// META-INF/services/org.acra.sender.ReportSenderFactory.
 			reportContent = listOf(
 				ReportField.PACKAGE_NAME,
 				ReportField.INSTALLATION_ID,
@@ -120,14 +123,20 @@ open class BaseApp : Application(), Configuration.Provider {
 				ReportField.STACK_TRACE,
 				ReportField.CRASH_CONFIGURATION,
 				ReportField.CUSTOM_DATA,
+				// Tells the sender whether this was a real crash or a Throwable.report() call, so the
+				// two don't land in Sentry at the same severity.
+				ReportField.IS_SILENT,
 			)
 
 			dialog {
+				// CrashReportActivity draws the prompt; these are the fallback copy ACRA would use if it
+				// ever fell back to its own dialog, and are kept in step with the layout's strings.
+				reportDialogClass = CrashReportActivity::class.java
 				text = getString(R.string.crash_text)
 				title = getString(R.string.error_occurred)
 				positiveButtonText = getString(R.string.send)
+				negativeButtonText = getString(R.string.no_thanks)
 				resIcon = R.drawable.ic_alert_outline
-				resTheme = android.R.style.Theme_Material_Light_Dialog_Alert
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import androidx.core.content.FileProvider
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.model.appUrl
+import org.koitharu.kotatsu.core.model.isLocal
 import org.koitharu.kotatsu.parsers.model.Manga
 import java.io.File
 
@@ -19,15 +20,8 @@ private const val TYPE_CBZ = "application/x-cbz"
 class ShareHelper(private val context: Context) {
 
 	fun shareMangaLink(manga: Manga) {
-		val text = buildString {
-			append(manga.title)
-			append("\n \n")
-			append(manga.publicUrl)
-			append("\n \n")
-			append(manga.appUrl)
-		}
 		ShareCompat.IntentBuilder(context)
-			.setText(text)
+			.setText(manga.toShareText())
 			.setType(TYPE_TEXT)
 			.setChooserTitle(context.getString(R.string.share_s, manga.title))
 			.startChooser()
@@ -41,14 +35,28 @@ class ShareHelper(private val context: Context) {
 			shareMangaLink(manga.first())
 			return
 		}
-		val text = manga.joinToString("\n \n") {
-			"${it.title} - ${it.publicUrl}"
-		}
 		ShareCompat.IntentBuilder(context)
-			.setText(text)
+			.setText(manga.joinToString("\n \n") { it.toShareText() })
 			.setType(TYPE_TEXT)
 			.setChooserTitle(R.string.share)
 			.startChooser()
+	}
+
+	/**
+	 * Title, the link on its source, and the link that opens it in the app.
+	 *
+	 * Sharing several at once used to emit only the source link, so a shared list opened websites
+	 * rather than the app. A local manga still gets no app link: its url is a path on this device, so
+	 * the link would be useless to anyone else and would leak the local file layout.
+	 */
+	private fun Manga.toShareText(): String = buildString {
+		append(title)
+		append("\n \n")
+		append(publicUrl)
+		if (!isLocal) {
+			append("\n \n")
+			append(appUrl)
+		}
 	}
 
 	fun shareCbz(files: Collection<File>) {

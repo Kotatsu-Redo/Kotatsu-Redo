@@ -29,3 +29,5 @@
 -keep class org.acra.config.DefaultRetryPolicy { *; }
 -keep class org.acra.attachment.DefaultAttachmentProvider { *; }
 -keep class org.acra.sender.JobSenderService
+# Loaded by ACRA through ServiceLoader (META-INF/services), so nothing references it directly.
+-keep class org.koitharu.kotatsu.core.util.SentryReportSenderFactory { *; }

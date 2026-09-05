@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.os.bundleOf
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.fragment.app.Fragment
@@ -122,6 +123,14 @@ class MangaListActivity :
 		when (v.id) {
 			R.id.button_order -> router.showFilterSheet()
 		}
+	}
+
+	/**
+	 * Hides the filter header while the search field is open: the chips offer categories to browse,
+	 * which is not what the bar is for once you are typing a query into it.
+	 */
+	fun setFilterHeaderVisible(isVisible: Boolean) {
+		viewBinding.containerFilterHeader?.isVisible = isVisible
 	}
 
 	fun showPreview(manga: Manga): Boolean = setSideFragment(

@@ -29,6 +29,7 @@ import org.koitharu.kotatsu.filter.ui.FilterCoordinator
 import org.koitharu.kotatsu.list.ui.MangaListFragment
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.search.domain.SearchKind
+import org.koitharu.kotatsu.search.ui.MangaListActivity
 
 @AndroidEntryPoint
 class RemoteListFragment : MangaListFragment(), FilterCoordinator.Owner, View.OnClickListener {
@@ -41,7 +42,11 @@ class RemoteListFragment : MangaListFragment(), FilterCoordinator.Owner, View.On
     override fun onViewBindingCreated(binding: FragmentListBinding, savedInstanceState: Bundle?) {
         super.onViewBindingCreated(binding, savedInstanceState)
         addMenuProvider(RemoteListMenuProvider())
-        addMenuProvider(MangaSearchMenuProvider(filterCoordinator, viewModel))
+        addMenuProvider(
+            MangaSearchMenuProvider(filterCoordinator, viewModel) { isSearchMode ->
+                (activity as? MangaListActivity)?.setFilterHeaderVisible(!isSearchMode)
+            },
+        )
         viewModel.isRandomLoading.observe(viewLifecycleOwner, MenuInvalidator(requireActivity()))
         viewModel.onOpenManga.observeEvent(viewLifecycleOwner) { router.openDetails(it) }
         viewModel.onSourceBroken.observeEvent(viewLifecycleOwner) { showSourceBrokenWarning() }

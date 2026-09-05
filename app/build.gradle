@@ -9,9 +9,30 @@ plugins {
 	id 'androidx.room'
 	id 'org.jetbrains.kotlin.plugin.serialization'
 	id 'org.jetbrains.kotlin.plugin.compose'
+	id 'io.sentry.android.gradle'
 	// enable if needed
 	// id 'dev.reformator.stacktracedecoroutinator'
 }
+
+// Reads a credential from local.properties, falling back to an environment variable for CI.
+//
+// Properties.load only splits on the first '=', so a base64 token's '=' padding survives untouched
+// and needs no quoting. Quotes would in fact become part of the value, so they are stripped here -
+// along with stray whitespace - to make that paste mistake harmless instead of silently wrong.
+def readSecret = { String fileKey, String envKey ->
+	def props = new Properties()
+	def file = rootProject.file('local.properties')
+	if (file.exists()) {
+		file.withInputStream { props.load(it) }
+	}
+	def value = (props.getProperty(fileKey) ?: System.getenv(envKey) ?: '').trim()
+	while (value.length() > 1 && (value.startsWith("'") || value.startsWith('"'))
+		&& value.charAt(0) == value.charAt(value.length() - 1)) {
+		value = value.substring(1, value.length() - 1).trim()
+	}
+	return value
+}
+
 
 android {
 	compileSdk = 37
@@ -29,8 +50,8 @@ android {
 		applicationId 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 37
-		versionCode = 2041
-        versionName = '9.8.2'
+		versionCode = 2042
+        versionName = '9.8.3'
 		generatedDensities = []
 		testInstrumentationRunner 'org.koitharu.kotatsu.HiltTestRunner'
 		ksp {
@@ -46,6 +67,18 @@ android {
 			localProperties.load(new FileInputStream(localPropertiesFile))
 		}
 		resValue 'string', 'tg_backup_bot_token', localProperties.getProperty('tg_backup_bot_token', '')
+		// Crash reporting endpoint. Empty unless a `sentry_dsn` is set in local.properties (or the
+		// SENTRY_DSN environment variable, for CI); an empty DSN disables reporting entirely, so a
+		// plain clone still builds and simply never asks the user to send anything.
+		def sentryDsn = readSecret('sentry_dsn', 'SENTRY_DSN')
+		buildConfigField 'String', 'SENTRY_DSN', "\"${sentryDsn}\""
+
+		// Host that serves the shareable https manga links and the assetlinks.json that lets Android
+		// verify them. Must match the deployed worker's hostname in web/wrangler.toml exactly, or the
+		// links stop opening the app directly. Used by the manifest and by Manga.appUrl.
+		def appLinkHost = 'kotatsuredo.app'
+		manifestPlaceholders = [appLinkHost: appLinkHost]
+		buildConfigField 'String', 'APP_LINK_HOST', "\"${appLinkHost}\""
 	}
 	buildTypes {
 		debug {
@@ -124,6 +157,40 @@ android {
 		}
 	}
 }
+
+// Uploads the R8 mapping file so release and nightly crash reports arrive deobfuscated. Without it
+// every production stack trace in Sentry is unreadable, since both build types are minified.
+//
+// Needs sentry_org / sentry_project in local.properties (or SENTRY_ORG / SENTRY_PROJECT env vars) and
+// a SENTRY_AUTH_TOKEN. With no token the build still works - the mapping is bundled and tagged with a
+// uuid, just not uploaded, so it can be uploaded later with sentry-cli.
+sentry {
+	def sentryOrg = readSecret('sentry_org', 'SENTRY_ORG')
+	def sentryProject = readSecret('sentry_project', 'SENTRY_PROJECT')
+	def sentryToken = readSecret('sentry_auth_token', 'SENTRY_AUTH_TOKEN')
+
+	org = sentryOrg
+	projectName = sentryProject
+	authToken = sentryToken
+
+	includeProguardMapping = true
+	autoUploadProguardMapping = sentryToken && sentryOrg && sentryProject
+	// Debug builds are not minified, so there is nothing to map.
+	ignoredBuildTypes = ['debug']
+
+	// The SDK dependency is pinned by hand in the version catalog; let the plugin leave it alone.
+	autoInstallation {
+		enabled = false
+	}
+	// Performance tracing is not used, and its bytecode instrumentation would add overhead for data
+	// nothing consumes.
+	tracingInstrumentation {
+		enabled = false
+	}
+	uploadNativeSymbols = false
+	includeSourceContext = false
+}
+
 dependencies {
 	def parsersVersion = libs.versions.parsers.get()
 	if (System.properties.containsKey('parsersVersionOverride')) {
@@ -202,8 +269,8 @@ dependencies {
 	implementation libs.markwon
 	implementation libs.kizzyrpc
 
-	implementation libs.acra.http
 	implementation libs.acra.dialog
+	implementation libs.sentry.android
 
 	implementation libs.conscrypt.android
 

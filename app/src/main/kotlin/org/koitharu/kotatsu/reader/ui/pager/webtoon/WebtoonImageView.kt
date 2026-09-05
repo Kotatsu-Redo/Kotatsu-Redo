@@ -92,7 +92,15 @@ class WebtoonImageView @JvmOverloads constructor(
 			}
 		}
 		desiredWidth = desiredWidth.coerceAtLeast(suggestedMinimumWidth)
-		desiredHeight = desiredHeight.coerceAtLeast(suggestedMinimumHeight).coerceAtMost(parentHeight())
+		desiredHeight = desiredHeight.coerceAtLeast(suggestedMinimumHeight)
+		// A page is never taller than the viewport - it scrolls internally instead - but only cap when
+		// the viewport height is actually known. parentHeight() is 0 whenever this view is measured
+		// without a RecyclerView above it (while detached, or before being attached), and capping to
+		// that collapses the page to zero height, which reads as two pages running into each other.
+		val viewportHeight = parentHeight()
+		if (viewportHeight > 0) {
+			desiredHeight = desiredHeight.coerceAtMost(viewportHeight)
+		}
 		setMeasuredDimension(desiredWidth, desiredHeight)
 	}
 
@@ -109,7 +117,20 @@ class WebtoonImageView @JvmOverloads constructor(
 		adjustScale()
 	}
 
+	/**
+	 * [getScrollRange] reports `0` both for an image shorter than the view and for one that has not been
+	 * decoded yet, and callers cannot tell those apart. Without this guard the second case divides by
+	 * `sWidth == 0`: float division yields `Infinity` rather than throwing, so `minScale` and `maxScale`
+	 * both become infinite, and SSIV clamps the image to that scale as soon as it does decode - the page
+	 * then renders as a hugely magnified crop, silently and only in webtoon mode.
+	 */
+	private fun canScale(): Boolean = isReady && sWidth > 0 && sHeight > 0 && width > 0
+
 	private fun scrollToInternal(pos: Int) {
+		if (!canScale()) {
+			scrollPos = 0
+			return
+		}
 		minScale = width / sWidth.toFloat()
 		maxScale = minScale
 		scrollPos = pos
@@ -118,6 +139,9 @@ class WebtoonImageView @JvmOverloads constructor(
 	}
 
 	private fun adjustScale() {
+		if (!canScale()) {
+			return
+		}
 		minScale = width / sWidth.toFloat()
 		maxScale = minScale
 		minimumScaleType = SCALE_TYPE_CUSTOM
