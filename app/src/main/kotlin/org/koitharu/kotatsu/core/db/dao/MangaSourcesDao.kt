@@ -134,5 +134,8 @@ abstract class MangaSourcesDao {
 		SourcesSortOrder.POPULARITY -> "(SELECT COUNT(*) FROM manga WHERE source = sources.source) DESC"
 		SourcesSortOrder.MANUAL -> "sort_key ASC"
 		SourcesSortOrder.LAST_USED -> "used_at DESC"
+		// Community scores live in a separate Room database, so they cannot be joined here. A stable
+		// alphabetical order is returned and MangaSourcesRepository re-sorts by score in Kotlin.
+		SourcesSortOrder.SCORE -> "source ASC"
 	}
 }

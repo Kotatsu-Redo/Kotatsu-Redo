@@ -11,6 +11,13 @@
 		android:title="@string/sync" />
 
 	<PreferenceScreen
+		android:fragment="org.koitharu.kotatsu.sourcescore.ui.CommunitySettingsFragment"
+		android:icon="@drawable/ic_trending_small"
+		android:key="community_settings"
+		android:summary="@string/community_summary"
+		android:title="@string/community" />
+
+	<PreferenceScreen
 		android:fragment="org.koitharu.kotatsu.settings.SuggestionsSettingsFragment"
 		android:icon="@drawable/ic_suggestion"
 		android:key="suggestions"

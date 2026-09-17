@@ -50,8 +50,8 @@ android {
 		applicationId 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 37
-		versionCode = 2042
-        versionName = '9.8.3'
+		versionCode = 2043
+        versionName = '9.8.4'
 		generatedDensities = []
 		testInstrumentationRunner 'org.koitharu.kotatsu.HiltTestRunner'
 		ksp {
@@ -172,6 +172,13 @@ sentry {
 	org = sentryOrg
 	projectName = sentryProject
 	authToken = sentryToken
+
+	// This org lives in Sentry's EU region. sentry-cli defaults to sentry.io (US), where the org does
+	// not exist, so the mapping upload fails there rather than anywhere useful. The DSN says the same
+	// thing - it points at ingest.de.sentry.io. Override via local.properties / SENTRY_URL if the org
+	// is ever migrated to another region.
+	def sentryUrl = readSecret('sentry_url', 'SENTRY_URL')
+	url = sentryUrl ?: 'https://de.sentry.io'
 
 	includeProguardMapping = true
 	autoUploadProguardMapping = sentryToken && sentryOrg && sentryProject

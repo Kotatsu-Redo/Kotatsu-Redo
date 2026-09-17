@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="@string/community">
+
+	<!--
+		Two independent switches on purpose. Comments carry an identity; telemetry carries a
+		pseudonym that rotates daily and no manga titles at all - so a user may reasonably want one
+		without the other, and bundling them would make the weaker consent stand in for the stronger.
+	-->
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
+		android:key="enabled"
+		android:summary="@string/community_enabled_summary"
+		android:title="@string/community_enabled" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
+		android:dependency="enabled"
+		android:key="telemetry"
+		android:summary="@string/community_telemetry_summary"
+		android:title="@string/community_telemetry" />
+
+	<PreferenceCategory
+		android:key="account"
+		android:title="@string/community"
+		app:isPreferenceVisible="false"
+		xmlns:app="http://schemas.android.com/apk/res-auto">
+
+		<EditTextPreference
+			android:dependency="enabled"
+			android:key="nickname"
+			android:summary="@string/community_nickname_summary"
+			android:title="@string/community_nickname"
+			app:useSimpleSummaryProvider="false" />
+
+		<Preference
+			android:dependency="enabled"
+			android:key="server"
+			android:summary="@string/community_server"
+			android:title="@string/community_server" />
+
+		<Preference
+			android:dependency="enabled"
+			android:key="recovery"
+			android:summary="@string/community_recovery_summary"
+			android:title="@string/community_recovery" />
+
+		<Preference
+			android:dependency="enabled"
+			android:key="export"
+			android:summary="@string/community_export_summary"
+			android:title="@string/community_export" />
+
+		<Preference
+			android:dependency="enabled"
+			android:key="delete"
+			android:summary="@string/community_delete_summary"
+			android:title="@string/community_delete" />
+	</PreferenceCategory>
+
+	<Preference
+		android:key="intro"
+		android:summary="@string/community_intro_replay_summary"
+		android:title="@string/community_intro_replay" />
+
+	<Preference
+		android:key="sponsor"
+		android:title="@string/community_sponsor" />
+</PreferenceScreen>

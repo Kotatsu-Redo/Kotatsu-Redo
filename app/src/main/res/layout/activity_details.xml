@@ -150,13 +150,197 @@
 					app:layout_constraintTop_toBottomOf="@id/textView_subtitle"
 					tools:text="@string/add_to_favourites" />
 
+				<!--
+					Reader rating: this app's own users rating for themselves. Sits with the favourite
+					chip because it is the other thing you do *to* a manga, and deliberately far from
+					the tracker scores further down so the two are never mistaken for each other.
+				-->
+				<!--
+					One compact row: the score, and a way into the comments. Five full-size star
+					buttons lived here before and ate the width of the screen for something you touch
+					once - the stars now live behind the score and only appear when you go to rate.
+				-->
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/button_community_rating"
+					style="@style/Widget.Material3Expressive.Button.TonalButton"
+					android:textColor="?attr/colorOnTertiaryContainer"
+					app:backgroundTint="?attr/colorTertiaryContainer"
+					app:iconTint="?attr/colorOnTertiaryContainer"
+					app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Community.Score"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="12dp"
+					android:layout_marginTop="6dp"
+					android:contentDescription="@string/community_rating"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
+					android:minWidth="0dp"
+					android:minHeight="40dp"
+					android:paddingStart="14dp"
+					android:paddingEnd="16dp"
+					app:icon="@drawable/ic_star_rate"
+					app:iconSize="18dp"
+					app:layout_constraintStart_toEndOf="@id/imageView_cover"
+					app:layout_constraintTop_toBottomOf="@id/chip_favorite"
+					tools:text="4.2" />
+
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/button_community_comments"
+					style="@style/Widget.Material3Expressive.Button.IconButton.Tonal"
+					app:backgroundTint="?attr/colorSecondaryContainer"
+					app:iconTint="?attr/colorOnSecondaryContainer"
+					app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Community.Comments"
+					android:layout_width="40dp"
+					android:layout_height="40dp"
+					android:layout_marginStart="8dp"
+					android:contentDescription="@string/community_comments"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
+					android:minWidth="0dp"
+					android:minHeight="0dp"
+					android:paddingStart="0dp"
+					android:paddingEnd="0dp"
+					app:icon="@drawable/ic_comment"
+					app:iconGravity="textStart"
+					app:iconPadding="0dp"
+					app:iconSize="20dp"
+					app:layout_constraintBottom_toBottomOf="@id/button_community_rating"
+					app:layout_constraintStart_toEndOf="@id/button_community_rating"
+					app:layout_constraintTop_toTopOf="@id/button_community_rating" />
+
+				<com.google.android.material.loadingindicator.LoadingIndicator
+					android:id="@+id/loadingIndicator_community"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="12dp"
+					android:layout_marginTop="6dp"
+					app:indicatorSize="24dp"
+					app:layout_constraintStart_toEndOf="@id/imageView_cover"
+					app:layout_constraintTop_toBottomOf="@id/chip_favorite" />
+
+				<!--
+					Revealed by the score button. Small icon buttons, so five of them read as one
+					control rather than as a row of tiles.
+				-->
+				<com.google.android.material.button.MaterialButtonGroup
+					android:id="@+id/group_community_stars"
+					style="@style/Widget.Material3Expressive.MaterialButtonGroup.Connected"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="12dp"
+					android:layout_marginTop="4dp"
+					android:visibility="gone"
+					app:layout_constraintStart_toEndOf="@id/imageView_cover"
+					app:layout_constraintTop_toBottomOf="@id/button_community_rating"
+					tools:visibility="visible">
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/button_star_1"
+						style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+						android:layout_width="42dp"
+						android:layout_height="42dp"
+						android:contentDescription="@string/community_rating"
+						android:insetTop="0dp"
+						android:insetBottom="0dp"
+						android:minWidth="0dp"
+						android:minHeight="0dp"
+						android:paddingStart="0dp"
+						android:paddingEnd="0dp"
+						app:icon="@drawable/ic_star_rate_outline"
+						app:iconGravity="textStart"
+						app:iconPadding="0dp"
+						app:iconSize="20dp"
+						app:iconTint="?attr/colorOnSurfaceVariant" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/button_star_2"
+						style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+						android:layout_width="42dp"
+						android:layout_height="42dp"
+						android:contentDescription="@string/community_rating"
+						android:insetTop="0dp"
+						android:insetBottom="0dp"
+						android:minWidth="0dp"
+						android:minHeight="0dp"
+						android:paddingStart="0dp"
+						android:paddingEnd="0dp"
+						app:icon="@drawable/ic_star_rate_outline"
+						app:iconGravity="textStart"
+						app:iconPadding="0dp"
+						app:iconSize="20dp"
+						app:iconTint="?attr/colorOnSurfaceVariant" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/button_star_3"
+						style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+						android:layout_width="42dp"
+						android:layout_height="42dp"
+						android:contentDescription="@string/community_rating"
+						android:insetTop="0dp"
+						android:insetBottom="0dp"
+						android:minWidth="0dp"
+						android:minHeight="0dp"
+						android:paddingStart="0dp"
+						android:paddingEnd="0dp"
+						app:icon="@drawable/ic_star_rate_outline"
+						app:iconGravity="textStart"
+						app:iconPadding="0dp"
+						app:iconSize="20dp"
+						app:iconTint="?attr/colorOnSurfaceVariant" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/button_star_4"
+						style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+						android:layout_width="42dp"
+						android:layout_height="42dp"
+						android:contentDescription="@string/community_rating"
+						android:insetTop="0dp"
+						android:insetBottom="0dp"
+						android:minWidth="0dp"
+						android:minHeight="0dp"
+						android:paddingStart="0dp"
+						android:paddingEnd="0dp"
+						app:icon="@drawable/ic_star_rate_outline"
+						app:iconGravity="textStart"
+						app:iconPadding="0dp"
+						app:iconSize="20dp"
+						app:iconTint="?attr/colorOnSurfaceVariant" />
+
+					<com.google.android.material.button.MaterialButton
+						android:id="@+id/button_star_5"
+						style="@style/Widget.Material3Expressive.Button.IconButton.Standard"
+						android:layout_width="42dp"
+						android:layout_height="42dp"
+						android:contentDescription="@string/community_rating"
+						android:insetTop="0dp"
+						android:insetBottom="0dp"
+						android:minWidth="0dp"
+						android:minHeight="0dp"
+						android:paddingStart="0dp"
+						android:paddingEnd="0dp"
+						app:icon="@drawable/ic_star_rate_outline"
+						app:iconGravity="textStart"
+						app:iconPadding="0dp"
+						app:iconSize="20dp"
+						app:iconTint="?attr/colorOnSurfaceVariant" />
+				</com.google.android.material.button.MaterialButtonGroup>
+
+				<androidx.constraintlayout.widget.Group
+					android:id="@+id/group_community_rating"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:visibility="gone"
+					app:constraint_referenced_ids="button_community_rating,button_community_comments"
+					tools:visibility="visible" />
+
 				<androidx.constraintlayout.widget.Barrier
 					android:id="@+id/barrier_header"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					app:barrierDirection="bottom"
 					app:barrierMargin="@dimen/margin_normal"
-					app:constraint_referenced_ids="imageView_cover,chip_favorite" />
+					app:barrierAllowsGoneWidgets="false"
+					app:constraint_referenced_ids="imageView_cover,chip_favorite,button_community_rating,group_community_stars,button_community_comments" />
 
 				<include layout="@layout/layout_details_table" />
 

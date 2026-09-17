@@ -15,6 +15,7 @@ import org.koitharu.kotatsu.core.util.ext.setTextAndVisible
 import org.koitharu.kotatsu.databinding.ItemEmptyHintBinding
 import org.koitharu.kotatsu.databinding.ItemSourceCatalogBinding
 import org.koitharu.kotatsu.list.ui.model.ListModel
+import org.koitharu.kotatsu.sourcescore.ui.HotSourceMarker
 import androidx.appcompat.R as appcompatR
 
 fun sourceCatalogItemSourceAD(
@@ -39,8 +40,10 @@ fun sourceCatalogItemSourceAD(
 		end = (basePadding - context.resources.getDimensionPixelOffset(R.dimen.margin_small)).coerceAtLeast(0),
 	)
 
+	val hotMarker = HotSourceMarker(context)
+
 	bind {
-		binding.textViewTitle.text = item.source.getTitle(context)
+		binding.textViewTitle.text = hotMarker.decorate(item.source.getTitle(context), item.isHot, atStart = true)
 		binding.textViewDescription.text = item.source.getSummary(context)
 		binding.textViewDescription.drawableStart = if (item.source.isBroken) {
 			ContextCompat.getDrawable(context, R.drawable.ic_off_small)

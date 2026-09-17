@@ -140,6 +140,9 @@ class ReaderControlDelegate(
 
 		fun onBookmarkClick()
 
+		/** Comments on the chapter being read, not on the work as a whole. */
+		fun onCommentsClick()
+
 		fun openMenu()
 
 		fun onSavePageClick()

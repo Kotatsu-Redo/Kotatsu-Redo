@@ -13,10 +13,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import org.koitharu.kotatsu.core.db.MangaQueryBuilder
+import org.koitharu.kotatsu.core.db.sourceCondition
 import org.koitharu.kotatsu.core.db.TABLE_HISTORY
 import org.koitharu.kotatsu.core.db.entity.MangaWithTags
 import org.koitharu.kotatsu.core.db.entity.TagEntity
 import org.koitharu.kotatsu.list.domain.ListFilterOption
+import org.koitharu.kotatsu.search.domain.ScreenFilterLog
 import org.koitharu.kotatsu.list.domain.ListSortOrder
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_COMPLETED
 
@@ -212,9 +214,15 @@ abstract class HistoryDao : MangaQueryBuilder.ConditionCallback {
 	 * Matches anything that identifies an entry on this screen - title, source, or the favourites list
 	 * it is in - so one box narrows the list however the user thinks of it.
 	 */
+	/**
+	 * The source part is resolved by [sourceCondition] rather than matched as text: `manga.source`
+	 * stores enum names, which display titles cannot be reshaped into.
+	 */
 	private fun searchCondition(query: String): String {
 		val pattern = sqlEscapeString("%$query%")
-		return "(manga.title LIKE $pattern OR manga.alt_title LIKE $pattern OR manga.source LIKE $pattern " +
+		val sourceClause = sourceCondition(query)
+		ScreenFilterLog.condition("history", "LIKE $pattern $sourceClause")
+		return "(manga.title LIKE $pattern OR manga.alt_title LIKE $pattern $sourceClause" +
 			"OR EXISTS(SELECT 1 FROM favourites f LEFT JOIN favourite_categories c ON c.category_id = f.category_id " +
 			"WHERE f.manga_id = history.manga_id AND f.deleted_at = 0 AND c.title LIKE $pattern))"
 	}

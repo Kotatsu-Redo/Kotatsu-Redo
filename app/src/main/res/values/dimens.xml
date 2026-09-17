@@ -4,6 +4,10 @@
 	<!-- Common dimensions -->
 	<dimen name="margin_normal">16dp</dimen>
 	<dimen name="margin_small">8dp</dimen>
+
+	<!-- Replies are indented once and then not again: nesting a thread six levels deep on a
+	     phone leaves a column of text one word wide. -->
+	<dimen name="community_reply_indent">16dp</dimen>
 	<!-- List spacing -->
 	<dimen name="list_spacing_small">6dp</dimen>
 	<dimen name="list_spacing_normal">8dp</dimen>
@@ -105,4 +109,6 @@
 
 	<!-- Ring marking the cover currently shown in the big preview. -->
 	<dimen name="cover_selection_stroke">3dp</dimen>
+    <dimen name="onboarding_dot">8dp</dimen>
+    <dimen name="onboarding_dot_active">22dp</dimen>
 </resources>

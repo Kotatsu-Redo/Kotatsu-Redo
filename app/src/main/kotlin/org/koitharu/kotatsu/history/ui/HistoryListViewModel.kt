@@ -33,6 +33,7 @@ import org.koitharu.kotatsu.list.domain.MangaListMapper
 import org.koitharu.kotatsu.list.domain.QuickFilterListener
 import org.koitharu.kotatsu.list.domain.ReadingProgress
 import org.koitharu.kotatsu.list.ui.MangaListViewModel
+import org.koitharu.kotatsu.search.domain.ScreenFilterLog
 import org.koitharu.kotatsu.search.domain.ScreenSearchQuery
 import org.koitharu.kotatsu.search.ui.suggestion.SearchSuggestionScope
 import org.koitharu.kotatsu.list.ui.model.EmptyState
@@ -159,6 +160,7 @@ class HistoryListViewModel @Inject constructor(
 	) { order, filters, limit, searchQuery ->
 		isPaginationReady.set(false)
 		repository.observeAllWithHistory(order, filters, limit, searchQuery)
+			.onEach { ScreenFilterLog.result(SearchSuggestionScope.HISTORY, searchQuery, it.size) }
 	}.flattenLatest()
 
 	override fun clearFilter() {

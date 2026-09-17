@@ -46,10 +46,14 @@ import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.search.domain.SearchKind
 import org.koitharu.kotatsu.search.domain.SearchV2Helper
+import org.koitharu.kotatsu.sourcescore.domain.SourceRanker
 import java.util.Locale
 import javax.inject.Inject
 
 private const val MAX_PARALLELISM = 4
+
+/** Highest value [SearchViewModel.priority] returns: +2 for a locale match. */
+private const val MAX_LOCALE_PRIORITY = 2.0
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
@@ -61,6 +65,7 @@ class SearchViewModel @Inject constructor(
 	private val favouritesRepository: FavouritesRepository,
 	private val settings: AppSettings,
 	private val presetsRepository: SourcePresetsRepository,
+	private val sourceRanker: SourceRanker,
 ) : BaseViewModel() {
 
 	val query = savedStateHandle.get<String>(AppRouter.KEY_QUERY).orEmpty()
@@ -70,6 +75,13 @@ class SearchViewModel @Inject constructor(
 	private var pinnedOnly = MutableStateFlow(false)
 	private var hideEmpty = MutableStateFlow(false)
 	private val results = MutableStateFlow<List<SearchResultsListModel>>(emptyList())
+
+	/**
+	 * Where each source's results belong on screen, keyed by source name. Sources answer in whatever
+	 * order the network allows; without this a fast obscure source would push a slow popular one
+	 * down the page. Filled in before a sweep starts, so every result finds its entry.
+	 */
+	private val displayRanks = java.util.concurrent.ConcurrentHashMap<String, DisplayRank>()
 
 	private var searchJob: Job? = null
 
@@ -83,7 +95,7 @@ class SearchViewModel @Inject constructor(
 			list.filter { it.list.isNotEmpty() }
 		} else {
 			list
-		}
+		}.sortedForDisplay()
 		when {
 			filteredList.isEmpty() -> listOf(
 				when {
@@ -123,6 +135,7 @@ class SearchViewModel @Inject constructor(
 	fun retry() {
 		searchJob?.cancel()
 		results.value = emptyList()
+		displayRanks.clear()
 		includeDisabledSources.value = false
 		doSearch()
 	}
@@ -149,8 +162,7 @@ class SearchViewModel @Inject constructor(
 			val sources = if (pinnedOnly.value) {
 				emptyList()
 			} else {
-				sourcesRepository.getDisabledSources()
-					.sortedByDescending { it.priority() }
+				sourcesRepository.getDisabledSources().toList().rankedForSweep(batch = 1)
 			}
 			val semaphore = Semaphore(MAX_PARALLELISM)
 			sources.map { source ->
@@ -170,7 +182,7 @@ class SearchViewModel @Inject constructor(
 			appendResult(searchHistory())
 			appendResult(searchFavorites())
 			appendResult(searchLocal())
-			val sources = getPresetSourcesOrDefault()
+			val sources = getPresetSourcesOrDefault().rankedForSweep(batch = 0)
 			val semaphore = Semaphore(MAX_PARALLELISM)
 			sources.map { source ->
 				launch {
@@ -203,6 +215,7 @@ class SearchViewModel @Inject constructor(
 					error = null,
 					listFilter = result.listFilter,
 					sortOrder = result.sortOrder,
+					isHot = displayRanks[source.name]?.isHot == true,
 				)
 			}
 		},
@@ -211,7 +224,15 @@ class SearchViewModel @Inject constructor(
 			if (source is MangaParserSource && source.isBroken) {
 				null
 			} else {
-				SearchResultsListModel(0, source, null, null, emptyList(), error)
+				SearchResultsListModel(
+					titleResId = 0,
+					source = source,
+					listFilter = null,
+					sortOrder = null,
+					list = emptyList(),
+					error = error,
+					isHot = displayRanks[source.name]?.isHot == true,
+				)
 			}
 		},
 	)
@@ -324,6 +345,51 @@ class SearchViewModel @Inject constructor(
 		}
 		return res
 	}
+
+	/**
+	 * Orders a sweep so the sources most likely to answer are asked first.
+	 *
+	 * The semaphore below already serialises work in list order, so ordering the list *is* the
+	 * scheduling - no queue rewrite needed. Results therefore surface best-source-first instead of
+	 * in whatever order the source table happened to return.
+	 *
+	 * [SourceRanker.RankingSnapshot.order] also reserves a slot for an under-sampled source, which is
+	 * what stops a newly added source from never being queried and therefore never earning a score.
+	 *
+	 * Falls back to the previous locale heuristic if the community database cannot be read.
+	 */
+	private suspend fun List<MangaSource>.rankedForSweep(batch: Int): List<MangaSource> {
+		if (isEmpty()) return this
+		val snapshot = runCatchingCancellable { sourceRanker.snapshot() }.getOrNull()
+			?: return sortedByDescending { it.priority() }
+		val ranked = snapshot.order(
+			sources = this,
+			affinityOf = { source -> source.priority() / MAX_LOCALE_PRIORITY },
+		)
+		ranked.forEach { displayRanks[it.source.name] = DisplayRank(batch, it.isHot, it.composite) }
+		return ranked.map { it.source }
+	}
+
+	/**
+	 * History, favourites and local results keep their place at the top. Source results follow by
+	 * rank: popular sources first, then best score. Deliberately not the sweep order, which puts a
+	 * random under-sampled source near the front to let it earn a score - right for querying, wrong
+	 * for what the user reads first.
+	 *
+	 * The sort is stable, so anything without a rank (the ranker was unavailable) keeps arrival order.
+	 */
+	private fun List<SearchResultsListModel>.sortedForDisplay(): List<SearchResultsListModel> = sortedWith(
+		compareBy<SearchResultsListModel> { displayRanks[it.source.name]?.batch ?: -1 }
+			.thenByDescending { displayRanks[it.source.name]?.isHot == true }
+			.thenByDescending { displayRanks[it.source.name]?.composite ?: 0.0 },
+	)
+
+	private data class DisplayRank(
+		/** 0 for the user's own sources, 1 for the "search disabled sources" follow-up, which stays below. */
+		val batch: Int,
+		val isHot: Boolean,
+		val composite: Double,
+	)
 
 	private suspend fun getPresetSourcesOrDefault(): List<MangaSource> {
 		val presetId = settings.activeSourcePresetId

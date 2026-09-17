@@ -124,6 +124,21 @@
 		android:layout_height="wrap_content">
 
 		<com.google.android.material.button.MaterialButton
+			android:id="@+id/button_comments"
+			style="?materialIconButtonStyle"
+			app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Community.Comments"
+			android:layout_width="48dp"
+			android:layout_height="48dp"
+			android:layout_gravity="center"
+			android:contentDescription="@string/community_comments"
+			app:icon="@drawable/ic_comment" />
+	</FrameLayout>
+
+	<FrameLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
+
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/button_options"
 			style="?materialIconButtonStyle"
 			android:layout_width="48dp"

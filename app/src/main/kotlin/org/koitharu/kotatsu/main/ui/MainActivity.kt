@@ -83,6 +83,10 @@ import org.koitharu.kotatsu.search.ui.suggestion.SearchSuggestionViewModel
 import org.koitharu.kotatsu.search.ui.suggestion.adapter.SearchSuggestionAdapter
 import javax.inject.Inject
 import com.google.android.material.R as materialR
+import org.koitharu.kotatsu.sourcescore.data.CommunitySettings
+import org.koitharu.kotatsu.sourcescore.ui.CommunityOnboardingDialog
+import org.koitharu.kotatsu.sourcescore.domain.CommunityReplyNotifier
+import org.koitharu.kotatsu.sourcescore.ui.SourceScoreSyncWorker
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNavOwner,
@@ -91,6 +95,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 	MainNavigationDelegate.OnFragmentChangedListener,
 	View.OnLayoutChangeListener,
 	SearchView.TransitionListener {
+
+	@Inject
+	lateinit var communitySettings: CommunitySettings
+
+	@Inject
+	lateinit var sourceScoreSyncScheduler: SourceScoreSyncWorker.Scheduler
+
+	@Inject
+	lateinit var communityReplyNotifier: CommunityReplyNotifier
 
 	@Inject
 	lateinit var settings: AppSettings
@@ -142,6 +155,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}
 
 		addMenuProvider(MainMenuProvider(router, viewModel))
+
+		// The community features introduce themselves once, on the first launch that reaches the main
+		// screen. Nothing is created before the user answers: the identity is generated lazily, so
+		// declining means no request is ever made and no row exists anywhere.
+		CommunityOnboardingDialog.showIfNeeded(this, communitySettings, supportFragmentManager)
+		// Idempotent, and reads the toggles - so it also cancels the job when the feature is off.
+		sourceScoreSyncScheduler.schedule()
+		// Polled on open rather than pushed: push would mean a device token and a third party
+		// learning when this user opens a manga app, to save a request that costs nothing.
+		communityReplyNotifier.pollOnOpen(lifecycleScope)
 
 		val exitCallback = ExitCallback(this, viewBinding.container)
 		onBackPressedDispatcher.addCallback(exitCallback)

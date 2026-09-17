@@ -159,13 +159,73 @@
 					app:layout_constraintTop_toBottomOf="@id/textView_subtitle"
 					tools:text="@string/add_to_favourites" />
 
+				<!--
+					Reader rating: this app's own users rating for themselves. Sits with the favourite
+					chip because it is the other thing you do *to* a manga, and deliberately far from
+					the tracker scores further down so the two are never mistaken for each other.
+				-->
+				<RatingBar
+					android:id="@+id/ratingBar_community"
+					style="?android:attr/ratingBarStyleSmall"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="16dp"
+					android:layout_marginTop="10dp"
+					android:contentDescription="@string/community_rating"
+					android:isIndicator="false"
+					android:numStars="5"
+					android:stepSize="0.5"
+					app:layout_constraintStart_toEndOf="@id/imageView_cover"
+					app:layout_constraintTop_toBottomOf="@id/chip_favorite"
+					tools:rating="4" />
+
+				<TextView
+					android:id="@+id/textView_community_rating_summary"
+					android:layout_width="0dp"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="8dp"
+					android:layout_marginEnd="16dp"
+					android:ellipsize="end"
+					android:singleLine="true"
+					android:textAppearance="?attr/textAppearanceBodySmall"
+					android:textColor="?android:attr/textColorSecondary"
+					app:layout_constraintBottom_toBottomOf="@id/ratingBar_community"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@id/ratingBar_community"
+					app:layout_constraintTop_toTopOf="@id/ratingBar_community"
+					tools:text="4.2 - 128 ratings" />
+
+				<com.google.android.material.button.MaterialButton
+					android:id="@+id/button_community_comments"
+					style="?attr/borderlessButtonStyle"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="12dp"
+					android:insetTop="0dp"
+					android:insetBottom="0dp"
+					android:minWidth="0dp"
+					android:text="@string/community_comments"
+					app:icon="@drawable/ic_comment"
+					app:iconSize="18dp"
+					app:layout_constraintStart_toEndOf="@id/imageView_cover"
+					app:layout_constraintTop_toBottomOf="@id/ratingBar_community" />
+
+				<androidx.constraintlayout.widget.Group
+					android:id="@+id/group_community_rating"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:visibility="gone"
+					app:constraint_referenced_ids="ratingBar_community,textView_community_rating_summary,button_community_comments"
+					tools:visibility="visible" />
+
 				<androidx.constraintlayout.widget.Barrier
 					android:id="@+id/barrier_header"
 					android:layout_width="0dp"
 					android:layout_height="wrap_content"
 					app:barrierDirection="bottom"
 					app:barrierMargin="@dimen/margin_normal"
-					app:constraint_referenced_ids="imageView_cover,chip_favorite" />
+					app:barrierAllowsGoneWidgets="false"
+					app:constraint_referenced_ids="imageView_cover,chip_favorite,ratingBar_community,button_community_comments" />
 
 				<include layout="@layout/layout_details_table" />
 

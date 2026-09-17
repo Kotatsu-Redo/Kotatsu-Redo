@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	android:paddingStart="24dp"
+	android:paddingTop="8dp"
+	android:paddingEnd="24dp">
+
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:lineSpacingMultiplier="1.2"
+		android:text="@string/community_recover_body"
+		android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+	<com.google.android.material.textfield.TextInputLayout
+		android:id="@+id/layout_key"
+		style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="16dp"
+		android:hint="@string/community_recover_hint"
+		app:errorEnabled="true">
+
+		<!--
+		  No autocorrect and no capitalisation: a recovery key is 43 case-sensitive base64 characters
+		  and a keyboard that helpfully capitalises the first one produces a different identity.
+		-->
+		<com.google.android.material.textfield.TextInputEditText
+			android:id="@+id/edit_key"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:fontFamily="monospace"
+			android:inputType="textVisiblePassword|textNoSuggestions"
+			android:maxLines="2" />
+	</com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

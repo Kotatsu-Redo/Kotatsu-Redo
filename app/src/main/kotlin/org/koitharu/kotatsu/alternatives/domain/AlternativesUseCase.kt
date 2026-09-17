@@ -24,6 +24,7 @@ import org.koitharu.kotatsu.parsers.config.ConfigKey
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.search.domain.SearchKind
 import org.koitharu.kotatsu.search.domain.SearchV2Helper
+import org.koitharu.kotatsu.sourcescore.domain.SourceRanker
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
@@ -32,12 +33,16 @@ private const val MAX_PARALLELISM = 8
 private const val MAX_PER_SOURCE_PARALLELISM = 2
 private const val SOURCE_REPLACEMENT_TAG = "SourceReplacement"
 
+/** Highest value [AlternativesUseCase.priority] can return: locale +4, content type +1. */
+private const val MAX_PRIORITY = 5.0
+
 class AlternativesUseCase @Inject constructor(
 	private val sourcesRepository: MangaSourcesRepository,
 	private val searchHelperFactory: SearchV2Helper.Factory,
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val settings: AppSettings,
 	private val presetsRepository: SourcePresetsRepository,
+	private val sourceRanker: SourceRanker,
 ) {
 	private val requestSemaphore = Semaphore(MAX_PARALLELISM)
 	private val webViewSemaphore = Semaphore(1)
@@ -128,14 +133,30 @@ class AlternativesUseCase @Inject constructor(
 			AlternativeSourceScope.CURRENT_PRESET -> getActivePreset()?.let(::getPresetSources).orEmpty()
 			AlternativeSourceScope.ENABLED -> sourcesRepository.getEnabledSources()
 		}
-		return sources.asSequence()
+		val candidates = sources.asSequence()
 			.distinctBy(MangaSource::name)
 			.filter { it.name != ref.name }
 			.filterNot { settings.isNsfwContentDisabled && it.isNsfw() }
 			.filter { !sameLanguageOnly || it.hasSameLanguageAs(ref) }
 			.filter { !sameContentTypeOnly || it.hasSameContentTypeAs(ref) }
-			.sortedWith(compareByDescending<MangaSource> { it.priority(ref) }.thenBy(MangaSource::name))
 			.toList()
+
+		// The single highest-value use of source scoring in the app. Alternatives fan out across every
+		// enabled source and the user watches results arrive, so querying the reliable ones first is
+		// the difference between "found it instantly" and "sat through nine dead sources".
+		//
+		// `priority()` (locale and content-type affinity) is folded in as the affinity term rather
+		// than replaced: it encodes something the community score cannot know, namely how well a
+		// source matches *this* manga.
+		val snapshot = runCatchingCancellable { sourceRanker.snapshot() }.getOrNull()
+			?: return candidates.sortedWith(
+				compareByDescending<MangaSource> { it.priority(ref) }.thenBy(MangaSource::name),
+			)
+
+		return snapshot.order(
+			sources = candidates,
+			affinityOf = { source -> source.priority(ref) / MAX_PRIORITY },
+		).map { it.source }
 	}
 
 	suspend fun getSourceScopeOptions(

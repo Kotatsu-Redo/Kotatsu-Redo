@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import org.intellij.lang.annotations.Language
 import org.koitharu.kotatsu.core.db.MangaQueryBuilder
+import org.koitharu.kotatsu.core.db.sourceCondition
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITES
 import org.koitharu.kotatsu.core.db.entity.MangaWithTags
 import org.koitharu.kotatsu.favourites.domain.model.Cover
 import org.koitharu.kotatsu.list.domain.ListFilterOption
+import org.koitharu.kotatsu.search.domain.ScreenFilterLog
 import org.koitharu.kotatsu.list.domain.ListSortOrder
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_COMPLETED
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
@@ -287,9 +289,15 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 	 * Matches anything that identifies an entry on this screen: title, source, or the category it is
 	 * filed under.
 	 */
+	/**
+	 * The source part is resolved by [sourceCondition] rather than matched as text: `manga.source`
+	 * stores enum names, which display titles cannot be reshaped into.
+	 */
 	private fun searchCondition(query: String): String {
 		val pattern = sqlEscapeString("%$query%")
-		return "(manga.title LIKE $pattern OR manga.alt_title LIKE $pattern OR manga.source LIKE $pattern " +
+		val sourceClause = sourceCondition(query)
+		ScreenFilterLog.condition("favourites", "LIKE $pattern $sourceClause")
+		return "(manga.title LIKE $pattern OR manga.alt_title LIKE $pattern $sourceClause" +
 			"OR EXISTS(SELECT 1 FROM favourite_categories c WHERE c.category_id = favourites.category_id " +
 			"AND c.deleted_at = 0 AND c.title LIKE $pattern))"
 	}

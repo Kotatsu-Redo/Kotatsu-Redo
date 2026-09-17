@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginBottom="8dp"
+	android:background="@drawable/bg_comment"
+	android:paddingStart="14dp"
+	android:paddingTop="12dp"
+	android:paddingEnd="14dp"
+	android:paddingBottom="8dp">
+
+	<TextView
+		android:id="@+id/textView_author"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textAppearance="?attr/textAppearanceLabelLarge"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		tools:text="reader#a1b2" />
+
+	<TextView
+		android:id="@+id/textView_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="@dimen/margin_small"
+		android:textAppearance="?attr/textAppearanceBodySmall"
+		android:textColor="?android:attr/textColorSecondary"
+		app:layout_constraintBaseline_toBaselineOf="@id/textView_author"
+		app:layout_constraintStart_toEndOf="@id/textView_author"
+		tools:text="2 hours ago" />
+
+	<TextView
+		android:id="@+id/textView_body"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="2dp"
+		android:textAppearance="?attr/textAppearanceBodyMedium"
+		android:textIsSelectable="true"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/textView_author"
+		tools:text="The art in this chapter was genuinely spectacular, especially the fight." />
+
+	<!--
+	  One row, laid out in order rather than chained by constraints.
+
+	  A gone view in a constraint chain still anchors whatever pointed at it, collapsed to a point -
+	  so hiding the votes on your own comment used to drag Reply up into the body text. A LinearLayout
+	  simply closes the gap.
+	-->
+	<LinearLayout
+		android:id="@+id/group_actions"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="-8dp"
+		android:layout_marginTop="4dp"
+		android:gravity="center_vertical"
+		android:orientation="horizontal"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/textView_body">
+
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/button_up"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:background="?attr/selectableItemBackgroundBorderless"
+			android:clickable="true"
+			android:contentDescription="@string/community_comment_like"
+			android:focusable="true"
+			android:gravity="center"
+			android:minWidth="48dp"
+			android:paddingStart="8dp"
+			android:paddingEnd="10dp"
+			android:textAppearance="?attr/textAppearanceLabelMedium"
+			android:drawablePadding="5dp"
+			app:drawableStartCompat="@drawable/ic_thumb_up"
+			tools:text="12" />
+
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/button_down"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:background="?attr/selectableItemBackgroundBorderless"
+			android:clickable="true"
+			android:contentDescription="@string/community_comment_dislike"
+			android:focusable="true"
+			android:gravity="center"
+			android:minWidth="48dp"
+			android:paddingStart="8dp"
+			android:paddingEnd="10dp"
+			android:textAppearance="?attr/textAppearanceLabelMedium"
+			android:drawablePadding="5dp"
+			app:drawableStartCompat="@drawable/ic_thumb_down"
+			tools:text="1" />
+
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/button_reply"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:background="?attr/selectableItemBackgroundBorderless"
+			android:clickable="true"
+			android:focusable="true"
+			android:gravity="center"
+			android:minWidth="48dp"
+			android:paddingStart="8dp"
+			android:paddingEnd="8dp"
+			android:text="@string/community_comment_reply"
+			android:textAppearance="?attr/textAppearanceLabelMedium" />
+
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/button_edit"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:background="?attr/selectableItemBackgroundBorderless"
+			android:clickable="true"
+			android:focusable="true"
+			android:gravity="center"
+			android:minWidth="48dp"
+			android:paddingStart="8dp"
+			android:paddingEnd="8dp"
+			android:text="@string/community_comment_edit"
+			android:visibility="gone"
+			android:textAppearance="?attr/textAppearanceLabelMedium" />
+
+		<androidx.appcompat.widget.AppCompatTextView
+			android:id="@+id/button_delete"
+			android:layout_width="wrap_content"
+			android:layout_height="40dp"
+			android:background="?attr/selectableItemBackgroundBorderless"
+			android:clickable="true"
+			android:focusable="true"
+			android:gravity="center"
+			android:minWidth="48dp"
+			android:paddingStart="8dp"
+			android:paddingEnd="8dp"
+			android:text="@string/community_comment_delete"
+			android:visibility="gone"
+			android:textAppearance="?attr/textAppearanceLabelMedium" />
+	</LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

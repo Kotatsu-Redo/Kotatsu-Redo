@@ -28,6 +28,7 @@ import org.koitharu.kotatsu.list.ui.adapter.ListItemType
 import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.MangaCompactListModel
 import org.koitharu.kotatsu.parsers.model.Manga
+import org.koitharu.kotatsu.sourcescore.ui.HotSourceMarker
 
 fun exploreButtonsAD(
 	clickListener: View.OnClickListener,
@@ -107,9 +108,10 @@ fun exploreSourceListItemAD(
 
 	AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
 	val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
+	val hotMarker = HotSourceMarker(context)
 
 	bind {
-		binding.textViewTitle.text = item.source.getTitle(context)
+		binding.textViewTitle.text = hotMarker.decorate(item.source.getTitle(context), item.isTrending, atStart = true)
 		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
 		binding.textViewSubtitle.text = item.source.getSummary(context)
 		binding.imageViewIcon.setImageAsync(item.source)
@@ -131,6 +133,7 @@ fun exploreSourceGridItemAD(
 
 	AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
 	val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
+	val hotMarker = HotSourceMarker(context)
 
 	bind {
 		val title = item.source.getTitle(context)
@@ -143,7 +146,7 @@ fun exploreSourceGridItemAD(
 				append(item.source.getSummary(context))
 			},
 		)
-		binding.textViewTitle.text = title
+		binding.textViewTitle.text = hotMarker.decorate(title, item.isTrending, atStart = true)
 		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
 		binding.imageViewIcon.setImageAsync(item.source)
 	}

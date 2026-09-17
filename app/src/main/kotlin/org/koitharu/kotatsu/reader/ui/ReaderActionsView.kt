@@ -95,6 +95,7 @@ class ReaderActionsView @JvmOverloads constructor(
 		binding.buttonOptions.initAction()
 		binding.buttonScreenRotation.initAction()
 		binding.buttonPagesThumbs.initAction()
+		binding.buttonComments.initAction()
 		binding.buttonTimer.initAction()
 		binding.buttonBookmark.initAction()
 		binding.slider.setLabelFormatter(PageLabelFormatter())
@@ -126,6 +127,7 @@ class ReaderActionsView @JvmOverloads constructor(
 			R.id.button_save -> listener?.onSavePageClick()
 			R.id.button_timer -> listener?.onScrollTimerClick(isLongClick = false)
 			R.id.button_pages_thumbs -> AppRouter.from(this)?.showChapterPagesSheet()
+			R.id.button_comments -> listener?.onCommentsClick()
 			R.id.button_screen_rotation -> listener?.toggleScreenOrientation()
 			R.id.button_options -> listener?.openMenu()
 			R.id.button_bookmark -> listener?.onBookmarkClick()
@@ -194,6 +196,7 @@ class ReaderActionsView @JvmOverloads constructor(
 		binding.buttonPrev.isVisible = ReaderControl.PREV_CHAPTER in controls
 		binding.buttonNext.isVisible = ReaderControl.NEXT_CHAPTER in controls
 		binding.buttonPagesThumbs.isVisible = ReaderControl.PAGES_SHEET in controls
+		binding.buttonComments.isVisible = ReaderControl.COMMENTS in controls
 		binding.buttonScreenRotation.isVisible = ReaderControl.SCREEN_ROTATION in controls
 		binding.buttonSave.isVisible = ReaderControl.SAVE_PAGE in controls
 		binding.buttonTimer.isVisible = ReaderControl.TIMER in controls

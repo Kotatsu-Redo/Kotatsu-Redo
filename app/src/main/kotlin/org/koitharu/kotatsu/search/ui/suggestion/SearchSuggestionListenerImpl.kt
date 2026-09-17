@@ -1,6 +1,7 @@
 package org.koitharu.kotatsu.search.ui.suggestion
 
 import android.text.Editable
+import android.util.Log
 import android.view.KeyEvent
 import android.widget.TextView
 import androidx.core.net.toUri
@@ -12,6 +13,7 @@ import org.koitharu.kotatsu.core.parser.MangaLinkResolver
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
+import org.koitharu.kotatsu.search.domain.ScreenFilterLog
 import org.koitharu.kotatsu.search.domain.SearchKind
 
 class SearchSuggestionListenerImpl(
@@ -69,7 +71,13 @@ class SearchSuggestionListenerImpl(
 
 	override fun onSourceClick(source: MangaSource) {
 		if (viewModel.isScopedSearch.value) {
-			applyFilter(source.getTitle(searchView.context))
+			val title = source.getTitle(searchView.context)
+			Log.i(
+				ScreenFilterLog.TAG,
+				"SOURCE tapped: title=\"$title\" enumName=\"${source.name}\" (the filter matches manga.source, " +
+					"which stores the enum name)",
+			)
+			applyFilter(title)
 			return
 		}
 		router.openList(source, null, null)
@@ -85,6 +93,7 @@ class SearchSuggestionListenerImpl(
 
 	/** Narrows the screen behind the overlay and steps out of the way. */
 	private fun applyFilter(text: String) {
+		ScreenFilterLog.applied(viewModel.currentScope, text, origin = "suggestion tap")
 		searchView.setText(text)
 		viewModel.applyScreenFilter(text)
 		searchView.hide()

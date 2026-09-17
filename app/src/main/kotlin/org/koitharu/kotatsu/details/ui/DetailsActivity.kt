@@ -117,6 +117,14 @@ import org.koitharu.kotatsu.scrobbling.common.domain.model.ScrobblingInfo
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import com.google.android.material.R as materialR
+import org.koitharu.kotatsu.sourcescore.ui.CommunityCommentsSheet
+import org.koitharu.kotatsu.sourcescore.ui.CommunityRatingDelegate
+import org.koitharu.kotatsu.sourcescore.ui.StarRowBinder
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
+import org.koitharu.kotatsu.sourcescore.data.RatingResponse
+import java.util.Locale
 
 @AndroidEntryPoint
 class DetailsActivity :
@@ -129,6 +137,9 @@ class DetailsActivity :
 	SwipeRefreshLayout.OnRefreshListener,
 	AuthorSpan.OnAuthorClickListener,
 	BottomSheetOwner {
+
+	@Inject
+	lateinit var communityRating: CommunityRatingDelegate
 
 	@Inject
 	lateinit var shortcutManager: AppShortcutManager
@@ -182,6 +193,7 @@ class DetailsActivity :
 
 		val appRouter = router
 		viewModel.mangaDetails.filterNotNull().observe(this, ::onMangaUpdated)
+		viewModel.mangaDetails.filterNotNull().observe(this) { bindCommunityRating(it.toManga()) }
 		viewModel.coverUrl.observe(this, ::loadCover)
 		viewModel.onMangaRemoved.observeEvent(this, ::onMangaRemoved)
 		viewModel.onError
@@ -623,4 +635,103 @@ class DetailsActivity :
 
 		private const val FAV_LABEL_LIMIT = 16
 	}
+	/**
+	 * The one place the details screen touches the community feature.
+	 *
+	 * Silent by default: with the feature off, the views absent from this layout variant, or the
+	 * server unreachable, the row simply does not appear. Nothing here may delay or break reading.
+	 */
+	private fun bindCommunityRating(manga: Manga) {
+		val group = viewBinding.groupCommunityRating ?: return
+		val stars = viewBinding.groupCommunityStars ?: return
+		val loading = viewBinding.loadingIndicatorCommunity
+		if (!communityRating.isAvailable) {
+			group.isVisible = false
+			return
+		}
+		val binder = StarRowBinder(
+			stars = listOf(
+				viewBinding.buttonStar1,
+				viewBinding.buttonStar2,
+				viewBinding.buttonStar3,
+				viewBinding.buttonStar4,
+				viewBinding.buttonStar5,
+			).mapNotNull { it },
+			scope = lifecycleScope,
+		) { value ->
+			val updated = communityRating.rate(manga, value)
+			if (updated == null) {
+				Snackbar.make(
+					viewBinding.root,
+					R.string.community_rating_failed,
+					Snackbar.LENGTH_SHORT,
+				).show()
+			} else {
+				showCommunityRating(updated)
+			}
+		}
+
+		// Up immediately, in its loading state. Waiting for the round trip meant the row appeared a
+		// second or two after everything else and pushed the page around as it landed.
+		binder.setEnabled(false)
+		loading?.isVisible = true
+		group.isVisible = false
+		stars.isVisible = false
+
+		// The score is the resting state; the stars are the editor. Five permanent star buttons took
+		// a whole row across the screen for something you touch once.
+		viewBinding.buttonCommunityRating?.setOnClickListener {
+			stars.isVisible = !stars.isVisible
+		}
+
+		viewBinding.buttonCommunityComments?.setOnClickListener {
+			// The work id is already known once the rating has loaded, so the sheet opens on the tap
+			// rather than after a resolve. Only a tap that beats the load takes the slow path.
+			val known = resolvedWorkId
+			if (known != null) {
+				CommunityCommentsSheet.show(supportFragmentManager, known)
+				return@setOnClickListener
+			}
+			lifecycleScope.launch {
+				val workId = communityRating.workId(manga)
+				if (workId == null) {
+					Snackbar.make(
+						viewBinding.root,
+						R.string.community_comments_unavailable,
+						Snackbar.LENGTH_SHORT,
+					).show()
+				} else {
+					resolvedWorkId = workId
+					CommunityCommentsSheet.show(supportFragmentManager, workId)
+				}
+			}
+		}
+		lifecycleScope.launch {
+			val rating = communityRating.load(manga)
+			loading?.isVisible = false
+			if (rating == null) {
+				// Unresolvable or unreachable. The row collapses rather than sitting there broken.
+				group.isVisible = false
+				return@launch
+			}
+			resolvedWorkId = communityRating.workId(manga)
+			binder.setRating(rating.mine?.toFloat() ?: 0f)
+			binder.setEnabled(true)
+			showCommunityRating(rating)
+			group.isVisible = true
+		}
+	}
+
+	/** Cached so the Comments button does not have to resolve the work before it can open. */
+	private var resolvedWorkId: String? = null
+
+	private fun showCommunityRating(rating: RatingResponse) {
+		// The score, and nothing else. How many people voted is not what anyone came to find out.
+		viewBinding.buttonCommunityRating?.text = if (rating.count == 0) {
+			getString(R.string.community_rating_dash)
+		} else {
+			String.format(Locale.getDefault(), "%.1f", rating.average)
+		}
+	}
+
 }

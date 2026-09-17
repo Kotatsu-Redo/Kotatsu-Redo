@@ -371,7 +371,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		}
 
 	var sourcesSortOrder: SourcesSortOrder
-		get() = prefs.getEnumValue(KEY_SOURCES_ORDER, SourcesSortOrder.MANUAL)
+		get() = prefs.getEnumValue(KEY_SOURCES_ORDER, SourcesSortOrder.SCORE)
 		set(value) = prefs.edit { putEnumValue(KEY_SOURCES_ORDER, value) }
 
 	var isSourcesGridMode: Boolean

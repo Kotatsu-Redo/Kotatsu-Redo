@@ -7,6 +7,8 @@ import org.koitharu.kotatsu.parsers.util.longHashCode
 data class MangaSourceItem(
 	val source: MangaSourceInfo,
 	val isGrid: Boolean,
+	/** Among the most-used sources for this user's language - see SourceRanker.trendingSources. */
+	val isTrending: Boolean = false,
 ) : ListModel {
 
 	val id: Long = source.name.longHashCode()

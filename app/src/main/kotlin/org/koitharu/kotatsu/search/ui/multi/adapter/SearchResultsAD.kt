@@ -20,6 +20,7 @@ import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.MangaListModel
 import org.koitharu.kotatsu.list.ui.size.ItemSizeResolver
 import org.koitharu.kotatsu.search.ui.multi.SearchResultsListModel
+import org.koitharu.kotatsu.sourcescore.ui.HotSourceMarker
 
 @SuppressLint("NotifyDataSetChanged")
 fun searchResultsAD(
@@ -40,9 +41,10 @@ fun searchResultsAD(
 	binding.recyclerView.addItemDecoration(SpacingItemDecoration(spacing, withBottomPadding = true))
 	val eventListener = AdapterDelegateClickListenerAdapter(this, itemClickListener)
 	binding.buttonMore.setOnClickListener(eventListener)
+	val hotMarker = HotSourceMarker(context)
 
 	bind {
-		binding.textViewTitle.text = item.getTitle(context)
+		binding.textViewTitle.text = hotMarker.decorate(item.getTitle(context), item.isHot)
 		binding.buttonMore.isVisible = item.source !== UnknownMangaSource
 		adapter.items = item.list
 		adapter.notifyDataSetChanged()

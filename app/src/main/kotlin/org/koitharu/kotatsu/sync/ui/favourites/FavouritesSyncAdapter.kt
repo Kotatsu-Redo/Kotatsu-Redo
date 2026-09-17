@@ -27,12 +27,22 @@ class FavouritesSyncAdapter(context: Context) : AbstractThreadedSyncAdapter(cont
 		}
 		val entryPoint = EntryPointAccessors.fromApplication(context, SyncAdapterEntryPoint::class.java)
 		val syncHelper = entryPoint.syncHelperFactory.create(account, provider)
-		runCatchingCancellable {
-			syncHelper.syncFavourites(syncResult.stats)
-			SyncController.setLastSync(context, account, authority, System.currentTimeMillis())
-		}.onFailure { e ->
-			syncResult.onError(e)
-			syncHelper.onError(e)
+		try {
+			runCatchingCancellable {
+				syncHelper.syncFavourites(syncResult.stats)
+				SyncController.setLastSync(context, account, authority, System.currentTimeMillis())
+			}.onFailure { e ->
+				syncResult.onError(e)
+				syncHelper.onError(e)
+			}
+		} catch (e: InterruptedException) {
+			// AbstractThreadedSyncAdapter cancels a sync by interrupting its own SyncThread, and the
+			// blocking OkHttp call in flight surfaces that as an InterruptedException.
+			// runCatchingCancellable treats it as cancellation and rethrows, so without this it reaches
+			// SyncThread.run uncaught and kills the process. Restore the flag and end quietly: a
+			// cancelled sync is not a failure, and the framework reschedules it.
+			Thread.currentThread().interrupt()
+			return
 		}
 		syncHelper.onSyncComplete(syncResult)
 	}

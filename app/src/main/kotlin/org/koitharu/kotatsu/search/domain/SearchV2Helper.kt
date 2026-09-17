@@ -16,6 +16,8 @@ import org.koitharu.kotatsu.parsers.model.SortOrder
 import org.koitharu.kotatsu.parsers.util.almostEquals
 import org.koitharu.kotatsu.parsers.util.levenshteinDistance
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
+import org.koitharu.kotatsu.sourcescore.domain.ProbeOp
+import org.koitharu.kotatsu.sourcescore.domain.SourceProbeRecorder
 
 private const val MATCH_THRESHOLD_DEFAULT = 0.2f
 
@@ -24,6 +26,7 @@ class SearchV2Helper @AssistedInject constructor(
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val dataRepository: MangaDataRepository,
 	private val settings: AppSettings,
+	private val probeRecorder: SourceProbeRecorder,
 ) {
 
 	suspend operator fun invoke(query: String, kind: SearchKind): SearchResults? {
@@ -33,7 +36,17 @@ class SearchV2Helper @AssistedInject constructor(
 		val repository = mangaRepositoryFactory.create(source)
 		val listFilter = repository.getFilter(query, kind) ?: return null
 		val sortOrder = repository.getSortOrder(kind)
-		val list = repository.getList(0, sortOrder, listFilter)
+		// The one choke point every per-source search passes through, which is why the probe lives
+		// here instead of being scattered across call sites. An empty result is recorded as a success
+		// that returned nothing: a broken parser answers 200 OK with zero items, and without that
+		// distinction it would look perfectly healthy forever.
+		val list = probeRecorder.measure(
+			source = source,
+			op = ProbeOp.SEARCH,
+			isEmpty = { it.isEmpty() },
+		) {
+			repository.getList(0, sortOrder, listFilter)
+		}
 		if (list.isEmpty()) {
 			return null
 		}

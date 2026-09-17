@@ -30,7 +30,7 @@ class SourcesSettingsFragment : BasePreferenceFragment(R.string.remote_sources),
 		findPreference<ListPreference>(AppSettings.KEY_SOURCES_ORDER)?.run {
 			entryValues = SourcesSortOrder.entries.names()
 			entries = SourcesSortOrder.entries.map { context.getString(it.titleResId) }.toTypedArray()
-			setDefaultValueCompat(SourcesSortOrder.MANUAL.name)
+			setDefaultValueCompat(SourcesSortOrder.SCORE.name)
 		}
         findPreference<ListPreference>(AppSettings.KEY_INCOGNITO_NSFW)?.run {
             entryValues = TriStateOption.entries.names()

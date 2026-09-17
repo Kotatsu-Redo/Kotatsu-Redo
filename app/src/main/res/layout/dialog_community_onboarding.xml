@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Three steps in a ViewFlipper rather than a ViewPager2: the flow is strictly forward, each step's
+	answer decides what the next one is, and swiping back to re-answer a consent question would be
+	confusing rather than helpful.
+
+	Laid out for Material 3 Expressive: a tonal hero shape carrying the step's icon, a shape-based
+	progress indicator, generous corner radii, and motion between steps that moves rather than fades.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="vertical"
+	android:paddingStart="24dp"
+	android:paddingTop="28dp"
+	android:paddingEnd="24dp"
+	android:paddingBottom="0dp">
+
+	<FrameLayout
+		android:id="@+id/layout_hero"
+		android:layout_width="72dp"
+		android:layout_height="72dp"
+		android:layout_gravity="center_horizontal"
+		android:background="@drawable/bg_onboarding_hero">
+
+		<ImageView
+			android:id="@+id/imageView_hero"
+			android:layout_width="34dp"
+			android:layout_height="34dp"
+			android:layout_gravity="center"
+			android:importantForAccessibility="no"
+			app:tint="?attr/colorOnSecondaryContainer"
+			tools:src="@drawable/ic_info_outline" />
+	</FrameLayout>
+
+	<TextView
+		android:id="@+id/textView_title"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:gravity="center_horizontal"
+		android:textAppearance="?attr/textAppearanceHeadlineSmall"
+		tools:text="Comments and ratings" />
+
+	<!-- Shape, not size, marks the active step: the current one is a stadium, the rest are dots. -->
+	<LinearLayout
+		android:id="@+id/layout_steps"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center_horizontal"
+		android:layout_marginTop="14dp"
+		android:orientation="horizontal">
+
+		<View
+			android:id="@+id/dot_1"
+			android:layout_width="22dp"
+			android:layout_height="8dp"
+			android:background="@drawable/bg_onboarding_dot_active" />
+
+		<View
+			android:id="@+id/dot_2"
+			android:layout_width="8dp"
+			android:layout_height="8dp"
+			android:layout_marginStart="6dp"
+			android:background="@drawable/bg_onboarding_dot" />
+
+		<View
+			android:id="@+id/dot_3"
+			android:layout_width="8dp"
+			android:layout_height="8dp"
+			android:layout_marginStart="6dp"
+			android:background="@drawable/bg_onboarding_dot" />
+
+		<View
+			android:id="@+id/dot_4"
+			android:layout_width="8dp"
+			android:layout_height="8dp"
+			android:layout_marginStart="6dp"
+			android:background="@drawable/bg_onboarding_dot" />
+	</LinearLayout>
+
+	<ViewFlipper
+		android:id="@+id/flipper"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:measureAllChildren="false"
+		android:inAnimation="@anim/onboarding_step_in"
+		android:outAnimation="@anim/onboarding_step_out">
+
+		<!-- Step 1: what the feature is, and that it needs no account.
+
+		     One child per step. The flipper indexes by child, so a step made of several views has to
+		     be wrapped in one container - three loose TextViews here made every later step display
+		     the wrong child, and the nickname step showed this text instead of its input field. -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:lineSpacingMultiplier="1.2"
+				android:text="@string/community_intro_body"
+				android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+			<TextView
+				android:id="@+id/textView_age"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="12dp"
+				android:text="@string/community_age_notice"
+				android:textAppearance="?attr/textAppearanceBodySmall"
+				android:textColor="?attr/colorPrimary" />
+
+			<TextView
+				android:id="@+id/textView_policies"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp"
+				android:textAppearance="?attr/textAppearanceBodySmall"
+				android:textColor="?android:attr/textColorSecondary"
+				tools:text="By turning this on you agree to the Terms and the Privacy notice." />
+		</LinearLayout>
+
+
+		<!-- Step 2: telemetry, described in terms of what is and is not sent. -->
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:lineSpacingMultiplier="1.2"
+			android:text="@string/community_telemetry_body"
+			android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+		<!-- Step 3: nickname. Optional - the discriminator is what actually identifies a user. -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:lineSpacingMultiplier="1.2"
+				android:text="@string/community_nickname_body"
+				android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+			<com.google.android.material.textfield.TextInputLayout
+				android:id="@+id/layout_nickname"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="16dp"
+				app:counterEnabled="true"
+				app:counterMaxLength="24"
+				app:shapeAppearance="?attr/shapeAppearanceCornerLarge">
+
+				<com.google.android.material.textfield.TextInputEditText
+					android:id="@+id/edit_nickname"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:hint="@string/community_nickname"
+					android:imeOptions="actionDone"
+					android:inputType="text"
+					android:maxLength="24" />
+			</com.google.android.material.textfield.TextInputLayout>
+
+			<TextView
+				android:id="@+id/textView_nickname_preview"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="4dp"
+				android:textAppearance="?attr/textAppearanceBodySmall"
+				android:textColor="?android:attr/textColorSecondary"
+				tools:text="You will appear as raph#4f2a" />
+		</LinearLayout>
+
+		<!-- Step 3: where sponsorship money goes. -->
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:lineSpacingMultiplier="1.2"
+				android:text="@string/community_sponsor_body"
+				android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+			<com.google.android.material.card.MaterialCardView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="16dp"
+				app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+				app:cardElevation="0dp"
+				app:contentPadding="16dp"
+				app:shapeAppearance="?attr/shapeAppearanceCornerExtraLarge">
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:gravity="center_vertical"
+					android:orientation="horizontal">
+
+					<org.koitharu.kotatsu.stats.ui.views.PieChartView
+						android:id="@+id/chart_split"
+						android:layout_width="96dp"
+						android:layout_height="96dp" />
+
+					<LinearLayout
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:layout_marginStart="16dp"
+						android:layout_weight="1"
+						android:orientation="vertical">
+
+						<TextView
+							android:id="@+id/legend_translation"
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:drawablePadding="10dp"
+							android:gravity="center_vertical"
+							android:textAppearance="?attr/textAppearanceBodySmall"
+							tools:text="40%  Translation work" />
+
+						<TextView
+							android:id="@+id/legend_charity"
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="8dp"
+							android:drawablePadding="10dp"
+							android:gravity="center_vertical"
+							android:textAppearance="?attr/textAppearanceBodySmall"
+							tools:text="40%  V Foundation" />
+
+						<TextView
+							android:id="@+id/legend_server"
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="8dp"
+							android:drawablePadding="10dp"
+							android:gravity="center_vertical"
+							android:textAppearance="?attr/textAppearanceBodySmall"
+							tools:text="20%  Server costs" />
+					</LinearLayout>
+				</LinearLayout>
+			</com.google.android.material.card.MaterialCardView>
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="12dp"
+				android:text="@string/community_sponsor_reports"
+				android:textAppearance="?attr/textAppearanceBodySmall"
+				android:textColor="?android:attr/textColorSecondary" />
+		</LinearLayout>
+	</ViewFlipper>
+</LinearLayout>

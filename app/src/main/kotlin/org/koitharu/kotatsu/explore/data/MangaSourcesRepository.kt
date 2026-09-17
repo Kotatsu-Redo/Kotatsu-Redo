@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import org.koitharu.kotatsu.BuildConfig
@@ -34,7 +35,9 @@ import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
 import org.koitharu.kotatsu.parsers.util.mapNotNullToSet
+import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.parsers.util.mapToSet
+import org.koitharu.kotatsu.sourcescore.domain.SourceRanker
 import java.util.Collections
 import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicBoolean
@@ -46,6 +49,12 @@ class MangaSourcesRepository @Inject constructor(
 	@LocalizedAppContext private val context: Context,
 	private val db: MangaDatabase,
 	private val settings: AppSettings,
+	/**
+	 * Nullable with a default so [org.koitharu.kotatsu.backups.domain.AppBackupAgent] can keep
+	 * constructing this by hand: a backup agent runs in its own process with no Hilt graph, and it
+	 * has no use for score ordering. Dagger ignores the default and injects the real instance.
+	 */
+	private val sourceRanker: SourceRanker? = null,
 ) {
 
 	private val isNewSourcesAssimilated = AtomicBoolean(false)
@@ -174,8 +183,11 @@ class MangaSourcesRepository @Inject constructor(
 		observeAllEnabled(),
 		observeSortOrder(),
 	) { skipNsfw, allEnabled, order ->
-		dao.observeAll(!allEnabled, order).map {
-			it.toSources(skipNsfw, order)
+		// Re-emits when a score download lands, so the order and the flames update without waiting
+		// for the sources table to change. Local stats are left out on purpose: they change on every
+		// search, and the list reshuffling under the user's finger would be worse than slightly stale.
+		combine(dao.observeAll(!allEnabled, order), observeScoreUpdates()) { entities, _ -> entities }.map {
+			it.toSources(skipNsfw, order).sortedByScoreIfNeeded(order)
 		}
 	}.flattenLatest()
 		.onStart { assimilateNewSources() }
@@ -388,6 +400,50 @@ class MangaSourcesRepository @Inject constructor(
 		}
 		return result
 	}
+
+	/**
+	 * Orders a list that did not come from the sources table - a preset's sources - the way the
+	 * enabled list is ordered for the user's chosen [SourcesSortOrder]. Without this a preset showed
+	 * sources in registry order whatever the setting said, flames and all but never popular-first.
+	 * Manual and last-used orders have no meaning outside the table, so those keep the given order.
+	 */
+	suspend fun sortForDisplay(sources: List<MangaSourceInfo>, order: SourcesSortOrder): List<MangaSourceInfo> =
+		when (order) {
+			SourcesSortOrder.ALPHABETIC -> sources.sortedWith(
+				compareBy<MangaSourceInfo> { !it.isPinned }.thenBy { it.getTitle(context) },
+			)
+
+			else -> sources.sortedByScoreIfNeeded(order)
+		}
+
+	/** Emits the current sort order, then again whenever the user changes it. */
+	fun observeSourcesSortOrder(): Flow<SourcesSortOrder> = observeSortOrder()
+
+	/**
+	 * Applies [SourcesSortOrder.SCORE], which cannot be expressed as an ORDER BY because the community
+	 * scores live in a separate Room database (kept apart so upstream Kotatsu's migrations never
+	 * collide with this fork's).
+	 *
+	 * Pinned sources stay on top regardless: pinning is an explicit user choice and outranks anything
+	 * a score has to say. The really popular (flame-marked) sources come straight after them.
+	 */
+	private suspend fun List<MangaSourceInfo>.sortedByScoreIfNeeded(
+		order: SourcesSortOrder?,
+	): List<MangaSourceInfo> {
+		if (order?.isExternallyRanked != true || isEmpty()) return this
+		val ranker = sourceRanker ?: return this
+		val snapshot = runCatchingCancellable { ranker.snapshot() }.getOrNull() ?: return this
+		val ranks = associate { it.name to snapshot.rank(it.mangaSource) }
+		return sortedWith(
+			compareBy<MangaSourceInfo> { !it.isPinned }
+				.thenByDescending { ranks.getValue(it.name).isHot }
+				.thenByDescending { ranks.getValue(it.name).composite },
+		)
+	}
+
+	/** Emits once at start and again whenever downloaded community scores change. */
+	fun observeScoreUpdates(): Flow<Unit> =
+		sourceRanker?.observeScores()?.map { } ?: flowOf(Unit)
 
 	private fun observeIsNsfwDisabled() = settings.observeAsFlow(AppSettings.KEY_DISABLE_NSFW) {
 		isNsfwContentDisabled

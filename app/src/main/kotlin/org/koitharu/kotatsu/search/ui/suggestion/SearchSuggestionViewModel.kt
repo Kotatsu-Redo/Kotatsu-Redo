@@ -75,6 +75,10 @@ class SearchSuggestionViewModel @Inject constructor(
 	val isScopedSearch: StateFlow<Boolean>
 		get() = isScoped
 
+	/** The screen the bar belongs to; for diagnostics. */
+	val currentScope: SearchSuggestionScope
+		get() = screenScope.value
+
 	val isIncognitoModeEnabled = settings.observeAsStateFlow(
 		scope = viewModelScope + Dispatchers.Default,
 		key = AppSettings.KEY_INCOGNITO_MODE,

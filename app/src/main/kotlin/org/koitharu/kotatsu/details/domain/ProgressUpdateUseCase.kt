@@ -6,6 +6,7 @@ import org.koitharu.kotatsu.core.model.isLocal
 import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.history.data.HistoryEntity
+import org.koitharu.kotatsu.history.domain.HistoryWriteLog
 import org.koitharu.kotatsu.list.domain.ReadingProgress
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_NONE
 import org.koitharu.kotatsu.local.data.LocalMangaRepository
@@ -56,6 +57,7 @@ class ProgressUpdateUseCase @Inject constructor(
 		val ppc = 1f / chaptersCount
 		val result = ppc * chapterIndex + ppc * pagePercent
 		if (result != history.percent || history.chaptersCount != chaptersCount) {
+			HistoryWriteLog.progressRewrite(manga, history.percent, result, history.chaptersCount, chaptersCount)
 			database.getHistoryDao().update(
 				history.copy(
 					chapterId = chapter.id,
@@ -96,6 +98,7 @@ class ProgressUpdateUseCase @Inject constructor(
 			(history.percent * history.chaptersCount / newTotal).coerceIn(0f, history.percent)
 		}
 		if (estimated != history.percent || history.chaptersCount != newTotal) {
+			HistoryWriteLog.progressRewrite(details, history.percent, estimated, history.chaptersCount, newTotal)
 			database.getHistoryDao().update(history.copy(percent = estimated, chaptersCount = newTotal))
 		}
 		return estimated

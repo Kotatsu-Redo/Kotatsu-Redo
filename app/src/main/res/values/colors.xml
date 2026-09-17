@@ -45,4 +45,6 @@
 	<color name="background_sakura">#FFF8F8</color>
 	<color name="background_mamimi">#FFF8F7</color>
 	<color name="background_kanade">#F3F3F3</color>
+	<!-- The popular-source flame: fire orange in both themes, readable on light and dark surfaces. -->
+	<color name="hot_source_flame">#FF6D00</color>
 </resources>

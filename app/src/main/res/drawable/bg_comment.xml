@@ -1,0 +1,6 @@
+<!-- An ordinary comment. Option B: every comment gets a container of its own. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+	android:shape="rectangle">
+	<solid android:color="?attr/colorSurfaceContainerLow" />
+	<corners android:radius="20dp" />
+</shape>

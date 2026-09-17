@@ -516,6 +516,81 @@
     <string name="suggest_new_sources_summary">Prompt to enable newly added sources after updating the application</string>
     <string name="list_options">List options</string>
     <string name="by_relevance">Relevance</string>
+    <string name="by_reliability">Popular &amp; reliable</string>
+    <!-- Community features -->
+    <string name="community">Community</string>
+    <string name="community_rating">Reader rating</string>
+    <string name="community_rating_summary">%1$s · %2$s</string>
+    <!-- Shown on the score button before anyone has rated. -->
+    <string name="community_rating_dash">\u2013</string>
+    <string name="community_rating_none">No ratings yet</string>
+    <string name="community_rating_failed">Could not save your rating</string>
+    <string name="community_summary">Comments, ratings and source reliability</string>
+    <string name="community_enabled">Community features</string>
+    <string name="community_enabled_summary">Comments and ratings</string>
+    <string name="community_telemetry">Share source reliability</string>
+    <string name="community_telemetry_summary">Anonymous, per source only. Never which manga you read.</string>
+    <string name="community_server">Server</string>
+    <string name="community_server_checking">Checking…</string>
+    <string name="community_server_ok">Connected</string>
+    <string name="community_server_unreachable">Not reachable — comments and ratings will not appear</string>
+    <string name="community_nickname">Nickname</string>
+    <string name="community_nickname_summary">How you appear on comments</string>
+    <string name="community_recovery">Back up my identity</string>
+    <string name="community_recovery_summary">Save your key, or restore one from another phone</string>
+    <string name="community_recovery_none">Your identity is created the first time you use a community feature.</string>
+    <string name="community_recovery_explain">Write this down. It is the only way to move your comments and ratings to another phone, and nobody can recover it for you.</string>
+    <string name="community_recovery_hint">Recovery key</string>
+    <string name="community_recovery_restore">Restore</string>
+    <string name="community_recovery_restored">Identity restored</string>
+    <string name="community_recovery_invalid">That does not look like a recovery key</string>
+    <string name="community_delete">Delete everything about me</string>
+    <string name="community_delete_summary">Erases your ratings and comments from the server, permanently</string>
+    <string name="community_delete_confirm">This erases your ratings, removes your comments and deletes your identity. It cannot be undone.</string>
+    <string name="community_sponsor">Support Kotatsu-Redo</string>
+    <string name="community_intro_replay">Show introduction</string>
+    <string name="community_intro_replay_summary">Walk through the community features again</string>
+
+    <!-- Onboarding -->
+    <string name="community_intro_title">Comments and ratings</string>
+    <string name="community_intro_body">Kotatsu-Redo can now show comments and ratings from other readers, and use what everyone learns to put the sources that actually work at the top of your searches.\n\nThere is no account. No email, no password. Your device makes a random key and that is your whole identity — you can back it up and move it to a new phone.</string>
+    <string name="community_recover">Restore</string>
+    <string name="community_recover_title">Restore your account</string>
+    <string name="community_recover_body">Paste the recovery key from your other device. You will find it there under Settings, Services, Community.
+
+Your comments, ratings and nickname come back with it.</string>
+    <string name="community_recover_hint">Recovery key</string>
+    <string name="community_recover_action">Restore</string>
+    <string name="community_recover_malformed">That is not a recovery key. It is 43 characters, with no spaces.</string>
+    <string name="community_recover_unknown">No account on this server uses that key. Check it for a missing or altered character — a key with a typo is a different key, not a broken one.</string>
+    <string name="community_recover_failed">Could not reach the server. Try again in a moment.</string>
+    <string name="community_recover_done">Welcome back, %1$s</string>
+    <string name="community_intro_optin">Turn it on</string>
+    <string name="community_intro_skip">Not now</string>
+
+    <string name="community_telemetry_title">Help rank sources</string>
+    <string name="community_telemetry_body">When a source fails, times out, or returns nothing, your app can report that — so everyone\'s search puts the working sources first.\n\nA report says only: which source, whether it worked, and how slow it was. It never contains a manga title, a search you typed, or a page you opened. The identifier rotates every day.</string>
+    <string name="community_telemetry_yes">Share reliability</string>
+    <string name="community_telemetry_no">No</string>
+
+    <string name="community_nickname_title">Pick a nickname</string>
+    <string name="community_nickname_body">Comments show a nickname of your choosing, followed by four characters that are yours alone. Nobody can take your name, and nobody can pretend to be you.
+
+Optional — skip it and you appear as anon.</string>
+    <string name="community_nickname_preview">You will appear as %1$s</string>
+    <string name="community_nickname_continue">Continue</string>
+    <string name="community_nickname_back">Back</string>
+    <string name="community_nickname_required">Pick a nickname to carry on</string>
+    <string name="community_nickname_too_short">A little longer, please</string>
+    <string name="community_nickname_invalid">Letters, numbers and spaces only</string>
+    <string name="community_sponsor_title">Where the money goes</string>
+    <string name="community_sponsor_body">Kotatsu-Redo is free and has no ads. Sponsorship covers the server, and everything beyond that is split evenly:</string>
+    <string name="community_sponsor_split_translation">Translation work</string>
+    <string name="community_sponsor_split_charity">V Foundation for Cancer Research</string>
+    <string name="community_sponsor_split_server">Server costs</string>
+    <string name="community_sponsor_reports">Reports are posted on the Discord.</string>
+    <string name="community_sponsor_open">Become a sponsor</string>
+    <string name="community_sponsor_dismiss">Maybe later</string>
     <string name="categories">Categories</string>
     <string name="online_variant">Online variant</string>
     <string name="periodic_backups">Periodic backups</string>
@@ -1024,4 +1099,73 @@
 	<string name="use_this_cover">Use this cover</string>
 	<string name="alternative_covers_progress">%1$d / %2$d sources</string>
 	<string name="no_alternative_covers">No other covers found for this title</string>
+    <plurals name="community_rating_count">
+        <item quantity="one">%d rating</item>
+        <item quantity="other">%d ratings</item>
+    </plurals>
+
+	<!-- Community comments -->
+	<string name="community_comments">Comments</string>
+	<string name="community_comments_sort_top">Top</string>
+	<string name="community_comments_sort_new">New</string>
+	<string name="community_comments_empty">No comments yet. Say something about this one.</string>
+	<string name="community_comments_unavailable">Comments aren\'t available right now.</string>
+	<!-- Sits beside the "Comments" title. The separator is part of it so RTL can move it. -->
+	<string name="community_comments_heading_count">\u00b7 %1$d</string>
+	<string name="community_comments_subtitle_other">%1$s &#183; also %2$d in other languages</string>
+	<plurals name="community_comments_count">
+		<item quantity="one">%d comment</item>
+		<item quantity="other">%d comments</item>
+	</plurals>
+
+	<string name="community_comment_hint">Add a comment</string>
+	<string name="community_comment_spoiler">Spoiler</string>
+	<string name="community_comment_spoiler_hidden">Spoiler — tap to show</string>
+	<string name="community_comment_send">Send</string>
+	<string name="community_comment_reply">Reply</string>
+	<string name="community_comment_edit">Edit</string>
+	<string name="community_comment_delete">Delete</string>
+	<string name="community_comment_delete_confirm">This can\'t be undone. Replies to it will stay.</string>
+	<string name="community_comment_like">Like</string>
+	<string name="community_comment_dislike">Dislike</string>
+	<string name="community_comment_deleted">Deleted</string>
+	<string name="community_comment_deleted_author">&#8212;</string>
+	<string name="community_comment_replying_to">Replying to %s</string>
+	<string name="community_comment_editing">Editing your comment</string>
+
+	<string name="community_comment_not_posted">Not posted</string>
+	<!--
+	  The term is the user\'s own word and arrives from the server untranslated, which is the whole
+	  point: naming it lets an honest user fix a false positive in one try.
+	-->
+	<string name="community_comment_blocked">&#8220;%s&#8221; isn\'t allowed here. Rewrite that part and try again.</string>
+	<string name="community_comment_filter_wrong">This was wrong</string>
+	<string name="community_comment_filter_reported">Thanks &#8212; a moderator will look at it.</string>
+	<string name="community_comment_too_short">Comments need at least %d characters.</string>
+	<string name="community_comment_chain_depth">You\'ve replied enough times in this thread. Let someone else in.</string>
+	<plurals name="community_comment_rate_limited_in">
+		<item quantity="one">You have posted as much as a new account can for now. Try again in about a minute.</item>
+		<item quantity="other">You have posted as much as a new account can for now. Try again in about %1$d minutes.</item>
+	</plurals>
+	<string name="community_comment_rate_limited">You\'re posting too quickly. Try again in a little while.</string>
+	<string name="community_comment_banned">Your account can no longer post.</string>
+	<string name="community_comment_failed">That didn\'t send. Check your connection and try again.</string>
+	<string name="community_rules">Community rules</string>
+	<string name="community_export">Export my data</string>
+	<string name="community_export_summary">Save a copy of your comments, ratings and votes</string>
+	<string name="community_export_failed">Couldn\'t download your data. Check your connection and try again.</string>
+	<string name="community_terms">Terms</string>
+	<string name="community_privacy">Privacy</string>
+	<!--
+	  Shown on the first onboarding screen, before the toggle. The community features are 18+ even
+	  though the app is not, so this has to be said before someone opts in rather than buried.
+	-->
+	<string name="community_age_notice">You need to be 18 or over to use comments and ratings. Reading works exactly the same either way.</string>
+	<string name="community_policy_links">By turning this on you agree to the %1$s and the %2$s.</string>
+	<string name="community_replies">Replies</string>
+	<string name="community_reply_from">%s replied to you</string>
+	<plurals name="community_replies_count">
+		<item quantity="one">%d new reply</item>
+		<item quantity="other">%d new replies</item>
+	</plurals>
 </resources>

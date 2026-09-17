@@ -42,16 +42,32 @@ fun View.hasGlobalPoint(x: Int, y: Int): Boolean {
 val ViewGroup.hasVisibleChildren: Boolean
 	get() = children.any { it.isVisible }
 
+/**
+ * The laid-out height, measuring on demand when there is not one yet.
+ *
+ * Returns 0 rather than measuring while detached. Measuring walks the subtree, and a ComposeView in
+ * it resolves its recomposer from the window during measure - with no window it throws
+ * `Cannot locate windowRecomposer`, which takes down the process. This is reachable from
+ * `onRestoreInstanceState`, before the view is attached.
+ */
 fun View.measureHeight(): Int {
 	val vh = height
-	return if (vh == 0) {
-		measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
-		measuredHeight
-	} else vh
+	if (vh != 0) {
+		return vh
+	}
+	if (!isAttachedToWindow) {
+		return 0
+	}
+	measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
+	return measuredHeight
 }
 
+/** @see measureHeight for why a detached view is not measured. */
 fun View.measureWidth(): Int {
 	val vw = width
+	if (vw == 0 && !isAttachedToWindow) {
+		return 0
+	}
 	return if (vw == 0) {
 		measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
 		measuredWidth

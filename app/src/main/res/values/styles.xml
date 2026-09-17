@@ -704,6 +704,28 @@
 
 	<!-- Shapes -->
 
+	<!--
+	  The community row's two controls, shaped so they are told apart before they are read.
+
+	  Expressive's point is that shape is information, not decoration. A score is a value on a scale,
+	  so it gets the stadium every M3 value-carrying control has. Comments are a place you go and a
+	  thing people said, so the button is a speech bubble: three generous corners and one cut back -
+	  the same broken corner a reply container uses in the sheet, so the shape means the same thing in
+	  both places.
+	-->
+	<style name="ShapeAppearanceOverlay.Kotatsu.Community.Score" parent="">
+		<item name="cornerFamily">rounded</item>
+		<item name="cornerSize">50%</item>
+	</style>
+
+	<style name="ShapeAppearanceOverlay.Kotatsu.Community.Comments" parent="">
+		<item name="cornerFamily">rounded</item>
+		<item name="cornerSizeTopLeft">18dp</item>
+		<item name="cornerSizeTopRight">18dp</item>
+		<item name="cornerSizeBottomRight">18dp</item>
+		<item name="cornerSizeBottomLeft">6dp</item>
+	</style>
+
 	<style name="ShapeAppearanceOverlay.Kotatsu.Cover" parent="">
 		<item name="cornerSize">12dp</item>
 	</style>

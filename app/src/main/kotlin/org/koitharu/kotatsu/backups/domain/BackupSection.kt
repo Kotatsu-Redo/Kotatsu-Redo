@@ -18,6 +18,15 @@ enum class BackupSection(
 	SCROBBLING("scrobbling"),
 	STATS("statistics"),
 	SAVED_FILTERS("saved_filters"),
+
+	/**
+	 * The community identity key.
+	 *
+	 * Included in the backup because it is the only thing that carries a user's comments and ratings
+	 * to a new phone - losing it orphans them permanently, and a recovery phrase nobody wrote down is
+	 * not a backup.
+	 */
+	IDENTITY("identity"),
 	;
 
 	companion object {
