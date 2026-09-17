@@ -9,18 +9,23 @@ online content sources. The main goal of the fork is to maintain existing featur
 
 <div align="left">
 
--   Online [manga catalogues](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo) (with 1200+ manga sources)
--   Search manga by name, genres and more filters
--   Favorites organized by user-defined categories
--   Reading history, bookmarks and incognito mode support
--   Download manga and read it offline. Third-party CBZ archives are also supported
--   Clean and convenient Material You UI, optimized for phones, tablets and desktop
--   Standard and Webtoon-optimized customizable reader, gesture support on reading interface
--   Notifications about new chapters with updates feed, manga recommendations (with filters)
--   Integration with manga tracking services: Shikimori, AniList, MyAnimeList, Kitsu
--   Password / fingerprint-protected access to the app
--   Automatically sync app data with other devices on the same account
--   Support for older devices running Android 6.0+
+-   900+ working online manga sources ([kotatsu-parsers-redo](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo)), with source presets, pinning and automatic mirror switching
+-   Search across all your sources at once, by title, author or genre, with filters; sources that work best come first
+-   Opt-in community features: comments and ratings on manga, plus shared source reliability that ranks search, Explore and the source catalog, with 🔥 on the most popular sources. No email or password, just a device key you can back up
+-   Find the same manga on other sources and migrate your progress with Alternatives
+-   Favorites in custom categories, reading history, bookmarks and incognito mode
+-   Four reader modes: standard, right-to-left, vertical and Webtoon. Adjustable zoom, gaps, cropping, gestures, volume-key paging and an e-ink mode
+-   New chapter checks with an updates feed, optional auto-download of new chapters, and recommendations with genre filters
+-   Download manga to read offline (CBZ or folders) and open your own CBZ/ZIP archives
+-   Sync favorites and history across devices, using your own sync server if you like
+-   Scheduled automatic backups to a folder of your choice or to Telegram
+-   Tracking with AniList, MyAnimeList, Kitsu and Shikimori, plus Discord Rich Presence
+-   Reading statistics and reading time estimates
+-   Home screen widgets for recent manga and your shelf
+-   Network tools: proxy, DNS over HTTPS, image proxy and built-in CloudFlare handling
+-   Password or fingerprint lock and screenshot protection
+-   Material You design for phones, tablets and desktop, with a pure black dark theme
+-   Supports Android 6.0 and newer
 
 </div>
 
