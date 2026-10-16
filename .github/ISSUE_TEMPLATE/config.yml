@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
     - name: ⚠️ Source issue
       url: https://github.com/Kotatsu-Redo/kotatsu-parsers-redo/issues/new
-      about: If you have a problem with a specific **manga source** or want to propose a new one, please open an issue in the kotatsu-parsers repository instead
+      about: If you have a problem with a specific **manga source** or want to propose a new one, please open an issue in the kotatsu-parsers-redo repository instead
