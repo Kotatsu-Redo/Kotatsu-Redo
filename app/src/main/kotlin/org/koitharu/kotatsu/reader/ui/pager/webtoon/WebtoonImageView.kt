@@ -123,6 +123,9 @@ class WebtoonImageView @JvmOverloads constructor(
 	override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
 		super.onSizeChanged(w, h, oldw, oldh)
 		applyScroll()
+		(parent?.parent as? WebtoonRecyclerView)?.let { recyclerView ->
+			(parent as? WebtoonFrameLayout)?.let(recyclerView::onPageSizeChanged)
+		}
 	}
 
 	/**
