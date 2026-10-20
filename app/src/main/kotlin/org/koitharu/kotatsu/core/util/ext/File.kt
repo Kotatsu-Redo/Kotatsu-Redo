@@ -115,6 +115,23 @@ fun File.isReadable() = runCatching {
 	canRead()
 }.getOrDefault(false)
 
-fun File.isWriteable() = runCatching {
-	canWrite()
+fun File.isWriteable(): Boolean = runCatching {
+	if (!canWrite()) {
+		return@runCatching false
+	}
+	if (isDirectory) {
+		val probe = File(this, ".probe_${java.util.UUID.randomUUID()}.tmp")
+		try {
+			if (probe.createNewFile()) {
+				probe.delete()
+				true
+			} else {
+				false
+			}
+		} finally {
+			probe.delete()
+		}
+	} else {
+		canWrite()
+	}
 }.getOrDefault(false)

@@ -47,7 +47,7 @@ class RestoreService : BaseBackupRestoreService() {
 			notification,
 			ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
 		)
-		val source = intent.getStringExtra(AppRouter.KEY_DATA)?.toUriOrNull() ?: throw FileNotFoundException()
+		val source = intent.data ?: intent.getStringExtra(AppRouter.KEY_DATA)?.toUriOrNull() ?: throw FileNotFoundException()
 		val sections =
 			requireNotNull(intent.getSerializableExtraCompat<Array<BackupSection>>(AppRouter.KEY_ENTRIES)?.toSet())
 		powerManager.withPartialWakeLock(TAG) {
@@ -105,9 +105,12 @@ class RestoreService : BaseBackupRestoreService() {
 
 		@CheckResult
 		fun start(context: Context, uri: Uri, sections: Set<BackupSection>): Boolean = try {
-			val intent = Intent(context, RestoreService::class.java)
-			intent.putExtra(AppRouter.KEY_DATA, uri.toString())
-			intent.putExtra(AppRouter.KEY_ENTRIES, sections.toTypedArray())
+			val intent = Intent(context, RestoreService::class.java).apply {
+				data = uri
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				putExtra(AppRouter.KEY_DATA, uri.toString())
+				putExtra(AppRouter.KEY_ENTRIES, sections.toTypedArray())
+			}
 			ContextCompat.startForegroundService(context, intent)
 			true
 		} catch (e: Exception) {

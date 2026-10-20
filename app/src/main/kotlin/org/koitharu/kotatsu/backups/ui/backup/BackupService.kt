@@ -50,7 +50,7 @@ class BackupService : BaseBackupRestoreService() {
 			notification,
 			ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
 		)
-		val destination = intent.getStringExtra(AppRouter.KEY_DATA)?.toUriOrNull() ?: throw FileNotFoundException()
+		val destination = intent.data ?: intent.getStringExtra(AppRouter.KEY_DATA)?.toUriOrNull() ?: throw FileNotFoundException()
 		powerManager.withPartialWakeLock(TAG) {
 			val progress = MutableStateFlow(Progress.INDETERMINATE)
 			val progressUpdateJob = if (checkNotificationPermission(CHANNEL_ID)) {
@@ -119,8 +119,11 @@ class BackupService : BaseBackupRestoreService() {
 
 		@CheckResult
 		fun start(context: Context, uri: Uri): Boolean = try {
-			val intent = Intent(context, BackupService::class.java)
-			intent.putExtra(AppRouter.KEY_DATA, uri.toString())
+			val intent = Intent(context, BackupService::class.java).apply {
+				data = uri
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+				putExtra(AppRouter.KEY_DATA, uri.toString())
+			}
 			ContextCompat.startForegroundService(context, intent)
 			true
 		} catch (e: Exception) {
