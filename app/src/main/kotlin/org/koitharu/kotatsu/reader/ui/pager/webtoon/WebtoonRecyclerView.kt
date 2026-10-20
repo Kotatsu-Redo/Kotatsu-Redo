@@ -221,7 +221,22 @@ class WebtoonRecyclerView @JvmOverloads constructor(
 	 */
 	fun onPageReady(child: WebtoonFrameLayout) {
 		child.isRepinPending = true
+		child.requestLayout()
+		requestLayout()
 		post { repinPage(child) }
+	}
+
+	fun onPageSizeChanged(child: WebtoonFrameLayout) {
+		if (child.parent !== this) {
+			return
+		}
+		child.requestLayout()
+		requestLayout()
+		post {
+			if (child.parent === this) {
+				updateChildrenScroll()
+			}
+		}
 	}
 
 	/**
