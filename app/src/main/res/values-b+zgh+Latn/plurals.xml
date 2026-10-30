@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tamazight (Standard Moroccan), traditional Latin orthography. Mirrored in values-b+zgh+Tfng. -->
+<resources>
+	<plurals name="search_results_count">
+		<item quantity="one">%1$d agmud</item>
+		<item quantity="other">%1$d igmuden</item>
+	</plurals>
+	<plurals name="items">
+		<item quantity="one">%1$d afrddis</item>
+		<item quantity="other">%1$d ifrddisen</item>
+	</plurals>
+	<plurals name="new_chapters">
+		<item quantity="one">%1$d ixf amaynu</item>
+		<item quantity="other">%1$d ixfawen imaynuten</item>
+	</plurals>
+	<plurals name="chapters">
+		<item quantity="one">%1$d ixf</item>
+		<item quantity="other">%1$d ixfawen</item>
+	</plurals>
+	<plurals name="pages">
+		<item quantity="one">%1$d tasna</item>
+		<item quantity="other">%1$d tisniwin</item>
+	</plurals>
+	<plurals name="minutes_ago">
+		<item quantity="one">%1$d tusdidt i izrin</item>
+		<item quantity="other">%1$d tusdidin i izrin</item>
+	</plurals>
+	<plurals name="hours_ago">
+		<item quantity="one">%1$d tasragt i izrin</item>
+		<item quantity="other">%1$d tisragin i izrin</item>
+	</plurals>
+	<plurals name="days_ago">
+		<item quantity="one">%1$d ass i izrin</item>
+		<item quantity="other">%1$d wussan i izrin</item>
+	</plurals>
+	<plurals name="months_ago">
+		<item quantity="one">%1$d ayyur i izrin</item>
+		<item quantity="other">%1$d wayyuren i izrin</item>
+	</plurals>
+	<plurals name="hours">
+		<item quantity="one">%1$d tasragt</item>
+		<item quantity="other">%1$d tisragin</item>
+	</plurals>
+	<plurals name="minutes">
+		<item quantity="one">%1$d tusdidt</item>
+		<item quantity="other">%1$d tusdidin</item>
+	</plurals>
+	<plurals name="sources_count">
+		<item quantity="one">%1$d uɣbalu</item>
+		<item quantity="other">%1$d iɣbula</item>
+	</plurals>
+	<plurals name="community_rating_count">
+		<item quantity="one">%d azal</item>
+		<item quantity="other">%d izalen</item>
+	</plurals>
+	<plurals name="community_comments_count">
+		<item quantity="one">%d awennit</item>
+		<item quantity="other">%d iwenniten</item>
+	</plurals>
+	<plurals name="community_comment_rate_limited_in">
+		<item quantity="one">Tessawḍeḍ anect i yezmer amiḍan amaynu i tura. Arm deffir anect n ddqiqa.</item>
+		<item quantity="other">Tessawḍeḍ anect i yezmer amiḍan amaynu i tura. Arm deffir %1$d n tesdidin.</item>
+	</plurals>
+	<plurals name="community_replies_count">
+		<item quantity="one">%d tirwint tamaynut</item>
+		<item quantity="other">%d tirwiyin timaynutin</item>
+	</plurals>
+</resources>

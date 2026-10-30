@@ -29,9 +29,11 @@ fun String.toLocaleOrNull() = if (isEmpty()) {
 	toLocale().takeUnless { it.displayName == this }
 }
 
-fun Locale?.getDisplayName(context: Context): String = when (this) {
-	null -> context.getString(R.string.all_languages)
-	Locale.ROOT -> context.getString(R.string.various_languages)
+fun Locale?.getDisplayName(context: Context): String = when {
+	this == null -> context.getString(R.string.all_languages)
+	this == Locale.ROOT -> context.getString(R.string.various_languages)
+	language == "zgh" && script == "Latn" -> context.getString(R.string.language_tamazight_latn)
+	language == "zgh" && script == "Tfng" -> context.getString(R.string.language_tamazight_tfng)
 	else -> getDisplayLanguage(this).toTitleCase(this)
 }
 

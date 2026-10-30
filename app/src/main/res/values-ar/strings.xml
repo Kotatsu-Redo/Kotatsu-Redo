@@ -373,6 +373,8 @@
     <string name="remove_completed">تمت الإزالة</string>
     <string name="enable_logging_summary">سجل بعض الأفعال لغايات التصحيح. لا تقم بتشغيله إذا لم تكن متأكدًا مما تفعله</string>
     <string name="language">اللغة</string>
+    <string name="language_tamazight_latn">الأمازيغية (الحرف اللاتيني)</string>
+    <string name="language_tamazight_tfng">الأمازيغية (تيفيناغ)</string>
     <string name="show_suspicious_content">إظهار المحتوى مشكوك فيه</string>
     <string name="color_theme">مخطط الألوان</string>
     <string name="show_in_grid_view">العرض في الشبكة</string>

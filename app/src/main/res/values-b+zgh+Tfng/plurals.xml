@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tamazight (Standard Moroccan) in Tifinagh. Generated from values-b+zgh+Latn by tools/transliterate_tifinagh.py; edit the Latin file instead. -->
+<resources>
+	<plurals name="search_results_count">
+		<item quantity="one">%1$d ⴰⴳⵎⵓⴷ</item>
+		<item quantity="other">%1$d ⵉⴳⵎⵓⴷⵏ</item>
+	</plurals>
+	<plurals name="items">
+		<item quantity="one">%1$d ⴰⴼⵔⴷⴷⵉⵙ</item>
+		<item quantity="other">%1$d ⵉⴼⵔⴷⴷⵉⵙⵏ</item>
+	</plurals>
+	<plurals name="new_chapters">
+		<item quantity="one">%1$d ⵉⵅⴼ ⴰⵎⴰⵢⵏⵓ</item>
+		<item quantity="other">%1$d ⵉⵅⴼⴰⵡⵏ ⵉⵎⴰⵢⵏⵓⵜⵏ</item>
+	</plurals>
+	<plurals name="chapters">
+		<item quantity="one">%1$d ⵉⵅⴼ</item>
+		<item quantity="other">%1$d ⵉⵅⴼⴰⵡⵏ</item>
+	</plurals>
+	<plurals name="pages">
+		<item quantity="one">%1$d ⵜⴰⵙⵏⴰ</item>
+		<item quantity="other">%1$d ⵜⵉⵙⵏⵉⵡⵉⵏ</item>
+	</plurals>
+	<plurals name="minutes_ago">
+		<item quantity="one">%1$d ⵜⵓⵙⴷⵉⴷⵜ ⵉ ⵉⵣⵔⵉⵏ</item>
+		<item quantity="other">%1$d ⵜⵓⵙⴷⵉⴷⵉⵏ ⵉ ⵉⵣⵔⵉⵏ</item>
+	</plurals>
+	<plurals name="hours_ago">
+		<item quantity="one">%1$d ⵜⴰⵙⵔⴰⴳⵜ ⵉ ⵉⵣⵔⵉⵏ</item>
+		<item quantity="other">%1$d ⵜⵉⵙⵔⴰⴳⵉⵏ ⵉ ⵉⵣⵔⵉⵏ</item>
+	</plurals>
+	<plurals name="days_ago">
+		<item quantity="one">%1$d ⴰⵙⵙ ⵉ ⵉⵣⵔⵉⵏ</item>
+		<item quantity="other">%1$d ⵡⵓⵙⵙⴰⵏ ⵉ ⵉⵣⵔⵉⵏ</item>
+	</plurals>
+	<plurals name="months_ago">
+		<item quantity="one">%1$d ⴰⵢⵢⵓⵔ ⵉ ⵉⵣⵔⵉⵏ</item>
+		<item quantity="other">%1$d ⵡⴰⵢⵢⵓⵔⵏ ⵉ ⵉⵣⵔⵉⵏ</item>
+	</plurals>
+	<plurals name="hours">
+		<item quantity="one">%1$d ⵜⴰⵙⵔⴰⴳⵜ</item>
+		<item quantity="other">%1$d ⵜⵉⵙⵔⴰⴳⵉⵏ</item>
+	</plurals>
+	<plurals name="minutes">
+		<item quantity="one">%1$d ⵜⵓⵙⴷⵉⴷⵜ</item>
+		<item quantity="other">%1$d ⵜⵓⵙⴷⵉⴷⵉⵏ</item>
+	</plurals>
+	<plurals name="sources_count">
+		<item quantity="one">%1$d ⵓⵖⴱⴰⵍⵓ</item>
+		<item quantity="other">%1$d ⵉⵖⴱⵓⵍⴰ</item>
+	</plurals>
+	<plurals name="community_rating_count">
+		<item quantity="one">%d ⴰⵣⴰⵍ</item>
+		<item quantity="other">%d ⵉⵣⴰⵍⵏ</item>
+	</plurals>
+	<plurals name="community_comments_count">
+		<item quantity="one">%d ⴰⵡⵏⵏⵉⵜ</item>
+		<item quantity="other">%d ⵉⵡⵏⵏⵉⵜⵏ</item>
+	</plurals>
+	<plurals name="community_comment_rate_limited_in">
+		<item quantity="one">ⵜⵙⵙⴰⵡⴹⴹ ⴰⵏⵛⵜ ⵉ ⵢⵣⵎⵔ ⴰⵎⵉⴹⴰⵏ ⴰⵎⴰⵢⵏⵓ ⵉ ⵜⵓⵔⴰ. ⴰⵔⵎ ⴷⴼⴼⵉⵔ ⴰⵏⵛⵜ ⵏ ⴷⴷⵇⵉⵇⴰ.</item>
+		<item quantity="other">ⵜⵙⵙⴰⵡⴹⴹ ⴰⵏⵛⵜ ⵉ ⵢⵣⵎⵔ ⴰⵎⵉⴹⴰⵏ ⴰⵎⴰⵢⵏⵓ ⵉ ⵜⵓⵔⴰ. ⴰⵔⵎ ⴷⴼⴼⵉⵔ %1$d ⵏ ⵜⵙⴷⵉⴷⵉⵏ.</item>
+	</plurals>
+	<plurals name="community_replies_count">
+		<item quantity="one">%d ⵜⵉⵔⵡⵉⵏⵜ ⵜⴰⵎⴰⵢⵏⵓⵜ</item>
+		<item quantity="other">%d ⵜⵉⵔⵡⵉⵢⵉⵏ ⵜⵉⵎⴰⵢⵏⵓⵜⵉⵏ</item>
+	</plurals>
+</resources>

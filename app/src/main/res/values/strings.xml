@@ -373,6 +373,8 @@
     <string name="prefetch_content">Content preloading</string>
     <string name="mark_as_current">Mark as current</string>
     <string name="language">Language</string>
+    <string name="language_tamazight_latn">Tamazight (Latin)</string>
+    <string name="language_tamazight_tfng">Tamazight (Tifinagh)</string>
     <string name="share_logs">Share logs</string>
     <string name="enable_logging">Enable logging</string>
     <string name="enable_logging_summary">Record some actions for debug purposes. Don\'t turn it on if you\'re not sure what you\'re doing</string>

@@ -48,6 +48,8 @@
 	<locale android:name="tr" />
 	<locale android:name="uk" />
 	<locale android:name="vi" />
+	<locale android:name="zgh-Latn" />
+	<locale android:name="zgh-Tfng" />
 	<locale android:name="zh-CN" />
 	<locale android:name="zh-TW" />
 </locale-config>

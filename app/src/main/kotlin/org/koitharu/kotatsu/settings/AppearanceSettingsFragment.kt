@@ -1,11 +1,9 @@
 package org.koitharu.kotatsu.settings
 
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.ListPreference
@@ -37,6 +35,7 @@ import org.koitharu.kotatsu.settings.utils.ActivityListPreference
 import org.koitharu.kotatsu.settings.utils.MultiSummaryProvider
 import org.koitharu.kotatsu.settings.utils.PercentSummaryProvider
 import org.koitharu.kotatsu.settings.utils.SliderPreference
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -63,15 +62,9 @@ class AppearanceSettingsFragment :
         }
         findPreference<ActivityListPreference>(AppSettings.KEY_APP_LOCALE)?.run {
             initLocalePicker(this)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                activityIntent = Intent(
-                    Settings.ACTION_APP_LOCALE_SETTINGS,
-                    Uri.fromParts("package", context.packageName, null),
-                )
-            }
             summaryProvider = Preference.SummaryProvider<ActivityListPreference> {
                 val locale = AppCompatDelegate.getApplicationLocales().get(0)
-                locale?.getDisplayName(locale)?.toTitleCase(locale) ?: getString(R.string.follow_system)
+                locale?.getPickerName(context) ?: getString(R.string.follow_system)
             }
             setDefaultValueCompat("")
         }
@@ -155,6 +148,12 @@ class AppearanceSettingsFragment :
         }
     }
 
+    private fun Locale.getPickerName(context: Context): String = when {
+        language == "zgh" && script == "Latn" -> context.getString(R.string.language_tamazight_latn)
+        language == "zgh" && script == "Tfng" -> context.getString(R.string.language_tamazight_tfng)
+        else -> getDisplayName(this)
+    }.toTitleCase(this)
+
     private fun initLocalePicker(preference: ListPreference) {
         val locales = preference.context.getLocalesConfig()
             .toList()
@@ -164,7 +163,7 @@ class AppearanceSettingsFragment :
                 getString(R.string.follow_system)
             } else {
                 val lc = locales[i - 1]
-                lc.getDisplayName(lc).toTitleCase(lc)
+                lc.getPickerName(preference.context)
             }
         }
         preference.entryValues = Array(locales.size + 1) { i ->
