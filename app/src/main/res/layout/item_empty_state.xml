@@ -5,6 +5,7 @@
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:animateLayoutChanges="true"
 	android:gravity="center"
 	android:orientation="vertical"
 	android:paddingHorizontal="32dp"
@@ -16,7 +17,7 @@
 		android:layout_height="192dp"
 		android:contentDescription="@null"
 		android:scaleType="fitCenter"
-		app:crossfadeEnabled="false"
+		app:crossfadeEnabled="true"
 		tools:src="@drawable/ic_empty_favourites" />
 
 	<TextView

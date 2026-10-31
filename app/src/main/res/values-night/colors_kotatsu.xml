@@ -32,4 +32,5 @@
 	<color name="kotatsu_inverseOnSurface">#1A1B1F</color>
 	<color name="kotatsu_background">#1A1B1F</color>
 	<color name="kotatsu_outline">#8E9099</color>
+	<color name="kotatsu_outlineVariant">#44474E</color>
 </resources>

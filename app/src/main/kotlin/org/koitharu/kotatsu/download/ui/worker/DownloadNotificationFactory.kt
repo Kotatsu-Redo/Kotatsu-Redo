@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.util.LruCache
 import android.text.format.DateUtils
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -52,7 +53,7 @@ class DownloadNotificationFactory @AssistedInject constructor(
 	@Assisted val isSilent: Boolean,
 ) {
 
-	private val covers = HashMap<Manga, Drawable>() // TODO cache
+	private val covers = LruCache<Manga, Drawable>(4)
 	private val builder = NotificationCompat.Builder(context, if (isSilent) CHANNEL_ID_SILENT else CHANNEL_ID_DEFAULT)
 	private val mutex = Mutex()
 

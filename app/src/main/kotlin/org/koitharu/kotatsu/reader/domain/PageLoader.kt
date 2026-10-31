@@ -110,7 +110,7 @@ class PageLoader @Inject constructor(
 	private var repository: MangaRepository? = null
 	private val prefetchQueue = LinkedList<MangaPage>()
 	private val counter = AtomicInteger(0)
-	private var prefetchQueueLimit = PREFETCH_LIMIT_DEFAULT // TODO adaptive
+	private var prefetchQueueLimit = computePrefetchLimit()
 	private val edgeDetector = EdgeDetector(context)
 
 	fun isPrefetchApplicable(): Boolean {
@@ -361,6 +361,24 @@ class PageLoader @Inject constructor(
 
 	private fun isLowRam(): Boolean {
 		return context.ramAvailable <= FileSize.MEGABYTES.convert(PREFETCH_MIN_RAM_MB, FileSize.BYTES)
+	}
+
+	/**
+	 * Picks a prefetch queue limit that scales with available RAM so low-memory devices
+	 * do not queue more pages than they can hold without evicting already-loaded ones.
+	 *
+	 * Thresholds (available RAM at the moment PageLoader is created):
+	 *  < 256 MB  → 2 pages  (tight – avoid OOM)
+	 *  < 512 MB  → 4 pages  (moderate)
+	 *  ≥ 512 MB  → 6 pages  (default – comfortable headroom)
+	 */
+	private fun computePrefetchLimit(): Int {
+		val availableMb = FileSize.BYTES.convert(context.ramAvailable, FileSize.MEGABYTES)
+		return when {
+			availableMb < 256 -> 2
+			availableMb < 512 -> 4
+			else -> PREFETCH_LIMIT_DEFAULT
+		}
 	}
 
 	private fun MangaSource.isOniSaga(): Boolean = name == "ONISAGA" || name.startsWith("ONISAGA_")

@@ -56,7 +56,7 @@ class ProxyProvider @Inject constructor(
 		val isProxyEnabled = isProxyEnabled()
 		if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
 			if (isProxyEnabled) {
-				throw IllegalArgumentException("Proxy for WebView is not supported") // TODO localize
+				throw ProxyConfigException()
 			}
 		} else {
 			val controller = ProxyController.getInstance()

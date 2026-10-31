@@ -11,6 +11,11 @@
 		<item name="android:colorBackground">@color/background_amoled</item>
 		<item name="android:windowBackground">@color/background_amoled</item>
 		<item name="colorBackgroundFloating">@color/background_amoled</item>
+		<!-- Extend AMOLED black to all surface container levels so dialogs,
+		     bottom sheets, and cards also use the true-black background. -->
+		<item name="colorSurfaceContainer">@color/surface_amoled</item>
+		<item name="colorSurfaceContainerHigh">@color/surface_amoled</item>
+		<item name="colorSurfaceContainerHighest">@color/surface_amoled</item>
 	</style>
 
 	<!-- Monet theme only support S+ -->

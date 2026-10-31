@@ -153,7 +153,10 @@ abstract class BasePageHolder<B : ViewBinding>(
 	}
 
 	override fun onTrimMemory(level: Int) {
-		// TODO
+		if (level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+			ssiv.recycle()
+			animatedView?.disposeImage()
+		}
 	}
 
 	override fun onConfigurationChanged(newConfig: Configuration) = Unit

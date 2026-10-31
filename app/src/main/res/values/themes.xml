@@ -37,7 +37,7 @@
 		<item name="colorOnError">@color/onError</item>
 		<item name="colorOnErrorContainer">@color/onErrorContainer</item>
 		<item name="colorOutline">@color/kotatsu_outline</item>
-		<item name="colorOutlineVariant">@color/kotatsu_outline</item>
+		<item name="colorOutlineVariant">@color/kotatsu_outlineVariant</item>
 
 		<!-- Drawables (icons) -->
 		<item name="actionModeCloseDrawable">@drawable/abc_ic_clear_material</item>

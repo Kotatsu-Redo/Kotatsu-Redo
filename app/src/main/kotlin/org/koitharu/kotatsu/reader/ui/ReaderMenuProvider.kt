@@ -17,8 +17,9 @@ class ReaderMenuProvider(
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
 		return when (menuItem.itemId) {
 			R.id.action_info -> {
-				// TODO
-				true
+				// action_info is currently hidden (android:visible="false" in opt_reader.xml)
+				// and has no implementation yet — return false to let the system handle it.
+				false
 			}
 
 			else -> false
