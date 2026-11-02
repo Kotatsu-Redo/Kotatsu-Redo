@@ -1,6 +1,7 @@
 package org.koitharu.kotatsu.suggestions.ui
 
 import android.Manifest
+import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -48,7 +49,6 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.CloudFlareException
 import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler
 import org.koitharu.kotatsu.core.model.MangaHistory
-import org.koitharu.kotatsu.core.model.distinctById
 import org.koitharu.kotatsu.core.model.getLocale
 import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.nav.AppRouter
@@ -67,6 +67,9 @@ import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.sanitize
 import org.koitharu.kotatsu.core.util.ext.toBitmapOrNull
 import org.koitharu.kotatsu.core.util.ext.trySetForeground
+import org.koitharu.kotatsu.discover.domain.DiscoverRanking
+import org.koitharu.kotatsu.discover.domain.ReaderProfiles
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.favourites.domain.FavouritesRepository
 import org.koitharu.kotatsu.history.data.HistoryRepository
@@ -81,6 +84,7 @@ import org.koitharu.kotatsu.parsers.util.sizeOrZero
 import org.koitharu.kotatsu.settings.work.PeriodicWorkScheduler
 import org.koitharu.kotatsu.suggestions.domain.CommunitySuggestionsSource
 import org.koitharu.kotatsu.suggestions.domain.MangaSuggestion
+import org.koitharu.kotatsu.suggestions.domain.SeedCandidate
 import org.koitharu.kotatsu.suggestions.domain.SuggestionRanking
 import org.koitharu.kotatsu.suggestions.domain.SuggestionRepository
 import org.koitharu.kotatsu.suggestions.domain.TagStatistics
@@ -107,11 +111,18 @@ class SuggestionsWorker @AssistedInject constructor(
 	private val sourcesRepository: MangaSourcesRepository,
 	private val communitySuggestions: CommunitySuggestionsSource,
 	private val tagStatistics: TagStatistics,
+	private val readerProfiles: ReaderProfiles,
+	private val dismissals: DiscoverDismissals,
 ) : CoroutineWorker(appContext, params) {
 
 	private val notificationManager by lazy { NotificationManagerCompat.from(appContext) }
 
 	override suspend fun doWork(): Result {
+		// This is up to dozens of requests, and parsing them, on the sites and the processor the reader is
+		// waiting on. Nothing about it is urgent unless they asked for it, so it waits until they are done.
+		if (TAG_ONESHOT !in tags && isAppOnScreen()) {
+			return Result.retry()
+		}
 		trySetForeground()
 		if (!appSettings.isSuggestionsEnabled) {
 			suggestionRepository.clear()
@@ -120,6 +131,12 @@ class SuggestionsWorker @AssistedInject constructor(
 		val count = doWorkImpl()
 		val outputData = workDataOf(DATA_COUNT to count)
 		return Result.success(outputData)
+	}
+
+	private fun isAppOnScreen(): Boolean {
+		val state = ActivityManager.RunningAppProcessInfo()
+		ActivityManager.getMyMemoryState(state)
+		return state.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
 	}
 
 	override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -184,16 +201,30 @@ class SuggestionsWorker @AssistedInject constructor(
 	}
 
 	private suspend fun doWorkImpl(): Int {
-		val history = historyRepository.getList(0, 20)
+		val profile = runCatchingCancellable { readerProfiles.get() }.onFailure { it.printStackTraceDebug() }.getOrNull()
+		// "Not interested" said on the Explore screen goes for this list too
+		val dismissed = runCatchingCancellable { dismissals.get() }.onFailure { it.printStackTraceDebug() }.getOrDefault(emptyMap())
+		val taste = DiscoverRanking.applyDismissals(profile?.taste.orEmpty(), dismissed.values)
+		fun isDismissed(title: String) = DiscoverRanking.titleKey(title) in dismissed
+		val history = historyRepository.getListWithProgress(0, MAX_SEED_POOL)
 		val favourites = favouritesRepository.getLastManga(20)
 		val favouriteIds = favourites.mapTo(HashSet()) { it.id }
 		// Opened, barely read and left for weeks: what the reader turned away from, not a taste to
 		// echo. A favourite is never that, however little of it has been read.
-		val dropped = history.filter { manga ->
-			manga.id !in favouriteIds && historyRepository.getOne(manga)?.isDropped() == true
-		}
+		val dropped = history.filter { (manga, progress) ->
+			manga.id !in favouriteIds && progress.isDropped()
+		}.map { it.manga }
 		val droppedIds = dropped.mapTo(HashSet()) { it.id }
-		val seed = (history + favourites).distinctById().filterNot { it.id in droppedIds }
+		// What they have been enjoying and not all alike, since only so many can be asked about
+		val candidates = history.mapIndexed { index, (manga, progress) ->
+			SeedCandidate(manga, DiscoverRanking.tagsOf(manga), SuggestionRanking.seedWeight(index, progress.percent, manga.id in favouriteIds, pagesRead = profile?.pagesRead?.get(manga.id) ?: 0))
+		} + favourites.mapIndexed { index, manga ->
+			SeedCandidate(manga, DiscoverRanking.tagsOf(manga), SuggestionRanking.seedWeight(index, -1f, isFavourite = true))
+		}
+		val seed = SuggestionRanking.pickSeeds(
+			candidates.distinctBy { it.item.id }.filterNot { it.item.id in droppedIds },
+			MAX_SEED_CANDIDATES,
+		)
 		val sources = getSources()
 		if (seed.isEmpty() || sources.isEmpty()) {
 			return 0
@@ -206,13 +237,20 @@ class SuggestionsWorker @AssistedInject constructor(
 		// It is asked first, and everything below remains exactly as it was for when it cannot
 		// answer: community features off, no network, a library nobody else has opened.
 		val remote = runCatchingCancellable {
-			communitySuggestions.getSuggestions(seed, dropped, MAX_RESULTS, tagsBlacklist, excludeNsfw)
+			communitySuggestions.getSuggestions(seed, dropped, MAX_RESULTS, tagsBlacklist, excludeNsfw, taste) { work ->
+				isDismissed(work.title) || profile?.knows(work.title, work.sources.map { it.source to it.key }) == true
+			}
 		}.onFailure { it.printStackTraceDebug() }.getOrDefault(emptyList())
+			// The server only knows its own name for a work and the addresses it has seen
+			.filterNot { profile?.knows(it.manga) == true || isDismissed(it.manga.title) }
 
 		val suggestions = if (remote.size >= MIN_REMOTE_RESULTS) {
 			remote
 		} else {
 			localSuggestions(seed, sources, tagsBlacklist)
+				.filterNot { profile?.knows(it.manga) == true || isDismissed(it.manga.title) }
+				.map { it.copy(relevance = DiscoverRanking.personalize(it.relevance.toDouble(), it.manga.tags.map { tag -> tag.title }, taste).toFloat().coerceIn(0f, 1f)) }
+				.sortedByDescending { it.relevance }
 		}
 		return publish(suggestions, tagsBlacklist)
 	}
@@ -232,7 +270,8 @@ class SuggestionsWorker @AssistedInject constructor(
 			.onFailure { it.printStackTraceDebug() }
 			.getOrNull()
 		val tags = SuggestionRanking.distinctiveTags(
-			seedTags = seed.flatMap { it.tags.map { x -> x.title } },
+			// "Adaptation" is rare and tells nothing, which is just what would put it first
+			seedTags = seed.flatMap { it.tags.map { x -> x.title } }.filterNot(DiscoverRanking::isNoiseTag),
 			rarity = { title -> statistics?.rarity(title) ?: 1.0 },
 			limit = 10,
 		)
@@ -323,10 +362,8 @@ class SuggestionsWorker @AssistedInject constructor(
 		val repository = mangaRepositoryFactory.create(source)
 		val availableOrders = repository.sortOrders
 		val order = preferredSortOrders.first { it in availableOrders }
-		val availableTags = repository.getFilterOptions().availableTags
-		val matched = tags.mapNotNull { title ->
-			availableTags.find { x -> x !in blacklist && x.title.almostEquals(title, TAG_EQ_THRESHOLD) }
-		}.distinct()
+		val availableTags = repository.getFilterOptions().availableTags.filterNot { it in blacklist }
+		val matched = tags.mapNotNull { title -> DiscoverRanking.findTag(availableTags, title, TAG_EQ_THRESHOLD) }.distinct()
 		// A source carrying none of the reader's tags used to be searched with no tag at all, which
 		// is its whole catalogue, newest or most popular first - nothing to do with the reader.
 		val first = matched.firstOrNull() ?: return@runCatchingCancellable emptyList()
@@ -536,6 +573,12 @@ class SuggestionsWorker @AssistedInject constructor(
 		const val GROUP_SUGGESTION = "org.koitharu.kotatsu.SUGGESTIONS"
 		const val WORKER_NOTIFICATION_ID = 36
 		const val MAX_RESULTS = 160
+
+		/** More than can be asked about, so a local file or an adult title among them does not leave fewer. */
+		const val MAX_SEED_CANDIDATES = 16
+
+		/** Deep enough that a long series they went back to matters, without reading the whole history. */
+		const val MAX_SEED_POOL = 40
 
 		/**
 		 * Below this the server has told us too little to be worth showing on its own - a library of

@@ -3,7 +3,6 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:title="@string/suggestions">
-
 	<SwitchPreferenceCompat
 		android:defaultValue="true"
 		android:icon="@drawable/ic_suggestion"
@@ -14,42 +13,17 @@
 	<SwitchPreferenceCompat
 		android:defaultValue="false"
 		android:dependency="suggestions"
-		android:icon="@drawable/ic_wifi"
-		android:key="suggestions_wifi"
-		android:summary="@string/suggestions_wifi_only_summary"
-		android:title="@string/only_using_wifi" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:dependency="suggestions"
 		android:icon="@drawable/ic_manga_source"
 		android:key="suggestions_disabled_sources"
 		android:summary="@string/suggestions_disabled_sources_summary"
 		android:title="@string/include_disabled_sources" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:dependency="suggestions"
-		android:icon="@drawable/ic_notification"
-		android:key="suggestions_notifications"
-		android:summary="@string/suggestions_notifications_summary"
-		android:title="@string/notifications_enable" />
 
 	<org.koitharu.kotatsu.settings.utils.MultiAutoCompleteTextViewPreference
 		android:dependency="suggestions"
 		android:icon="@drawable/ic_tag"
 		android:key="suggestions_exclude_tags"
 		android:summary="@string/suggestions_excluded_genres_summary"
-		android:title="@string/suggestions_excluded_genres"
-		app:allowDividerAbove="true" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:dependency="suggestions"
-		android:icon="@drawable/ic_sfw"
-		android:key="suggestions_exclude_nsfw"
-		android:summary="@string/exclude_nsfw_from_suggestions_summary"
-		android:title="@string/exclude_nsfw_from_suggestions" />
+		android:title="@string/suggestions_excluded_genres" />
 
 	<Preference
 		android:icon="@drawable/ic_info_outline"

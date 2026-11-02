@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<item
+		android:id="@+id/action_by_source"
+		android:icon="@drawable/ic_manga_source"
+		android:title="@string/by_source"
+		app:showAsAction="ifRoom" />
+
+	<item
+		android:id="@+id/action_refresh"
+		android:title="@string/update"
+		app:showAsAction="never" />
+
+	<item
+		android:id="@+id/action_show_dismissed"
+		android:title="@string/show_dismissed"
+		app:showAsAction="never" />
+
+</menu>

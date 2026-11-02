@@ -3,11 +3,14 @@ package org.koitharu.kotatsu.reader.ui.pager
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.children
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import org.koitharu.kotatsu.core.prefs.ReaderAnimation
 import org.koitharu.kotatsu.core.ui.BaseFragment
 import org.koitharu.kotatsu.core.ui.widgets.ZoomControl
+import org.koitharu.kotatsu.core.util.ext.hasGlobalPoint
 import org.koitharu.kotatsu.core.util.ext.isAnimationsEnabled
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.reader.ui.ReaderState
@@ -76,6 +79,18 @@ abstract class BaseReaderFragment<B : ViewBinding> : BaseFragment<B>(), ZoomCont
 	open fun scrollBy(delta: Int, smooth: Boolean): Boolean = false
 
 	abstract fun getCurrentState(): ReaderState?
+
+	/** The page under a point on screen. */
+	abstract fun findPageHolderAt(rawX: Int, rawY: Int): BasePageHolder<*>?
+
+	protected fun RecyclerView.findPageHolderAt(rawX: Int, rawY: Int): BasePageHolder<*>? {
+		for (child in children) {
+			if (child.hasGlobalPoint(rawX, rawY)) {
+				return getChildViewHolder(child) as? BasePageHolder<*>
+			}
+		}
+		return null
+	}
 
 	protected abstract fun onCreateAdapter(): BaseReaderAdapter<*>
 

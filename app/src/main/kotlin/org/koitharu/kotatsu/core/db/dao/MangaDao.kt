@@ -55,6 +55,15 @@ abstract class MangaDao {
 	@Update(onConflict = OnConflictStrategy.IGNORE)
 	abstract suspend fun update(manga: MangaEntity): Int
 
+	/** Touches nothing if they are the same already, so that nothing watching the table goes and reloads for no reason. */
+	@Query(
+		"""
+		UPDATE manga SET cover_url = :coverUrl, large_cover_url = :largeCoverUrl
+		WHERE manga_id = :id AND (cover_url != :coverUrl OR large_cover_url IS NOT :largeCoverUrl)
+		""",
+	)
+	abstract suspend fun updateCover(id: Long, coverUrl: String, largeCoverUrl: String?)
+
 	@Insert(onConflict = OnConflictStrategy.IGNORE)
 	abstract suspend fun insertTagRelation(tag: MangaTagsEntity): Long
 

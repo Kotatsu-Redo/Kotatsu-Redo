@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:background="@drawable/list_selector"
+	android:orientation="vertical"
+	android:padding="3dp">
+
+	<FrameLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<org.koitharu.kotatsu.image.ui.CoverImageView
+			android:id="@+id/imageView_cover"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:background="?colorSurfaceContainer"
+			android:scaleType="centerCrop"
+			app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Cover.Medium"
+			tools:src="@tools:sample/backgrounds/scenic" />
+
+		<TextView
+			android:id="@+id/textView_rank"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="bottom|start"
+			android:layout_marginStart="6dp"
+			android:layout_marginBottom="4dp"
+			android:includeFontPadding="false"
+			android:shadowColor="#CC000000"
+			android:shadowDx="0"
+			android:shadowDy="1"
+			android:shadowRadius="6"
+			android:textAppearance="?attr/textAppearanceBodyMedium"
+			android:textColor="@android:color/white"
+			android:textStyle="bold"
+			tools:text="1" />
+
+	</FrameLayout>
+
+	<TextView
+		android:id="@+id/textView_title"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="3dp"
+		android:ellipsize="end"
+		android:maxLines="2"
+		android:textAppearance="?attr/textAppearanceBodySmall"
+		tools:text="@tools:sample/lorem[4]" />
+
+</LinearLayout>

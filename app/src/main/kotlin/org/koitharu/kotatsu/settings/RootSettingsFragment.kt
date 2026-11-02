@@ -31,13 +31,15 @@ class RootSettingsFragment : BasePreferenceFragment(0) {
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		addPreferencesFromResource(R.xml.pref_root)
 		addPreferencesFromResource(R.xml.pref_root_debug)
-		bindPreferenceSummary("appearance", R.string.theme, R.string.list_mode, R.string.language)
 		bindPreferenceSummary("reader", R.string.read_mode, R.string.scale_mode, R.string.switch_pages)
-		bindPreferenceSummary("network", R.string.storage_usage, R.string.proxy, R.string.prefetch_content)
+		bindPreferenceSummary("appearance", R.string.theme, R.string.list_mode, R.string.language)
+		bindPreferenceSummary("tracker", R.string.frequency_of_check, R.string.track_sources)
+		bindPreferenceSummary("downloads", R.string.manga_save_location, R.string.storage_usage, R.string.data_removal)
 		bindPreferenceSummary("userdata", R.string.create_or_restore_backup, R.string.periodic_backups)
-		bindPreferenceSummary("downloads", R.string.manga_save_location, R.string.downloads_wifi_only)
-		bindPreferenceSummary("tracker", R.string.track_sources, R.string.notifications_settings)
-		bindPreferenceSummary("services", R.string.suggestions, R.string.sync, R.string.tracking)
+		bindPreferenceSummary("accounts", R.string.sync, R.string.tracking, R.string.community)
+		bindPreferenceSummary("notifications", R.string.new_chapters, R.string.suggestions)
+		bindPreferenceSummary("privacy", R.string.adult_content, R.string.app_security, R.string.your_activity)
+		bindPreferenceSummary("network", R.string.mobile_data, R.string.proxy, R.string.dns_over_https)
 		findPreference<Preference>("about")?.summary = getString(R.string.app_version, BuildConfig.VERSION_NAME)
 		applyExpressiveIconBackgrounds()
 	}
@@ -57,6 +59,13 @@ class RootSettingsFragment : BasePreferenceFragment(0) {
 		addMenuProvider(SettingsSearchMenuProvider(activityViewModel))
 	}
 
+	override fun onResume() {
+		super.onResume()
+		findPreference<Preference>(AppSettings.KEY_SUGGESTIONS)?.setSummary(
+			if (settings.isSuggestionsEnabled) R.string.enabled else R.string.disabled,
+		)
+	}
+
 	override fun setTitle(title: CharSequence?) {
 		if (!resources.getBoolean(R.bool.is_tablet)) {
 			super.setTitle(title)
@@ -73,14 +82,17 @@ class RootSettingsFragment : BasePreferenceFragment(0) {
 		}
 		val context = requireContext()
 		val iconColors = arrayOf(
+			"reader" to R.color.settings_icon_reader,
 			"appearance" to R.color.settings_icon_appearance,
 			AppSettings.KEY_REMOTE_SOURCES to R.color.settings_icon_sources,
-			"reader" to R.color.settings_icon_reader,
-			"network" to R.color.settings_icon_network,
-			"downloads" to R.color.settings_icon_downloads,
+			AppSettings.KEY_SUGGESTIONS to R.color.settings_icon_suggestions,
 			"tracker" to R.color.settings_icon_tracker,
-			"services" to R.color.settings_icon_services,
+			"downloads" to R.color.settings_icon_downloads,
 			"userdata" to R.color.settings_icon_backup,
+			"accounts" to R.color.settings_icon_services,
+			"notifications" to R.color.settings_icon_notifications,
+			"privacy" to R.color.settings_icon_privacy,
+			"network" to R.color.settings_icon_network,
 			"about" to R.color.settings_icon_about,
 		)
 		val density = resources.displayMetrics.density

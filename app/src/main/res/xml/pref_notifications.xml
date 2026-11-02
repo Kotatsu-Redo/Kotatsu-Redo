@@ -3,33 +3,49 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:title="@string/notifications">
+	<!-- Android 8 and later keep sound, vibration and light per channel in their own settings, so there these
+	     rows would change nothing. NotificationsSettingsFragment only shows them on older versions. -->
+	<Preference
+		android:icon="@drawable/ic_notification"
+		android:key="notifications_settings"
+		android:title="@string/notifications_settings" />
 
 	<SwitchPreferenceCompat
 		android:defaultValue="true"
 		android:icon="@drawable/ic_notification"
 		android:key="tracker_notifications"
-		android:layout="@layout/preference_toggle_header"
-		android:title="@string/notifications_enable" />
+		android:title="@string/new_chapters"
+		app:isPreferenceVisible="false" />
 
 	<Preference
 		android:dependency="tracker_notifications"
 		android:icon="@drawable/ic_voice_input"
 		android:key="notifications_sound"
-		android:title="@string/notification_sound" />
+		android:title="@string/notification_sound"
+		app:isPreferenceVisible="false" />
 
 	<CheckBoxPreference
 		android:defaultValue="false"
 		android:dependency="tracker_notifications"
 		android:icon="@drawable/ic_move_horizontal"
 		android:key="notifications_vibrate"
-		android:title="@string/vibration" />
+		android:title="@string/vibration"
+		app:isPreferenceVisible="false" />
 
 	<CheckBoxPreference
 		android:defaultValue="true"
 		android:dependency="tracker_notifications"
 		android:icon="@drawable/ic_flash"
 		android:key="notifications_light"
-		android:title="@string/light_indicator" />
+		android:title="@string/light_indicator"
+		app:isPreferenceVisible="false" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
+		android:icon="@drawable/ic_suggestion"
+		android:key="suggestions_notifications"
+		android:summary="@string/suggestions_notifications_summary"
+		android:title="@string/suggestions" />
 
 	<org.koitharu.kotatsu.settings.utils.LinksPreference
 		android:icon="@drawable/ic_info_outline"

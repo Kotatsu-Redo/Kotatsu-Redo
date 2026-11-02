@@ -24,6 +24,7 @@ import org.koitharu.kotatsu.backups.data.model.BackupIndex
 import org.koitharu.kotatsu.backups.data.model.BookmarkBackup
 import org.koitharu.kotatsu.backups.data.model.CategoryBackup
 import org.koitharu.kotatsu.backups.data.model.FavouriteBackup
+import org.koitharu.kotatsu.backups.data.model.HiddenImageBackup
 import org.koitharu.kotatsu.backups.data.model.HistoryBackup
 import org.koitharu.kotatsu.backups.data.model.MangaBackup
 import org.koitharu.kotatsu.backups.data.model.ScrobblingBackup
@@ -39,6 +40,7 @@ import org.koitharu.kotatsu.filter.data.PersistableFilter
 import org.koitharu.kotatsu.filter.data.SavedFiltersRepository
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.reader.data.TapGridSettings
+import org.koitharu.kotatsu.reader.data.erase.HiddenImagesRepository
 import org.koitharu.kotatsu.sourcescore.data.CommunitySettings
 import java.io.InputStream
 import java.io.OutputStream
@@ -60,6 +62,8 @@ class BackupRepository @Inject constructor(
      * injects the real instance; the agent simply omits the identity section.
      */
     private val communitySettings: CommunitySettings? = null,
+    /** Nullable for the same reason: a backup agent's has no Hilt graph, and writes an empty section. */
+    private val hiddenImages: HiddenImagesRepository? = null,
 ) {
 
     private companion object {
@@ -146,6 +150,12 @@ class BackupRepository @Inject constructor(
                     serializer = serializer(),
                 )
 
+                BackupSection.HIDDEN_IMAGES -> output.writeJsonArray(
+                    section = BackupSection.HIDDEN_IMAGES,
+                    data = hiddenImages?.dump().orEmpty().asFlow().map { HiddenImageBackup(it) },
+                    serializer = serializer(),
+                )
+
                 BackupSection.SAVED_FILTERS -> {
                     val sources = mangaSourcesRepository.getEnabledSources()
                     val filters = sources.flatMap { source ->
@@ -227,6 +237,11 @@ class BackupRepository @Inject constructor(
                     BackupSection.SAVED_FILTERS -> input.readJsonArray<PersistableFilter>(serializer())
                         .restoreWithoutTransaction {
                             savedFiltersRepository.save(it)
+                        }
+
+                    BackupSection.HIDDEN_IMAGES -> input.readJsonArray<HiddenImageBackup>(serializer())
+                        .restoreWithoutTransaction {
+                            hiddenImages?.restore(it.toEntity())
                         }
 
                     null -> CompositeResult.EMPTY // skip unknown entries

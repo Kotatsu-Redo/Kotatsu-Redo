@@ -13,6 +13,8 @@ import org.koitharu.kotatsu.core.util.ext.bookmarkKey
 import org.koitharu.kotatsu.core.util.ext.mangaKey
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.parsers.model.Manga
+import org.koitharu.kotatsu.parsers.model.MangaListFilter
+import org.koitharu.kotatsu.parsers.model.SortOrder
 import org.koitharu.kotatsu.parsers.util.findById
 import org.koitharu.kotatsu.parsers.util.ifNullOrEmpty
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -70,7 +72,17 @@ class CoverRestoreInterceptor @Inject constructor(
 			return false
 		}
 		val repo = repositoryFactory.create(manga.source)
-		val fixed = repo.find(manga) ?: return false
+		val list = repo.getList(0, SortOrder.RELEVANCE, MangaListFilter(query = manga.title))
+		val fixed = list.find { it.id == manga.id }
+		if (fixed == null) {
+			// Ids come from urls, so a site that moved lists the same manga under another id. Stored is the one to keep.
+			val moved = list.singleOrNull { it.title == manga.title } ?: return false
+			if (moved.coverUrl.isNullOrEmpty() || moved.coverUrl == manga.coverUrl) {
+				return false
+			}
+			dataRepository.updateCover(manga.copy(coverUrl = moved.coverUrl, largeCoverUrl = moved.largeCoverUrl))
+			return true
+		}
 		return if (fixed != manga) {
 			dataRepository.storeManga(fixed, replaceExisting = true)
 			fixed.coverUrl != manga.coverUrl

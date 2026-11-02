@@ -83,6 +83,25 @@ class CommunitySettings @Inject constructor(
 		get() = prefs.getString(KEY_SYNCED_NICKNAME, null)
 		set(value) = prefs.edit { putString(KEY_SYNCED_NICKNAME, value) }
 
+	/** Whether the server last said this account has the crown for donating. */
+	var isSupporter: Boolean
+		get() = prefs.getBoolean(KEY_SUPPORTER, false)
+		set(value) = prefs.edit { putBoolean(KEY_SUPPORTER, value) }
+
+	/** When the donation reminder last came up, or when the clock for the first one started. 0 if neither. */
+	var donationReminderAt: Long
+		get() = prefs.getLong(KEY_DONATION_REMINDER, 0L)
+		set(value) = prefs.edit { putLong(KEY_DONATION_REMINDER, value) }
+
+	/** When this version first looked: entries resolved before then have not told the server their cover. */
+	val coverReportingSince: Long
+		get() {
+			prefs.getLong(KEY_COVER_REPORTING_SINCE, 0L).takeIf { it != 0L }?.let { return it }
+			val now = System.currentTimeMillis()
+			prefs.edit { putLong(KEY_COVER_REPORTING_SINCE, now) }
+			return now
+		}
+
 	var lastScoreSyncAt: Long
 		get() = prefs.getLong(KEY_LAST_SYNC, 0L)
 		set(value) = prefs.edit { putLong(KEY_LAST_SYNC, value) }
@@ -224,6 +243,9 @@ class CommunitySettings @Inject constructor(
 		const val KEY_ONBOARDED = "onboarded"
 		const val KEY_NICKNAME = "nickname"
 		const val KEY_SYNCED_NICKNAME = "nickname_synced"
+		const val KEY_SUPPORTER = "supporter"
+		const val KEY_DONATION_REMINDER = "donation_reminder"
+		const val KEY_COVER_REPORTING_SINCE = "cover_reporting_since"
 		const val DEFAULT_SERVER = "https://community.kotatsuredo.app"
 
 		val WIDEVINE_UUID: java.util.UUID =

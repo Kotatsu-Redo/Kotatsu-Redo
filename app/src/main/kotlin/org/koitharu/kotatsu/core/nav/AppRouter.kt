@@ -283,6 +283,12 @@ class AppRouter private constructor(
         startActivity(readerSettingsIntent(contextOrNull() ?: return))
     }
 
+    fun openHiddenImages() {
+        startActivity(
+            Intent(contextOrNull() ?: return, SettingsActivity::class.java).setAction(ACTION_HIDDEN_IMAGES),
+        )
+    }
+
     fun openProxySettings() {
         startActivity(proxySettingsIntent(contextOrNull() ?: return))
     }
@@ -862,6 +868,7 @@ class AppRouter private constructor(
         const val ACTION_MANGA_EXPLORE = "${BuildConfig.APPLICATION_ID}.action.EXPLORE_MANGA"
         const val ACTION_PROXY = "${BuildConfig.APPLICATION_ID}.action.MANAGE_PROXY"
         const val ACTION_READER = "${BuildConfig.APPLICATION_ID}.action.MANAGE_READER_SETTINGS"
+        const val ACTION_HIDDEN_IMAGES = "${BuildConfig.APPLICATION_ID}.action.MANAGE_HIDDEN_IMAGES"
         const val ACTION_SOURCE = "${BuildConfig.APPLICATION_ID}.action.MANAGE_SOURCE_SETTINGS"
         const val ACTION_SOURCES = "${BuildConfig.APPLICATION_ID}.action.MANAGE_SOURCES"
         const val ACTION_MANAGE_DISCORD = "${BuildConfig.APPLICATION_ID}.action.MANAGE_DISCORD"

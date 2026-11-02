@@ -20,6 +20,7 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
+import org.koitharu.kotatsu.sourcescore.ui.CommunityOnboardingDialog
 
 @AndroidEntryPoint
 class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
@@ -75,6 +76,11 @@ class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
 				true
 			}
 
+			KEY_SPONSOR -> {
+				router.openExternalBrowser(CommunityOnboardingDialog.SPONSOR_URL, preference.title)
+				true
+			}
+
 			else -> super.onPreferenceTreeClick(preference)
 		}
 	}
@@ -95,5 +101,9 @@ class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
 	} else {
 		Snackbar.make(listView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
 		false
+	}
+
+	private companion object {
+		const val KEY_SPONSOR = "sponsor"
 	}
 }

@@ -2,48 +2,12 @@
 <PreferenceScreen
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:title="@string/services">
-
+	android:title="@string/accounts_and_sync">
 	<PreferenceScreen
 		android:fragment="org.koitharu.kotatsu.settings.SyncSettingsFragment"
 		android:icon="@drawable/ic_sync"
 		android:key="sync_settings"
 		android:title="@string/sync" />
-
-	<PreferenceScreen
-		android:fragment="org.koitharu.kotatsu.sourcescore.ui.CommunitySettingsFragment"
-		android:icon="@drawable/ic_trending_small"
-		android:key="community_settings"
-		android:summary="@string/community_summary"
-		android:title="@string/community" />
-
-	<PreferenceScreen
-		android:fragment="org.koitharu.kotatsu.settings.SuggestionsSettingsFragment"
-		android:icon="@drawable/ic_suggestion"
-		android:key="suggestions"
-		android:title="@string/suggestions"
-		app:allowDividerAbove="true" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_list_group"
-		android:key="related_manga"
-		android:summary="@string/related_manga_summary"
-		android:title="@string/related_manga" />
-
-	<org.koitharu.kotatsu.settings.utils.SplitSwitchPreference
-		android:defaultValue="false"
-		android:icon="@drawable/ic_chart"
-		android:key="stats_on"
-		android:title="@string/reading_stats"
-		app:allowDividerAbove="true" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_timelapse"
-		android:key="reading_time"
-		android:summary="@string/reading_time_estimation_summary"
-		android:title="@string/reading_time_estimation" />
 
 	<PreferenceCategory android:title="@string/tracking">
 
@@ -77,13 +41,20 @@
 
 	</PreferenceCategory>
 
+	<PreferenceScreen
+		android:fragment="org.koitharu.kotatsu.sourcescore.ui.CommunitySettingsFragment"
+		android:icon="@drawable/ic_trending_small"
+		android:key="community_settings"
+		android:summary="@string/community_summary"
+		android:title="@string/community"
+		app:allowDividerAbove="true" />
+
 	<Preference
 		android:fragment="org.koitharu.kotatsu.settings.discord.DiscordSettingsFragment"
 		android:icon="@drawable/ic_discord"
 		android:key="discord_rpc"
 		android:summary="@string/discord_rpc_summary"
-		android:title="@string/discord_rpc"
-		app:allowDividerAbove="true"
+		android:title="@string/discord"
 		app:icon="@drawable/ic_discord" />
 
 </PreferenceScreen>

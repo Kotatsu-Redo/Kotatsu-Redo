@@ -10,15 +10,50 @@ import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.details.data.MangaDetails
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaPage
+import org.koitharu.kotatsu.reader.data.erase.HiddenImagesRepository
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
 import javax.inject.Inject
 
 private const val PAGES_TRIM_THRESHOLD = 120
 
+/**
+ * Leaves out [hidden] pages, except that a chapter always keeps one: the reader has no notion of a
+ * chapter with no pages, and would report it as not found rather than move on.
+ */
+internal fun withoutHidden(pages: List<ReaderPage>, hidden: Set<Long>): List<ReaderPage> {
+	if (hidden.isEmpty()) {
+		return pages
+	}
+	val visibleChapters = pages.mapNotNullTo(HashSet()) { page -> page.chapterId.takeIf { page.id !in hidden } }
+	val keptChapters = HashSet<Long>()
+	return pages.filter { page ->
+		page.id !in hidden || (page.chapterId !in visibleChapters && keptChapters.add(page.chapterId))
+	}
+}
+
+/**
+ * Where to go for a saved position in [pages]: the page itself or, if it has since been hidden, the next
+ * one still there. Null if the chapter is not in the list at all.
+ */
+internal fun List<ReaderPage>.indexOfPosition(chapterId: Long, page: Int): Int? {
+	var last: Int? = null
+	for (i in indices) {
+		val item = this[i]
+		if (item.chapterId == chapterId) {
+			if (item.index >= page) {
+				return i
+			}
+			last = i
+		}
+	}
+	return last
+}
+
 @ViewModelScoped
 class ChaptersLoader @Inject constructor(
 	private val mangaRepositoryFactory: MangaRepository.Factory,
 	private val captchaAutoResolveCoordinator: CaptchaAutoResolveCoordinator,
+	private val hiddenImages: HiddenImagesRepository,
 ) {
 
 	private val chapters = LongSparseArray<MangaChapter>()
@@ -90,7 +125,24 @@ class ChaptersLoader @Inject constructor(
 
 	fun first() = chapterPages.first()
 
-	fun snapshot() = chapterPages.toList()
+	/**
+	 * The pages to show, without those known to be nothing but a hidden image. They are only left out here
+	 * and not when loading: `ReaderPage.index` and [getPagesCount] are what saved progress is made of, and
+	 * must go on describing the chapter as the source serves it.
+	 */
+	suspend fun snapshot(): List<ReaderPage> = withoutHidden(chapterPages.toList(), hiddenImages.getHiddenPages())
+
+	fun observeHiddenPages() = hiddenImages.observeHiddenPages()
+
+	/** The page right before or after another, hidden or not, as long as it is in the same chapter. */
+	fun findNeighbour(pageId: Long, isBefore: Boolean): ReaderPage? {
+		val pages = chapterPages.toList()
+		val index = pages.indexOfFirst { it.id == pageId }
+		if (index < 0) {
+			return null
+		}
+		return pages.getOrNull(if (isBefore) index - 1 else index + 1)?.takeIf { it.chapterId == pages[index].chapterId }
+	}
 
 	private suspend fun loadChapter(
 		chapterId: Long,

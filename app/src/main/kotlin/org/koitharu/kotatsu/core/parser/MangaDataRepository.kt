@@ -167,6 +167,17 @@ class MangaDataRepository @Inject constructor(
 		}
 	}
 
+	/**
+	 * Keeps the cover a source has now, if the manga is stored. A site that moves leaves everything saved from it
+	 * with covers on its old address, however well the manga itself still opens. Overrides are stored apart from this.
+	 */
+	suspend fun updateCover(manga: Manga) {
+		val coverUrl = manga.coverUrl
+		if (!manga.isLocal && !coverUrl.isNullOrEmpty()) {
+			db.getMangaDao().updateCover(manga.id, coverUrl, manga.largeCoverUrl)
+		}
+	}
+
 	suspend fun updateChapters(manga: Manga) {
 		val chapters = manga.chapters
 		if (!chapters.isNullOrEmpty() && manga.id in db.getMangaDao()) {

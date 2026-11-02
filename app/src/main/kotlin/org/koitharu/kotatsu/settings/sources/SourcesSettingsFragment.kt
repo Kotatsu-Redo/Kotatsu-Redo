@@ -11,7 +11,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.prefs.AppSettings
-import org.koitharu.kotatsu.core.prefs.TriStateOption
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
 import org.koitharu.kotatsu.core.util.ext.getQuantityStringSafe
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -32,10 +31,6 @@ class SourcesSettingsFragment : BasePreferenceFragment(R.string.remote_sources),
 			entries = SourcesSortOrder.entries.map { context.getString(it.titleResId) }.toTypedArray()
 			setDefaultValueCompat(SourcesSortOrder.SCORE.name)
 		}
-        findPreference<ListPreference>(AppSettings.KEY_INCOGNITO_NSFW)?.run {
-            entryValues = TriStateOption.entries.names()
-            setDefaultValueCompat(TriStateOption.ASK.name)
-        }
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -27,6 +27,7 @@ import org.koitharu.kotatsu.core.util.ext.recyclerView
 import org.koitharu.kotatsu.core.util.ext.resetTransformations
 import org.koitharu.kotatsu.databinding.FragmentReaderPagerBinding
 import org.koitharu.kotatsu.reader.domain.PageLoader
+import org.koitharu.kotatsu.reader.domain.indexOfPosition
 import org.koitharu.kotatsu.reader.ui.ReaderState
 import org.koitharu.kotatsu.reader.ui.pager.standard.NoAnimPageTransformer
 import org.koitharu.kotatsu.reader.ui.pager.standard.PageAnimTransformer
@@ -123,9 +124,7 @@ abstract class BasePagerReaderFragment : BaseReaderFragment<FragmentReaderPagerB
 			pagerLifecycleDispatcher?.postInvalidate()
 		}
 		if (pendingState != null) {
-			val position = pages.indexOfFirst {
-				it.chapterId == pendingState.chapterId && it.index == pendingState.page
-			}
+			val position = pages.indexOfPosition(pendingState.chapterId, pendingState.page) ?: -1
 			items.join()
 			if (position != -1) {
 				requireViewBinding().pager.setCurrentItem(position, false)
@@ -171,6 +170,9 @@ abstract class BasePagerReaderFragment : BaseReaderFragment<FragmentReaderPagerB
 			scroll = 0,
 		)
 	}
+
+	override fun findPageHolderAt(rawX: Int, rawY: Int): BasePageHolder<*>? =
+		viewBinding?.pager?.findCurrentViewHolder() as? BasePageHolder<*>
 
 	protected open fun onWheelScroll(axisValue: Float) {
 		switchPageBy(-axisValue.sign.toInt())

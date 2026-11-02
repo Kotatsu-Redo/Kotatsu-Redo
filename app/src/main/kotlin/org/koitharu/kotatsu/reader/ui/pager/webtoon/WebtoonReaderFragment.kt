@@ -20,11 +20,14 @@ import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.ui.list.lifecycle.RecyclerViewLifecycleDispatcher
 import org.koitharu.kotatsu.core.util.ext.firstVisibleItemPosition
+import org.koitharu.kotatsu.core.util.ext.isLowRamDevice
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.removeItemDecoration
 import org.koitharu.kotatsu.databinding.FragmentReaderWebtoonBinding
 import org.koitharu.kotatsu.reader.domain.PageLoader
+import org.koitharu.kotatsu.reader.domain.indexOfPosition
 import org.koitharu.kotatsu.reader.ui.ReaderState
+import org.koitharu.kotatsu.reader.ui.pager.BasePageHolder
 import org.koitharu.kotatsu.reader.ui.pager.BaseReaderAdapter
 import org.koitharu.kotatsu.reader.ui.pager.BaseReaderFragment
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
@@ -56,6 +59,11 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 		super.onViewBindingCreated(binding, savedInstanceState)
 		with(binding.recyclerView) {
 			setHasFixedSize(true)
+			// One continuous strip: pages joining or leaving it must not fade in and out over what is being read
+			itemAnimator = null
+			// Pages just read stay as they are rather than loading all over again on going back a little. Pages ahead come
+			// from what is laid out in the direction of scrolling. Only as many as memory allows
+			setItemViewCacheSize(if (context.isLowRamDevice()) PAGES_KEPT_LOW_RAM else PAGES_KEPT)
 			adapter = readerAdapter
 			addOnPageScrollListener(this@WebtoonReaderFragment)
 			recyclerLifecycleDispatcher = RecyclerViewLifecycleDispatcher().also {
@@ -138,9 +146,7 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 			}
 		}
 		if (pendingState != null) {
-			val position = pages.indexOfFirst {
-				it.chapterId == pendingState.chapterId && it.index == pendingState.page
-			}
+			val position = pages.indexOfPosition(pendingState.chapterId, pendingState.page) ?: -1
 			setItems.join()
 			if (position != -1) {
 				with(requireViewBinding().recyclerView) {
@@ -170,6 +176,9 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 			scroll = (recyclerView.findViewHolderForAdapterPosition(currentItem) as? WebtoonHolder)?.getScrollY() ?: 0,
 		)
 	}
+
+	override fun findPageHolderAt(rawX: Int, rawY: Int): BasePageHolder<*>? =
+		with(viewBinding?.recyclerView) { this?.findPageHolderAt(rawX, rawY) }
 
 	override fun onZoomIn() {
 		viewBinding?.frame?.onZoomIn()
@@ -287,5 +296,11 @@ class WebtoonReaderFragment : BaseReaderFragment<FragmentReaderWebtoonBinding>()
 		if (this.text != text) {
 			this.text = text
 		}
+	}
+
+	private companion object {
+
+		const val PAGES_KEPT = 4
+		const val PAGES_KEPT_LOW_RAM = 2
 	}
 }

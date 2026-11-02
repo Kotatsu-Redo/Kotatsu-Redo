@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -26,6 +27,9 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.plus
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.model.MangaHistory
@@ -48,6 +52,7 @@ import org.koitharu.kotatsu.core.util.ext.MutableEventFlow
 import org.koitharu.kotatsu.core.util.ext.call
 import org.koitharu.kotatsu.core.util.ext.firstNotNull
 import org.koitharu.kotatsu.core.util.ext.findCloudFlareException
+import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.requireValue
 import org.koitharu.kotatsu.details.data.MangaDetails
 import org.koitharu.kotatsu.details.domain.DetailsInteractor
@@ -73,6 +78,7 @@ import org.koitharu.kotatsu.reader.domain.ChaptersLoader
 import org.koitharu.kotatsu.reader.domain.DetectReaderModeUseCase
 import org.koitharu.kotatsu.reader.domain.PageLoader
 import org.koitharu.kotatsu.reader.ui.config.ReaderSettings
+import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
 import org.koitharu.kotatsu.reader.ui.pager.ReaderUiState
 import org.koitharu.kotatsu.scrobbling.discord.ui.DiscordRpc
 import org.koitharu.kotatsu.stats.domain.StatsCollector
@@ -83,6 +89,7 @@ import javax.inject.Inject
 private const val BOUNDS_PAGE_OFFSET = 2
 private const val PREFETCH_LIMIT = 10
 private const val MAX_DETAILS_VERIFICATION_RETRIES = 2L
+private const val NEIGHBOUR_WAIT_MS = 1500L
 
 @HiltViewModel
 class ReaderViewModel @Inject constructor(
@@ -136,6 +143,7 @@ class ReaderViewModel @Inject constructor(
     val isIncognitoMode = MutableStateFlow(savedStateHandle.get<Boolean>(ReaderIntent.EXTRA_INCOGNITO))
 
     val content = MutableStateFlow(ReaderContent(emptyList(), null))
+    private val contentLock = Mutex()
 
     val pageAnimation = settings.observeAsStateFlow(
         scope = viewModelScope + Dispatchers.Default,
@@ -214,6 +222,31 @@ class ReaderViewModel @Inject constructor(
         initIncognitoMode()
         loadImpl()
         launchJob(Dispatchers.Default) {
+            pageLoader.imageHider.cuts.collect { found ->
+                // A strip slices images wherever it likes, so the rest of this one is on the page next door
+                val neighbour = chaptersLoader.findNeighbour(found.pageId, isBefore = found.cut.isAtTop)
+                if (neighbour != null) {
+                    runCatchingCancellable {
+                        val page = neighbour.toMangaPage()
+                        if (!pageLoader.imageHider.hasRemainder(page, found.cut)) {
+                            pageLoader.imageHider.hideRemainder(page, pageLoader.loadPage(page, force = false), found.cut)
+                        }
+                    }.onFailure { it.printStackTraceDebug() }
+                }
+            }
+        }
+        launchJob(Dispatchers.Default) {
+            chaptersLoader.observeHiddenPages().drop(1).collect {
+                contentLock.withLock {
+                    val pages = chaptersLoader.snapshot()
+                    // Empty means a chapter switch is under way, and it brings its own pages and position
+                    content.update { current ->
+                        if (current.pages.isEmpty()) current else ReaderContent(pages, null)
+                    }
+                }
+            }
+        }
+        launchJob(Dispatchers.Default) {
             val mangaId = manga.filterNotNull().first().id
             if (!isIncognitoMode.firstNotNull()) {
                 appShortcutManager.notifyMangaOpened(mangaId)
@@ -272,6 +305,23 @@ class ReaderViewModel @Inject constructor(
 
     fun getCurrentState() = readingState.value
 
+    /**
+     * The files of the pages either side of [page]. Usually already preloaded; one that is not gets a moment
+     * and is otherwise left out, since this is only to compare against and someone is waiting on it.
+     */
+    suspend fun loadNeighbourImages(page: ReaderPage): List<Uri> {
+        val pages = content.value.pages
+        val index = pages.indexOfFirst { it.id == page.id && it.chapterId == page.chapterId }
+        if (index < 0) {
+            return emptyList()
+        }
+        return listOfNotNull(pages.getOrNull(index - 1), pages.getOrNull(index + 1)).mapNotNull { neighbour ->
+            withTimeoutOrNull(NEIGHBOUR_WAIT_MS) {
+                runCatchingCancellable { pageLoader.loadPage(neighbour.toMangaPage(), force = false) }.getOrNull()
+            }
+        }
+    }
+
     fun getCurrentChapterPages(): List<MangaPage>? {
         val chapterId = readingState.value?.chapterId ?: return null
         return chaptersLoader.getPages(chapterId)
@@ -310,7 +360,7 @@ class ReaderViewModel @Inject constructor(
             content.value = ReaderContent(emptyList(), null)
             chaptersLoader.loadSingleChapter(id)
             val newState = ReaderState(id, page, 0)
-            content.value = ReaderContent(chaptersLoader.snapshot(), newState)
+            publishPages(newState)
             saveCurrentState(newState)
         }
     }
@@ -338,7 +388,7 @@ class ReaderViewModel @Inject constructor(
                 page = if (delta == 0) prevState.page else 0,
                 scroll = if (delta == 0) prevState.scroll else 0,
             )
-            content.value = ReaderContent(chaptersLoader.snapshot(), newState)
+            publishPages(newState)
             saveCurrentState(newState)
         }
     }
@@ -456,16 +506,16 @@ class ReaderViewModel @Inject constructor(
                             }
                         }
                         mangaDetails.value = details.filterChapters(selectedBranch.value)
+                        notifyStateChanged()
+                        publishPages(readingState.value)
 
-                        // save state
+                        // save state, once the pages are on their way: this rewrites the whole chapter list
                         if (!isIncognitoMode.firstNotNull()) {
                             readingState.value?.let {
                                 val percent = computePercent(it.chapterId, it.page)
                                 historyUpdateUseCase(manga, it, percent)
                             }
                         }
-                        notifyStateChanged()
-                        content.value = ReaderContent(chaptersLoader.snapshot(), readingState.value)
                     }
             } catch (e: CancellationException) {
                 throw e
@@ -502,13 +552,22 @@ class ReaderViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Puts the current pages on screen. Reading them and publishing them go together, one writer at a time: a
+     * list read just before a page was found to be hidden, and published just after, would bring that page back
+     * for good, as nothing is going to change again to correct it.
+     */
+    private suspend fun publishPages(state: ReaderState?) = contentLock.withLock {
+        content.value = ReaderContent(chaptersLoader.snapshot(), state)
+    }
+
     @AnyThread
     private fun loadPrevNextChapter(currentId: Long, isNext: Boolean) {
         val prevJob = loadingJob
         loadingJob = launchLoadingJob(Dispatchers.Default) {
             prevJob?.join()
             chaptersLoader.loadPrevNextChapter(mangaDetails.requireValue(), currentId, isNext)
-            content.value = ReaderContent(chaptersLoader.snapshot(), null)
+            publishPages(null)
         }
     }
 
@@ -554,7 +613,10 @@ class ReaderViewModel @Inject constructor(
         if (chaptersCount == 0 || pagesCount == 0) {
             return PROGRESS_NONE
         }
-        val pagePercent = (pageIndex + 1) / pagesCount.toFloat()
+        // With a hidden credit page at the end, the last page that can be reached still finishes the chapter
+        val lastVisibleIndex = content.value.pages.lastOrNull { it.chapterId == chapterId }?.index
+        val effectiveIndex = if (pageIndex == lastVisibleIndex) pagesCount - 1 else pageIndex
+        val pagePercent = (effectiveIndex + 1) / pagesCount.toFloat()
         val ppc = 1f / chaptersCount
         return ppc * chapterIndex + ppc * pagePercent
     }

@@ -1,10 +1,7 @@
 package org.koitharu.kotatsu.settings
 
-import android.accounts.AccountManager
-import android.content.SharedPreferences
-import android.os.Bundle
-import android.view.View
 import androidx.preference.Preference
+import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -20,40 +17,17 @@ import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.core.util.ext.viewLifecycleScope
 import org.koitharu.kotatsu.scrobbling.common.domain.model.ScrobblerService
 import org.koitharu.kotatsu.scrobbling.common.ui.ScrobblerAuthHelper
-import org.koitharu.kotatsu.settings.utils.SplitSwitchPreference
-import org.koitharu.kotatsu.sync.domain.SyncController
 import javax.inject.Inject
 
+/** Everything that signs in to somewhere else. */
 @AndroidEntryPoint
-class ServicesSettingsFragment : BasePreferenceFragment(R.string.services),
-	SharedPreferences.OnSharedPreferenceChangeListener {
-
-	@Inject
-	lateinit var syncController: SyncController
+class AccountsSettingsFragment : BasePreferenceFragment(R.string.accounts_and_sync) {
 
 	@Inject
 	lateinit var scrobblerAuthHelper: ScrobblerAuthHelper
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-		addPreferencesFromResource(R.xml.pref_services)
-		findPreference<SplitSwitchPreference>(AppSettings.KEY_STATS_ENABLED)?.let {
-			it.onContainerClickListener = Preference.OnPreferenceClickListener {
-				router.openStatistic()
-				true
-			}
-		}
-	}
-
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-		bindSuggestionsSummary()
-		bindStatsSummary()
-		settings.subscribe(this)
-	}
-
-	override fun onDestroyView() {
-		settings.unsubscribe(this)
-		super.onDestroyView()
+		addPreferencesFromResource(R.xml.pref_accounts)
 	}
 
 	override fun onResume() {
@@ -63,14 +37,6 @@ class ServicesSettingsFragment : BasePreferenceFragment(R.string.services),
 		bindScrobblerSummary(AppSettings.KEY_MAL, ScrobblerService.MAL)
 		bindScrobblerSummary(AppSettings.KEY_KITSU, ScrobblerService.KITSU)
 	}
-
-	override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {
-		when (key) {
-			AppSettings.KEY_SUGGESTIONS -> bindSuggestionsSummary()
-			AppSettings.KEY_STATS_ENABLED -> bindStatsSummary()
-		}
-	}
-
 
 	override fun onPreferenceTreeClick(preference: Preference): Boolean {
 		return when (preference.key) {
@@ -100,7 +66,7 @@ class ServicesSettingsFragment : BasePreferenceFragment(R.string.services),
 
 	private fun bindScrobblerSummary(
 		key: String,
-		scrobblerService: ScrobblerService
+		scrobblerService: ScrobblerService,
 	) {
 		val pref = findPreference<Preference>(key) ?: return
 		if (!scrobblerAuthHelper.isAuthorized(scrobblerService)) {
@@ -132,18 +98,6 @@ class ServicesSettingsFragment : BasePreferenceFragment(R.string.services),
 		} else {
 			router.openScrobblerSettings(scrobblerService)
 		}
-	}
-
-	private fun bindSuggestionsSummary() {
-		findPreference<Preference>(AppSettings.KEY_SUGGESTIONS)?.setSummary(
-			if (settings.isSuggestionsEnabled) R.string.enabled else R.string.disabled,
-		)
-	}
-
-	private fun bindStatsSummary() {
-		findPreference<Preference>(AppSettings.KEY_STATS_ENABLED)?.setSummary(
-			if (settings.isStatsEnabled) R.string.enabled else R.string.disabled,
-		)
 	}
 
 	private fun confirmScrobblerAuth(scrobblerService: ScrobblerService) {

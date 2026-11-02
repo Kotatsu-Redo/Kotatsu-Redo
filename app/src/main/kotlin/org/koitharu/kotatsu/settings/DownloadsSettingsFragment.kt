@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.documentfile.provider.DocumentFile
+import androidx.fragment.app.viewModels
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import com.google.android.material.snackbar.Snackbar
@@ -14,36 +15,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.core.exceptions.resolve.SnackbarErrorObserver
 import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.os.OpenDocumentTreeHelper
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.DownloadFormat
-import org.koitharu.kotatsu.core.prefs.TriStateOption
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
 import org.koitharu.kotatsu.core.util.ext.getQuantityStringSafe
-import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.core.util.ext.observe
+import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.resolveFile
 import org.koitharu.kotatsu.core.util.ext.setDefaultValueCompat
 import org.koitharu.kotatsu.core.util.ext.tryLaunch
 import org.koitharu.kotatsu.core.util.ext.viewLifecycleScope
-import org.koitharu.kotatsu.download.ui.worker.DownloadWorker
 import org.koitharu.kotatsu.local.data.LocalStorageManager
 import org.koitharu.kotatsu.parsers.util.names
-import org.koitharu.kotatsu.settings.utils.DozeHelper
+import org.koitharu.kotatsu.settings.userdata.storage.StorageUsagePreference
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class DownloadsSettingsFragment :
-	BasePreferenceFragment(R.string.downloads),
+	BasePreferenceFragment(R.string.downloads_and_storage),
 	SharedPreferences.OnSharedPreferenceChangeListener {
 
-	private val dozeHelper = DozeHelper(this)
+	private val viewModel by viewModels<StorageUsageViewModel>()
 
 	@Inject
 	lateinit var storageManager: LocalStorageManager
-
-	@Inject
-	lateinit var downloadsScheduler: DownloadWorker.Scheduler
 
 	private val pickFileTreeLauncher = OpenDocumentTreeHelper(this) {
 		if (it != null) onDirectoryPicked(it)
@@ -55,11 +53,6 @@ class DownloadsSettingsFragment :
 			entryValues = DownloadFormat.entries.names()
 			setDefaultValueCompat(DownloadFormat.AUTOMATIC.name)
 		}
-		findPreference<ListPreference>(AppSettings.KEY_DOWNLOADS_METERED_NETWORK)?.run {
-			entryValues = TriStateOption.entries.names()
-			setDefaultValueCompat(TriStateOption.ASK.name)
-		}
-		dozeHelper.updatePreference()
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,6 +60,10 @@ class DownloadsSettingsFragment :
 		findPreference<Preference>(AppSettings.KEY_LOCAL_STORAGE)?.bindStorageName()
 		findPreference<Preference>(AppSettings.KEY_LOCAL_MANGA_DIRS)?.bindDirectoriesCount()
 		findPreference<Preference>(AppSettings.KEY_PAGES_SAVE_DIR)?.bindPagesDirectory()
+		viewModel.onError.observeEvent(viewLifecycleOwner, SnackbarErrorObserver(listView, this))
+		findPreference<StorageUsagePreference>(AppSettings.KEY_STORAGE_USAGE)?.let { pref ->
+			viewModel.storageUsage.observe(viewLifecycleOwner, pref)
+		}
 		settings.subscribe(this)
 	}
 
@@ -85,10 +82,6 @@ class DownloadsSettingsFragment :
 				findPreference<Preference>(key)?.bindDirectoriesCount()
 			}
 
-			AppSettings.KEY_DOWNLOADS_METERED_NETWORK -> {
-				updateDownloadsConstraints()
-			}
-
 			AppSettings.KEY_PAGES_SAVE_DIR -> {
 				findPreference<Preference>(AppSettings.KEY_PAGES_SAVE_DIR)?.bindPagesDirectory()
 			}
@@ -105,10 +98,6 @@ class DownloadsSettingsFragment :
 			AppSettings.KEY_LOCAL_MANGA_DIRS -> {
 				router.openDirectoriesSettings()
 				true
-			}
-
-			AppSettings.KEY_IGNORE_DOZE -> {
-				dozeHelper.startIgnoreDoseActivity()
 			}
 
 			AppSettings.KEY_PAGES_SAVE_DIR -> {
@@ -157,27 +146,6 @@ class DownloadsSettingsFragment :
 			}
 			summary = df?.getDisplayPath(this@bindPagesDirectory.context)
 				?: this@bindPagesDirectory.context.getString(androidx.preference.R.string.not_set)
-		}
-	}
-
-	private fun updateDownloadsConstraints() {
-		val preference = findPreference<Preference>(AppSettings.KEY_DOWNLOADS_METERED_NETWORK)
-		viewLifecycleScope.launch {
-			try {
-				preference?.isEnabled = false
-				withContext(Dispatchers.Default) {
-					val option = when (settings.allowDownloadOnMeteredNetwork) {
-						TriStateOption.ENABLED -> true
-						TriStateOption.ASK -> return@withContext
-						TriStateOption.DISABLED -> false
-					}
-					downloadsScheduler.updateConstraints(option)
-				}
-			} catch (e: Exception) {
-				e.printStackTraceDebug()
-			} finally {
-				preference?.isEnabled = true
-			}
 		}
 	}
 

@@ -11,6 +11,8 @@ import org.koitharu.kotatsu.sourcescore.data.CommentDto
 import org.koitharu.kotatsu.sourcescore.data.CommentPageDto
 import org.koitharu.kotatsu.sourcescore.data.NotificationsResponse
 import org.koitharu.kotatsu.sourcescore.data.ScoresResponse
+import org.koitharu.kotatsu.sourcescore.data.SimilarWorksResponse
+import org.koitharu.kotatsu.sourcescore.data.VoteRequest
 import org.koitharu.kotatsu.sourcescore.ui.threadOrdered
 
 /**
@@ -158,6 +160,58 @@ class CommunityWireFormatTest {
 		// UTC with a `Z`, never a numeric offset: the cursor goes straight back as a query parameter,
 		// and `+02:00` would arrive decoded as a space.
 		assertTrue(response.cursor.endsWith("Z"))
+	}
+
+	@Test
+	fun `scores from a server with per-operation figures still decode`() {
+		// Verbatim from community.kotatsuredo.app on 2026-10-16, after `ops` and
+		// `median_stability_by_op` were added: an app that knows neither must read the rest unchanged.
+		val response = json.decodeFromString<ScoresResponse>(
+			"""{"region":"EU","generated_at":"2026-09-25T04:12:02.120968Z","median_composite":0.5060413,""" +
+				""""median_stability":0.38847902,"median_stability_by_op":{},"sources":[{"source":"ATSUMOE",""" +
+				""""stability":0.97463256,"popularity":0.9886357,"composite":0.97930026,"samples":1212,"ops":{}}]}""",
+		)
+		assertEquals("EU", response.region)
+		assertEquals("ATSUMOE", response.sources.single().source)
+		assertEquals(1212, response.sources.single().samples)
+	}
+
+	/**
+	 * The similar-works answer, from both `/v1/works/{id}/similar` and the anonymous
+	 * `/v1/public/similar`, in the server's encoding: defaults written out, nulls left out - so a
+	 * work with no known year or type arrives without those keys at all.
+	 */
+	@Test
+	fun `similar works decode, including a work the server knows little about`() {
+		val payload = """
+			{"work_id":"309","similar":[{"work_id":"412","title":"Solo Leveling","year":2018,
+			"content_type":"manhwa","nsfw":false,"genres":["action","fantasy"],"shared_genres":2,
+			"score":1.84,"sources":[{"source":"MANGADEX","key":"/title/7f3c","reporters":3,
+			"last_seen":"2026-10-15","verified":true}]},{"work_id":"77","title":"Untitled","nsfw":false,
+			"genres":[],"shared_genres":0,"score":0.4,"sources":[]}]}
+		""".trimIndent().replace("\n", "")
+
+		val response = json.decodeFromString<SimilarWorksResponse>(payload)
+		assertEquals("309", response.workId)
+		val first = response.similar.first()
+		assertEquals("412", first.workId)
+		assertEquals(listOf("action", "fantasy"), first.genres)
+		// The key is what the app fetches the manga by, so it must survive exactly.
+		assertEquals("/title/7f3c", first.sources.single().key)
+		assertEquals("2026-10-15", first.sources.single().lastSeen)
+		assertTrue(first.sources.single().verified)
+		val sparse = response.similar.last()
+		assertNull(sparse.year)
+		assertNull(sparse.contentType)
+		assertTrue(sparse.sources.isEmpty())
+	}
+
+	@Test
+	fun `a vote says whether withdrawing it restores the one it replaced`() {
+		// As CommunityApi encodes it: defaults written out, so the server never has to guess.
+		val encoder = Json { encodeDefaults = true }
+		assertEquals("""{"value":0,"restore_previous":true}""", encoder.encodeToString(VoteRequest(0, restorePrevious = true)))
+		assertEquals("""{"value":1,"restore_previous":false}""", encoder.encodeToString(VoteRequest(1)))
 	}
 
 	@Test

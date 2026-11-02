@@ -58,6 +58,10 @@ class HistoryRepository @Inject constructor(
 		return entities.map { it.toManga() }
 	}
 
+	suspend fun getListWithProgress(offset: Int, limit: Int): List<MangaWithHistory> {
+		return db.getHistoryDao().findAll(offset, limit).map { MangaWithHistory(it.toManga(), it.history.toMangaHistory()) }
+	}
+
 	suspend fun search(query: String, kind: SearchKind, limit: Int): List<Manga> {
 		val dao = db.getHistoryDao()
 		val q = "%$query%"

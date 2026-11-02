@@ -117,4 +117,18 @@
 
 	</LinearLayout>
 
+	<org.koitharu.kotatsu.reader.ui.erase.EraseOverlayView
+		android:id="@+id/eraseOverlay"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:elevation="1001dp"
+		android:visibility="gone" />
+
+	<org.koitharu.kotatsu.reader.ui.erase.EraseTutorialView
+		android:id="@+id/eraseTutorial"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:elevation="1002dp"
+		android:visibility="gone" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

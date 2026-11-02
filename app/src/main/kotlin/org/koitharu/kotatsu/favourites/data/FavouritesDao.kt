@@ -39,6 +39,19 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 	@Query("SELECT * FROM favourites WHERE deleted_at = 0 GROUP BY manga_id ORDER BY created_at DESC LIMIT :limit")
 	abstract suspend fun findLast(limit: Int): List<FavouriteManga>
 
+	/** Changes whenever anything is added or removed. */
+	@Query("SELECT count(*) || ':' || ifnull(max(created_at), 0) FROM favourites WHERE deleted_at = 0")
+	abstract suspend fun getLibraryVersion(): String
+
+	/** See [LibraryRow]. */
+	@Query(
+		"""SELECT m.manga_id AS id, m.title AS title, m.alt_title AS altTitles, m.source AS source, m.url AS url,
+		NULL AS percent, NULL AS updatedAt, NULL AS chapters,
+		(SELECT group_concat(t.title, '|') FROM manga_tags mt JOIN tags t ON t.tag_id = mt.tag_id WHERE mt.manga_id = m.manga_id) AS tags
+		FROM manga m WHERE m.manga_id IN (SELECT manga_id FROM favourites WHERE deleted_at = 0)""",
+	)
+	abstract suspend fun findLibraryRows(): List<org.koitharu.kotatsu.history.data.LibraryRow>
+
 	@Transaction
 	@Query("SELECT manga.* FROM favourites LEFT JOIN manga ON manga.manga_id = favourites.manga_id WHERE favourites.deleted_at = 0 AND (manga.title LIKE :query OR manga.alt_title LIKE :query) LIMIT :limit")
 	abstract suspend fun searchByTitle(query: String, limit: Int): List<MangaWithTags>

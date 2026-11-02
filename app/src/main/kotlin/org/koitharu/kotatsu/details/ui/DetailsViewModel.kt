@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +37,7 @@ import org.koitharu.kotatsu.details.domain.DetailsLoadUseCase
 import org.koitharu.kotatsu.details.domain.ProgressUpdateUseCase
 import org.koitharu.kotatsu.details.domain.ReadingTimeUseCase
 import org.koitharu.kotatsu.details.domain.RelatedMangaUseCase
+import org.koitharu.kotatsu.reader.domain.PagePreloader
 import org.koitharu.kotatsu.details.ui.model.HistoryInfo
 import org.koitharu.kotatsu.details.ui.model.MangaBranch
 import org.koitharu.kotatsu.details.ui.pager.ChaptersPagesViewModel
@@ -72,6 +74,7 @@ class DetailsViewModel @Inject constructor(
 	private val detailsLoadUseCase: DetailsLoadUseCase,
 	private val progressUpdateUseCase: ProgressUpdateUseCase,
 	private val readingTimeUseCase: ReadingTimeUseCase,
+	private val pagePreloader: PagePreloader,
 	statsRepository: StatsRepository,
 ) : ChaptersPagesViewModel(
 	settings = settings,
@@ -143,23 +146,32 @@ class DetailsViewModel @Inject constructor(
 		.withErrorHandling()
 		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, emptyList())
 
-	val relatedManga: StateFlow<List<MangaListModel>> = manga.mapLatest {
-		if (it != null && settings.isRelatedMangaEnabled) {
-			val related = relatedMangaUseCase(it).orEmpty().let { list ->
-				if (settings.isNsfwContentDisabled) {
-					list.filterNot { manga -> manga.isNsfw() }
-				} else {
-					list
-				}
-			}
-			mangaListMapper.toListModelList(
-				manga = related,
-				mode = ListMode.GRID,
-			)
-		} else {
-			emptyList()
+	private val relatedRefresh = MutableStateFlow(0)
+
+	/** Survives the screen going away and coming back from the reader, which should not cost requests again. */
+	@Volatile
+	private var loadedRelated: List<Manga>? = null
+
+	/**
+	 * Only once the manga itself is done and the reader has stayed a moment, and only while this screen is
+	 * showing: it takes requests to the same sites, and someone heading straight for the reader never sees it.
+	 */
+	val relatedManga: StateFlow<List<MangaListModel>> = relatedRefresh.mapLatest {
+		loadingJob.join()
+		val seed = manga.value
+		if (seed == null || !settings.isRelatedMangaEnabled) {
+			return@mapLatest emptyList()
 		}
-	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Lazily, emptyList())
+		val related = loadedRelated ?: run {
+			delay(RELATED_DELAY_MS)
+			relatedMangaUseCase(seed).orEmpty().also { loadedRelated = it }
+		}
+		mangaListMapper.toListModelList(
+			manga = if (settings.isNsfwContentDisabled) related.filterNot { it.isNsfw() } else related,
+			mode = ListMode.GRID,
+		)
+	}.withErrorHandling()
+		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.WhileSubscribed(), emptyList())
 
 	val tags = manga.mapLatest {
 		mangaListMapper.mapTags(it?.tags.orEmpty())
@@ -197,6 +209,21 @@ class DetailsViewModel @Inject constructor(
 				progressUpdateUseCase(manga.toManga())
 			}
 		}
+		launchJob(Dispatchers.Default + SkipErrors) {
+			val details = mangaDetails.firstOrNull { !it?.chapters.isNullOrEmpty() } ?: return@launchJob
+			val manga = details.toManga()
+			val history = historyRepository.getOne(manga)
+			val inProgress = history?.let { manga.findChapterById(it.chapterId) }
+			val chapter = inProgress
+				?: manga.getChapters(manga.getPreferredBranch(null)).firstOrNull()
+				?: return@launchJob
+			pagePreloader.preload(
+				manga = manga,
+				chapter = chapter,
+				startPage = if (inProgress != null) history.page else 0,
+				withImages = history != null,
+			)
+		}
 		launchJob(Dispatchers.Default) {
 			val manga = mangaDetails.firstOrNull { it != null && it.isLocal } ?: return@launchJob
 			remoteManga.value = interactor.findRemote(manga.toManga())
@@ -206,6 +233,8 @@ class DetailsViewModel @Inject constructor(
 	fun reload() {
 		loadingJob.cancel()
 		loadingJob = doLoad(force = true)
+		loadedRelated = null
+		relatedRefresh.value++
 	}
 
 	fun updateScrobbling(index: Int, rating: Float, status: ScrobblingStatus?) {
@@ -264,6 +293,11 @@ class DetailsViewModel @Inject constructor(
 	}
 
 	private class DefaultBranch(val name: String?, val isFromHistory: Boolean)
+
+	private companion object {
+
+		const val RELATED_DELAY_MS = 1_500L
+	}
 
 	private fun getScrobbler(index: Int): Scrobbler? {
 		val info = scrobblingInfo.value.getOrNull(index)

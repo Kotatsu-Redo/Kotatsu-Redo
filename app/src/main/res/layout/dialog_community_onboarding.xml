@@ -190,64 +190,13 @@
 				android:text="@string/community_sponsor_body"
 				android:textAppearance="?attr/textAppearanceBodyMedium" />
 
-			<com.google.android.material.card.MaterialCardView
+			<TextView
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:layout_marginTop="16dp"
-				app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-				app:cardElevation="0dp"
-				app:contentPadding="16dp"
-				app:shapeAppearance="?attr/shapeAppearanceCornerExtraLarge">
-
-				<LinearLayout
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:gravity="center_vertical"
-					android:orientation="horizontal">
-
-					<org.koitharu.kotatsu.stats.ui.views.PieChartView
-						android:id="@+id/chart_split"
-						android:layout_width="96dp"
-						android:layout_height="96dp" />
-
-					<LinearLayout
-						android:layout_width="0dp"
-						android:layout_height="wrap_content"
-						android:layout_marginStart="16dp"
-						android:layout_weight="1"
-						android:orientation="vertical">
-
-						<TextView
-							android:id="@+id/legend_translation"
-							android:layout_width="match_parent"
-							android:layout_height="wrap_content"
-							android:drawablePadding="10dp"
-							android:gravity="center_vertical"
-							android:textAppearance="?attr/textAppearanceBodySmall"
-							tools:text="40%  Translation work" />
-
-						<TextView
-							android:id="@+id/legend_charity"
-							android:layout_width="match_parent"
-							android:layout_height="wrap_content"
-							android:layout_marginTop="8dp"
-							android:drawablePadding="10dp"
-							android:gravity="center_vertical"
-							android:textAppearance="?attr/textAppearanceBodySmall"
-							tools:text="40%  V Foundation" />
-
-						<TextView
-							android:id="@+id/legend_server"
-							android:layout_width="match_parent"
-							android:layout_height="wrap_content"
-							android:layout_marginTop="8dp"
-							android:drawablePadding="10dp"
-							android:gravity="center_vertical"
-							android:textAppearance="?attr/textAppearanceBodySmall"
-							tools:text="20%  Server costs" />
-					</LinearLayout>
-				</LinearLayout>
-			</com.google.android.material.card.MaterialCardView>
+				android:layout_marginTop="12dp"
+				android:lineSpacingMultiplier="1.2"
+				android:text="@string/community_sponsor_perk"
+				android:textAppearance="?attr/textAppearanceBodyMedium" />
 
 			<TextView
 				android:layout_width="match_parent"

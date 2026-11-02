@@ -10,4 +10,10 @@
 		android:visible="false"
 		app:showAsAction="always" />
 
+	<item
+		android:id="@+id/action_hidden_images"
+		android:icon="@drawable/ic_eye_off"
+		android:title="@string/hidden_images"
+		app:showAsAction="never" />
+
 </menu>

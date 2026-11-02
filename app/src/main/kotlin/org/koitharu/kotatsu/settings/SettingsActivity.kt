@@ -30,6 +30,7 @@ import org.koitharu.kotatsu.core.util.ext.start
 import org.koitharu.kotatsu.core.util.ext.textAndVisible
 import org.koitharu.kotatsu.databinding.ActivitySettingsBinding
 import org.koitharu.kotatsu.main.ui.owners.AppBarOwner
+import org.koitharu.kotatsu.reader.ui.erase.HiddenImagesFragment
 import org.koitharu.kotatsu.settings.about.AboutSettingsFragment
 import org.koitharu.kotatsu.settings.discord.DiscordSettingsFragment
 import org.koitharu.kotatsu.settings.search.SettingsItem
@@ -145,6 +146,7 @@ class SettingsActivity :
 	private fun openDefaultFragment() {
 		val fragment = when (intent?.action) {
 			AppRouter.ACTION_READER -> ReaderSettingsFragment()
+			AppRouter.ACTION_HIDDEN_IMAGES -> HiddenImagesFragment()
 			AppRouter.ACTION_SUGGESTIONS -> SuggestionsSettingsFragment()
 			AppRouter.ACTION_HISTORY -> BackupsSettingsFragment()
 			AppRouter.ACTION_TRACKER -> TrackerSettingsFragment()
@@ -167,7 +169,7 @@ class SettingsActivity :
 			}
 
 			else -> null
-		} ?: if (isMasterDetails) AppearanceSettingsFragment() else RootSettingsFragment()
+		} ?: if (isMasterDetails) ReaderSettingsFragment() else RootSettingsFragment()
 		supportFragmentManager.commit {
 			setReorderingAllowed(true)
 			replace(R.id.container, fragment)

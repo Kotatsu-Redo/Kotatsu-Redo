@@ -13,6 +13,7 @@ import org.koitharu.kotatsu.parsers.exception.NotFoundException
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaSource
+import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.parsers.util.almostEquals
 import org.koitharu.kotatsu.parsers.util.ifNullOrEmpty
 import org.koitharu.kotatsu.parsers.util.levenshteinDistance
@@ -102,15 +103,34 @@ class MangaLinkResolver @Inject constructor(
 	 *
 	 * For callers that already know the exact address - a suggestion the server matched by it - where
 	 * a title search is both a wasted request and a guess: it misses on sources whose search cannot
-	 * find their own titles, and can return a different manga with the same name. The details are
-	 * cached, so opening the result costs nothing more.
+	 * find their own titles, and can return a different manga with the same name.
+	 *
+	 * The result stays out of the in-memory details cache. That cache holds a handful of manga, one on a low-RAM
+	 * phone, and these callers fetch many at a time: storing them pushes out the manga the reader has open, whose
+	 * reader then has to fetch all of its chapters again.
 	 */
 	suspend fun resolveExact(source: MangaSource, url: String, title: String?): Manga {
-		val manga = repositoryFactory.create(source).getDetails(getSeedManga(source, url, title))
+		val manga = repositoryFactory.create(source).getDetailsNoCache(getSeedManga(source, url, title))
 		// As for links: a parser that derives ids from something other than the url would give the
 		// seed a different id than the entry the app already has, splitting its history.
 		return manga.publicUrl.takeIf { it.isNotEmpty() }?.let { dataRepository.findMangaByPublicUrl(it) } ?: manga
 	}
+
+	/** The manga at [url] on [source] if it can be had without a request, with what it takes to show it. */
+	suspend fun findKnown(source: MangaSource, url: String, title: String?): Manga? {
+		val seed = getSeedManga(source, url, title)
+		(repositoryFactory.create(source) as? CachingMangaRepository)?.peekDetails(seed)?.let { return it }
+		return dataRepository.findMangaById(seed.id, withChapters = false)?.takeUnless { it.coverUrl.isNullOrEmpty() }
+	}
+
+	/** A manga to show from what the server knows of it. Everything else comes from the site when it is opened. */
+	fun fromServer(source: MangaSource, url: String, title: String?, coverUrl: String, genres: Collection<String>): Manga =
+		getSeedManga(source, url, title).copy(
+			coverUrl = coverUrl,
+			tags = genres.mapTo(LinkedHashSet()) { genre ->
+				MangaTag(title = genre.replaceFirstChar(Char::uppercase), key = genre, source = source)
+			},
+		)
 
 	private suspend fun MangaRepository.getDetailsNoCache(manga: Manga): Manga = if (this is CachingMangaRepository) {
 		getDetails(manga, CachePolicy.READ_ONLY)

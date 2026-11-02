@@ -49,8 +49,7 @@ class SuggestionsSettingsFragment : BasePreferenceFragment(R.string.suggestions)
 
 	override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
 		if (settings.isSuggestionsEnabled && (key == AppSettings.KEY_SUGGESTIONS
-				|| key == AppSettings.KEY_SUGGESTIONS_EXCLUDE_TAGS
-				|| key == AppSettings.KEY_SUGGESTIONS_EXCLUDE_NSFW)
+				|| key == AppSettings.KEY_SUGGESTIONS_EXCLUDE_TAGS)
 		) {
 			updateSuggestions()
 		}

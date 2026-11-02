@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
-import org.koitharu.kotatsu.core.nav.router
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
 import org.koitharu.kotatsu.core.ui.dialog.buildAlertDialog
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
@@ -117,14 +116,6 @@ class CommunitySettingsFragment : BasePreferenceFragment(R.string.community) {
 
 		findPreference<Preference>("intro")?.setOnPreferenceClickListener {
 			CommunityOnboardingDialog.show(parentFragmentManager)
-			true
-		}
-
-		findPreference<Preference>("sponsor")?.setOnPreferenceClickListener {
-			router.openExternalBrowser(
-				CommunityOnboardingDialog.SPONSOR_URL,
-				getString(R.string.community_sponsor),
-			)
 			true
 		}
 
@@ -394,7 +385,6 @@ class CommunitySettingsFragment : BasePreferenceFragment(R.string.community) {
 			communitySettings.forget()
 			updateVisibility()
 			findPreference<SwitchPreferenceCompat>("enabled")?.isChecked = false
-			findPreference<SwitchPreferenceCompat>("telemetry")?.isChecked = false
 		}
 	}
 }

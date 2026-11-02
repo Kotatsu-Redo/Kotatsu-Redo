@@ -16,6 +16,22 @@ abstract class ChaptersDao {
 	@Query("SELECT * FROM chapters WHERE manga_id = :mangaId AND chapter_id = :chapterId")
 	abstract suspend fun find(mangaId: Long, chapterId: Long): ChapterEntity?
 
+	/**
+	 * Newest upload dates in the branch of [chapterId]. Other translations release on their own schedule and together
+	 * would look more frequent than the one being followed.
+	 */
+	@Query(
+		"""
+		SELECT upload_date FROM chapters
+		WHERE manga_id = :mangaId
+			AND upload_date > 0
+			AND branch IS (SELECT branch FROM chapters WHERE manga_id = :mangaId AND chapter_id = :chapterId)
+		ORDER BY upload_date DESC
+		LIMIT :limit
+		""",
+	)
+	abstract suspend fun findUploadDates(mangaId: Long, chapterId: Long, limit: Int): List<Long>
+
 	@Query("DELETE FROM chapters WHERE manga_id = :mangaId")
 	abstract suspend fun deleteAll(mangaId: Long)
 

@@ -11,7 +11,9 @@ import org.koitharu.kotatsu.core.model.isLocal
 import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.parser.MangaLinkResolver
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.discover.domain.DiscoverRanking
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
+import org.koitharu.kotatsu.parsers.exception.NotFoundException
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -62,6 +64,8 @@ class CommunitySuggestionsSource @Inject constructor(
 		limit: Int,
 		blacklist: TagsBlacklist,
 		excludeNsfw: Boolean,
+		taste: Map<String, Double> = emptyMap(),
+		isKnown: (SimilarWorkDto) -> Boolean = { false },
 	): List<MangaSuggestion> {
 		if (seed.isEmpty()) {
 			return emptyList()
@@ -87,35 +91,37 @@ class CommunitySuggestionsSource @Inject constructor(
 		val seen = (seed + dropped).mapTo(HashSet()) { it.source.name to it.url }
 		val ranked = candidates.values
 			.filter { candidate -> candidate.dto.sources.none { (it.source to it.key) in seen } }
+			// Before anything is fetched: the rest of their library is no suggestion either, and each one costs a request
+			.filterNot { isKnown(it.dto) }
+			.filter { candidate -> candidate.dto.sources.any { it.source in enabledSources } }
 			.filter { it.dto.workId !in droppedWorks }
 			.map { candidate ->
 				val hits = likeDropped[candidate.dto.workId] ?: 0
 				candidate.copy(
-					score = SuggestionRanking.dampPopularity(
-						SuggestionRanking.penalizeDropped(candidate.score, hits),
-						candidate.dto.readers,
+					// Here on the device, as the server is never told what this reader likes
+					score = DiscoverRanking.personalize(
+						SuggestionRanking.dampPopularity(
+							SuggestionRanking.penalizeDropped(candidate.score, hits),
+							candidate.dto.readers,
+						),
+						candidate.dto.genres,
+						taste,
 					),
 				)
 			}
 		val best = SuggestionRanking.diversify(ranked, MAX_CANDIDATES)
 		val topScore = best.firstOrNull()?.score ?: return emptyList()
 
-		val semaphore = Semaphore(MAX_PARALLELISM)
-		val resolved = coroutineScope {
-			best.map { candidate ->
-				async {
-					semaphore.withPermit {
-						findManga(candidate.dto, enabledSources)?.let { manga ->
-							MangaSuggestion(
-								manga = manga,
-								relevance = (candidate.score / topScore).toFloat().coerceIn(0f, 1f),
-							)
-						}
-					}
-				}
-			}.awaitAll()
+		val manga = findManga(best.map { it.dto }, enabledSources, MAX_CANDIDATES, BACKGROUND_PARALLELISM)
+		val resolved = best.mapIndexedNotNull { index, candidate ->
+			manga[index]?.let {
+				MangaSuggestion(
+					manga = it,
+					relevance = (candidate.score / topScore).toFloat().coerceIn(0f, 1f),
+				)
+			}
 		}
-		return resolved.filterNotNull()
+		return resolved
 			.filter { it.manga !in blacklist }
 			.filter { !excludeNsfw || !it.manga.isNsfw() }
 			.distinctBy { it.manga.id }
@@ -132,7 +138,14 @@ class CommunitySuggestionsSource @Inject constructor(
 	 * The manga's own source is preferred when it carries a result, so opening a suggestion keeps
 	 * the reader where they already are.
 	 */
-	suspend fun getSimilarTo(seed: Manga, limit: Int, excludeNsfw: Boolean): List<Manga> {
+	suspend fun getSimilarTo(
+		seed: Manga,
+		limit: Int,
+		excludeNsfw: Boolean,
+		maxFetches: Int = limit,
+		taste: Map<String, Double> = emptyMap(),
+		isKnown: (SimilarWorkDto) -> Boolean = { false },
+	): List<Manga> {
 		// Each result costs one details fetch on its source, and this runs when a details screen
 		// opens, so the list is cut here rather than after the network work is already done.
 		@Suppress("NAME_SHADOWING") val limit = limit.coerceAtMost(MAX_RELATED)
@@ -148,24 +161,37 @@ class CommunitySuggestionsSource @Inject constructor(
 			.getOrNull()
 			.orEmpty()
 			.filter { !excludeNsfw || !it.nsfw }
+			.filterNot(isKnown)
+			// Before the picking: only so many get picked, and one nobody could open would take up a place
+			.filter { work -> work.sources.any { it.source in enabledSources } }
 		val picked = SuggestionRanking.diversify(
-			similar.map { RankedWork(it, SuggestionRanking.dampPopularity(it.weight, it.readers)) },
+			similar.map {
+				RankedWork(it, DiscoverRanking.personalize(SuggestionRanking.dampPopularity(it.weight, it.readers), it.genres, taste))
+			},
 			limit,
 		)
 		if (picked.isEmpty()) {
 			return emptyList()
 		}
 
-		val semaphore = Semaphore(MAX_PARALLELISM)
-		return coroutineScope {
-			picked.map { candidate ->
-				async {
-					semaphore.withPermit { findManga(candidate.dto, enabledSources, preferred = seed.source.name) }
-				}
-			}.awaitAll()
-		}.filterNotNull()
+		return findManga(picked.map { it.dto }, enabledSources, maxFetches, RELATED_PARALLELISM, seed.source.name)
+			.filterNotNull()
 			.filter { it.id != seed.id }
 			.distinctBy { it.id }
+	}
+
+	/** The first [limit] works from a chart that the reader can open, as manga. Never anything adult. */
+	suspend fun resolveChart(works: List<SimilarWorkDto>, limit: Int): Map<String, Manga> {
+		val enabledSources = enabledSources(excludeNsfw = true)
+		if (enabledSources.isEmpty()) {
+			return emptyMap()
+		}
+		val picked = works.asSequence()
+			.filter { work -> !work.nsfw && work.sources.any { it.source in enabledSources } }
+			.take(limit)
+			.toList()
+		val manga = findManga(picked, enabledSources, limit, MAX_PARALLELISM)
+		return picked.indices.mapNotNull { index -> manga[index]?.let { picked[index].workId to it } }.toMap()
 	}
 
 	private suspend fun enabledSources(excludeNsfw: Boolean): Map<String, MangaSource> =
@@ -245,31 +271,39 @@ class CommunitySuggestionsSource @Inject constructor(
 		filter { !it.isLocal && !(excludeNsfw && it.isNsfw()) }
 
 	/**
-	 * Turns a work into something openable: a source the reader has enabled, then that source's own
-	 * entry for it, fetched by the exact address the server matched rather than searched by title.
+	 * Turns works into something openable: a source the reader has enabled, then that source's own
+	 * entry for each, fetched by the exact address the server matched rather than searched by title,
+	 * unless this device has it already.
+	 *
+	 * @return one entry for each of [works], null for those it could not open
 	 */
 	private suspend fun findManga(
-		dto: SimilarWorkDto,
+		works: List<SimilarWorkDto>,
 		enabledSources: Map<String, MangaSource>,
+		maxFetches: Int,
+		parallelism: Int,
 		preferred: String? = null,
-	): Manga? {
-		val ordered = if (preferred == null) {
-			dto.sources
-		} else {
-			dto.sources.sortedByDescending { it.source == preferred }
-		}
-		for (candidateSource in ordered) {
-			val source = enabledSources[candidateSource.source] ?: continue
-			if (source == UnknownMangaSource) continue
-			val manga = runCatchingCancellable {
-				linkResolver.resolveExact(source, candidateSource.key, dto.title)
-			}.onFailure { it.printStackTraceDebug() }.getOrNull()
-			if (manga != null) {
-				return manga
+	): List<Manga?> = resolveWorks(
+		works = works,
+		maxFetches = maxFetches,
+		parallelism = parallelism,
+		addresses = { dto ->
+			val ordered = if (preferred == null) dto.sources else dto.sources.sortedByDescending { it.source == preferred }
+			ordered.mapNotNull { address ->
+				enabledSources[address.source]?.takeUnless { it == UnknownMangaSource }?.let { WorkAddress(it, address.key) }
 			}
-		}
-		return null
-	}
+		},
+		// What this device has, then what the server can say about it: either way the site is spared a request
+		known = { dto, address ->
+			linkResolver.findKnown(address.source, address.key, dto.title)
+				?: dto.sources.firstOrNull { it.source == address.source.name && it.key == address.key }
+					?.coverUrl
+					?.takeIf { it.startsWith("https://", ignoreCase = true) }
+					?.let { linkResolver.fromServer(address.source, address.key, dto.title, it, dto.genres) }
+		},
+		fetch = { dto, address -> linkResolver.resolveExact(address.source, address.key, dto.title) },
+		isOnlyThisPageMissing = { it is NotFoundException },
+	)
 
 	private data class Lookup(val workId: String, val similar: List<SimilarWorkDto>)
 
@@ -291,6 +325,12 @@ class CommunitySuggestionsSource @Inject constructor(
 		/** The details screen shows a row, not a catalogue, and it must open promptly. */
 		const val MAX_RELATED = 8
 		const val MAX_PARALLELISM = 3
+
+		/** The row can wait. What the reader opened, on the same site more often than not, cannot. */
+		const val RELATED_PARALLELISM = 2
+
+		/** Nobody is waiting for it, and the reader may start using the app while it runs. */
+		const val BACKGROUND_PARALLELISM = 2
 
 		/** A few is enough to recognise what the reader turns away from, and each costs a lookup. */
 		const val MAX_DROPPED = 3

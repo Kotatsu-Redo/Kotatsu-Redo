@@ -19,11 +19,14 @@ import coil3.toBitmap
 import com.davemorrissey.labs.subscaleview.ImageSource
 import dagger.hilt.android.ActivityRetainedLifecycle
 import dagger.hilt.android.scopes.ActivityRetainedScoped
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -73,6 +76,7 @@ import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.requireBody
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
+import org.koitharu.kotatsu.reader.domain.erase.ImageHider
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
 import java.io.File
 import java.util.LinkedList
@@ -94,13 +98,20 @@ class PageLoader @Inject constructor(
 	private val imageProxyInterceptor: ImageProxyInterceptor,
 	private val downloadSlowdownDispatcher: DownloadSlowdownDispatcher,
 	private val captchaAutoResolveCoordinator: CaptchaAutoResolveCoordinator,
+	val imageHider: ImageHider,
+	private val preloader: PagePreloader,
 ) {
 
 	val loaderScope = lifecycle.lifecycleScope + InternalErrorHandler() + Dispatchers.Default
 
 	private val tasks = LongSparseArray<ProgressDeferred<Uri, Float>>()
-	private val semaphore = Semaphore(3)
-	private val prefetchSemaphore = Semaphore(2)
+	private val slots = DownloadSlots()
+
+	/** How many views each page is in. A download only stops when nothing wants it any more. */
+	private val boundPages = LongSparseArray<Int>()
+
+	/** What was started ahead of time, and is no use once it is no longer ahead. */
+	private val prefetching = HashSet<Long>()
 	private val oniSagaSemaphore = Semaphore(ONISAGA_PREFETCH_LIMIT + 1)
 	private val oniSagaPrefetchSemaphore = Semaphore(ONISAGA_PREFETCH_LIMIT)
 	private val convertLock = Mutex()
@@ -120,9 +131,61 @@ class PageLoader @Inject constructor(
 			&& !isLowRam()
 	}
 
+	/** The page on screen goes first for everything: its download, then its check. */
+	fun setOnScreen(pageId: Long, isOnScreen: Boolean) {
+		slots.setOnScreen(pageId, isOnScreen)
+		imageHider.setOnScreen(pageId, isOnScreen)
+	}
+
+	fun onPageBound(pageId: Long) {
+		synchronized(tasks) {
+			boundPages[pageId] = (boundPages[pageId] ?: 0) + 1
+		}
+	}
+
+	/**
+	 * Nothing shows this page now. Still on its way, it is holding up pages someone is on their way to, and the bytes are for
+	 * nothing unless they come back, when it starts again. What has already arrived is kept on disk either way.
+	 */
+	fun onPageUnbound(pageId: Long) {
+		synchronized(tasks) {
+			val count = (boundPages[pageId] ?: 0) - 1
+			if (count > 0) {
+				boundPages[pageId] = count
+			} else {
+				boundPages.remove(pageId)
+				cancelIfUnfinished(pageId)
+			}
+		}
+	}
+
+	private fun cancelIfUnfinished(pageId: Long) {
+		val task = tasks[pageId] ?: return
+		if (!task.isCompleted) {
+			task.cancel()
+			tasks.remove(pageId)
+		}
+	}
+
 	@AnyThread
 	fun prefetch(pages: List<ReaderPage>) = loaderScope.launch {
 		prefetchLock.withLock {
+			// Only what is ahead from here: whoever jumps somewhere else has no use for what was ahead of where they were
+			val wanted = pages.mapTo(HashSet()) { it.id }
+			prefetchQueue.removeAll { it.id !in wanted }
+			synchronized(tasks) {
+				val iterator = prefetching.iterator()
+				while (iterator.hasNext()) {
+					val id = iterator.next()
+					val task = tasks[id]
+					if (task == null || task.isCompleted) {
+						iterator.remove()
+					} else if (id !in wanted && boundPages[id] == null) {
+						iterator.remove()
+						cancelIfUnfinished(id)
+					}
+				}
+			}
 			for (page in pages.asReversed()) {
 				val isLoading = synchronized(tasks) {
 					tasks[page.id]?.takeIf { it.isValid() }?.isCancelled == false
@@ -194,7 +257,16 @@ class PageLoader @Inject constructor(
 	}
 
 	suspend fun loadPage(page: MangaPage, force: Boolean): Uri {
-		return loadPageAsync(page, force).await()
+		var isForced = force
+		while (true) {
+			try {
+				return loadPageAsync(page, isForced).await()
+			} catch (e: CancellationException) {
+				// It was the download that was given up on, by a view of it going away, and not this
+				currentCoroutineContext().ensureActive()
+				isForced = false
+			}
+		}
 	}
 
 	@CheckResult
@@ -251,6 +323,7 @@ class PageLoader @Inject constructor(
 					val task = tasks[page.id]?.takeIf { it.isValid() }
 					if (task?.isCancelled != false) {
 						tasks[page.id] = loadPageAsyncImpl(page, skipCache = false, isPrefetch = true)
+						prefetching += page.id
 					}
 				}
 			}
@@ -300,10 +373,15 @@ class PageLoader @Inject constructor(
 		skipCache: Boolean,
 	): Uri {
 		if (isPrefetch) {
-			val gate = if (page.source.isOniSaga()) oniSagaPrefetchSemaphore else prefetchSemaphore
-			return gate.withPermit {
+			val uri = if (page.source.isOniSaga()) {
+				oniSagaPrefetchSemaphore.withPermit { loadPageWithPermit(page, progress, isPrefetch = true, skipCache) }
+			} else {
 				loadPageWithPermit(page, progress, isPrefetch = true, skipCache)
 			}
+			// Not part of this task: the reader waits on this task when it reaches the page, and looking pages over
+			// ahead of time goes one at a time. A page already downloaded would sit blank behind all of the others.
+			loaderScope.launch { imageHider.checkAhead(page, uri) }
+			return uri
 		}
 		return loadPageWithPermit(page, progress, isPrefetch = false, skipCache)
 	}
@@ -314,14 +392,18 @@ class PageLoader @Inject constructor(
 		isPrefetch: Boolean,
 		skipCache: Boolean,
 	): Uri {
-		val gate = if (page.source.isOniSaga()) oniSagaSemaphore else semaphore
-		return gate.withPermit {
+		val load: suspend () -> Uri = {
 			captchaAutoResolveCoordinator.runWithVerification(
 				source = page.source,
 				mayStartVerification = !isPrefetch,
 			) {
 				loadPageAttempt(page, progress, isPrefetch, skipCache)
 			}
+		}
+		return if (page.source.isOniSaga()) {
+			oniSagaSemaphore.withPermit { load() }
+		} else {
+			slots.withSlot(page.id, load)
 		}
 	}
 
@@ -334,7 +416,8 @@ class PageLoader @Inject constructor(
 		val pageUrl = getPageUrl(page)
 		check(pageUrl.isNotBlank()) { "Cannot obtain full image url for $page" }
 		if (!skipCache) {
-			cache.get(pageUrl)?.let { return it.toUri() }
+			preloader.awaitDownload(pageUrl)
+			cache.get(pageUrl)?.let { return decodeIfAvif(it.toUri()) }
 		}
 		val uri = pageUrl.toUri()
 		return when {
@@ -350,13 +433,28 @@ class PageLoader @Inject constructor(
 					downloadSlowdownDispatcher.delay(page.source)
 				}
 				val request = createPageRequest(pageUrl, page.source)
-				imageProxyInterceptor.interceptPageRequest(request, okHttp).ensureSuccess().use { response ->
+				val file = imageProxyInterceptor.interceptPageRequest(request, okHttp).ensureSuccess().use { response ->
 					response.requireBody().withProgress(progress).use {
 						cache.set(pageUrl, it.source(), it.contentType()?.toMimeType())
 					}
-				}.toUri()
+				}
+				decodeIfAvif(file.toUri())
 			}
 		}
+	}
+
+	/**
+	 * Decodes an AVIF too large for the platform with libavif straight away, and keeps the result in its place. Any
+	 * other image goes on to the view as it is, which is far quicker. Only for the page cache, since this replaces the
+	 * file. A page that fails here still has the reader's own fallback.
+	 */
+	private suspend fun decodeIfAvif(uri: Uri): Uri {
+		if (!runInterruptible(Dispatchers.IO) { BitmapDecoderCompat.isAvifTooLargeForPlatform(uri.toFile()) }) {
+			return uri
+		}
+		return runCatchingCancellable { convertBimap(uri) }
+			.onFailure { it.printStackTraceDebug() }
+			.getOrDefault(uri)
 	}
 
 	private fun isLowRam(): Boolean {

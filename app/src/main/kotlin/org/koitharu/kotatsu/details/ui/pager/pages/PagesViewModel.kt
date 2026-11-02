@@ -130,7 +130,7 @@ class PagesViewModel @Inject constructor(
 		}
 	}
 
-	private fun updateList(readerState: ReaderState?) {
+	private suspend fun updateList(readerState: ReaderState?) {
 		val snapshot = chaptersLoader.snapshot()
 		val pages = buildList(snapshot.size + chaptersLoader.size + 2) {
 			var previousChapterId = 0L

@@ -71,9 +71,9 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		get() {
 			val raw = prefs.getString(KEY_NAV_MAIN, null)?.split(',')
 			return if (raw.isNullOrEmpty()) {
-				listOf(NavItem.HISTORY, NavItem.FAVORITES, NavItem.EXPLORE, NavItem.FEED)
+				listOf(NavItem.HISTORY, NavItem.FAVORITES, NavItem.EXPLORE, NavItem.SOURCES, NavItem.FEED)
 			} else {
-				raw.mapNotNull { x -> NavItem.entries.find(x) }.ifEmpty { listOf(NavItem.EXPLORE) }
+				withSourcesTab(raw.mapNotNull { x -> NavItem.entries.find(x) }.ifEmpty { listOf(NavItem.EXPLORE) })
 			}
 		}
 		set(value) {
@@ -551,6 +551,29 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		get() = prefs.getBoolean(KEY_WEBTOON_PULL_GESTURE, false)
 		set(value) = prefs.edit { putBoolean(KEY_WEBTOON_PULL_GESTURE, value) }
 
+	val isReaderEraseGestureEnabled: Boolean
+		get() = prefs.getBoolean(KEY_READER_ERASE_GESTURE, true)
+
+	/**
+	 * A saved layout's EXPLORE used to be the list of sources, which is now the SOURCES tab, so it gets
+	 * that tab beside the new screen, once. Removing it afterwards has to stick, hence the flag. A bar
+	 * already at the limit is left alone: adding one would push the reader's own last tab off the end, and
+	 * the Explore screen links to the same place.
+	 */
+	private fun withSourcesTab(items: List<NavItem>): List<NavItem> {
+		if (prefs.getBoolean(KEY_NAV_SOURCES_OFFERED, false)) {
+			return items
+		}
+		prefs.edit { putBoolean(KEY_NAV_SOURCES_OFFERED, true) }
+		val index = items.indexOf(NavItem.EXPLORE)
+		if (index < 0 || NavItem.SOURCES in items || items.size >= NAV_ITEMS_ALWAYS_FIT) {
+			return items
+		}
+		val updated = items.toMutableList().apply { add(index + 1, NavItem.SOURCES) }
+		mainNavItems = updated
+		return updated
+	}
+
 	@get:FloatRange(from = 0.0, to = 0.5)
 	val defaultWebtoonZoomOut: Float
 		get() = prefs.getInt(KEY_WEBTOON_ZOOM_OUT, 0).coerceIn(0, 50) / 100f
@@ -643,6 +666,11 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 
 	fun isTipEnabled(tip: String): Boolean {
 		return prefs.getStringSet(KEY_TIPS_CLOSED, emptySet())?.contains(tip) != true
+	}
+
+	fun reopenTip(tip: String) {
+		val closedTips = prefs.getStringSet(KEY_TIPS_CLOSED, emptySet()).orEmpty()
+		prefs.edit { putStringSet(KEY_TIPS_CLOSED, closedTips - tip) }
 	}
 
 	fun closeTip(tip: String) {
@@ -890,6 +918,11 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_WEBTOON_ZOOM = "webtoon_zoom"
 		const val KEY_WEBTOON_ZOOM_OUT = "webtoon_zoom_out"
 		const val KEY_WEBTOON_PULL_GESTURE = "webtoon_pull_gesture"
+		const val KEY_READER_ERASE_GESTURE = "reader_erase_gesture"
+		const val KEY_ERASE_TUTORIAL = "erase_tutorial"
+		const val TIP_ERASE_TUTORIAL = "erase_tutorial"
+		private const val KEY_NAV_SOURCES_OFFERED = "nav_sources_offered"
+		private const val NAV_ITEMS_ALWAYS_FIT = 5
 		const val KEY_PREFETCH_CONTENT = "prefetch_content"
 		const val KEY_APP_LOCALE = "app_locale"
 		const val KEY_SOURCES_GRID = "sources_grid"

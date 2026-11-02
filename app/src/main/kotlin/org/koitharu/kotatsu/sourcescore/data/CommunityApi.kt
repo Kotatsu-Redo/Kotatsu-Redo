@@ -34,6 +34,7 @@ data class IdentityResponse(
 	val tier: Int = 0,
 	/** Kept for wire compatibility with older servers. Hardened servers always return false. */
 	val restored: Boolean = false,
+	@SerialName("is_supporter") val isSupporter: Boolean = false,
 )
 
 @Serializable
@@ -55,6 +56,8 @@ data class FingerprintDto(
 	 * oddities - cost nothing and reach nobody.
 	 */
 	val genres: List<String> = emptyList(),
+	/** Where the source keeps the cover. Other readers' apps can then show it without asking the site for the entry. */
+	@SerialName("cover_url") val coverUrl: String? = null,
 )
 
 @Serializable
@@ -79,6 +82,7 @@ data class WorkSourceDto(
 	val reporters: Int = 0,
 	@SerialName("last_seen") val lastSeen: String? = null,
 	val verified: Boolean = false,
+	@SerialName("cover_url") val coverUrl: String? = null,
 )
 
 @Serializable
@@ -93,6 +97,13 @@ data class SimilarWorkDto(
 	/** Weight of the shared genres: rare ones count for more. Comparable within one response. */
 	val score: Double = 0.0,
 	val sources: List<WorkSourceDto> = emptyList(),
+)
+
+@Serializable
+data class ChartsResponse(
+	val window: String,
+	@SerialName("generated_at") val generatedAt: Long = 0L,
+	val works: List<SimilarWorkDto> = emptyList(),
 )
 
 @Serializable
@@ -139,6 +150,8 @@ data class CommentDto(
 	@SerialName("my_vote") val myVote: Int = 0,
 	@SerialName("is_mine") val isMine: Boolean = false,
 	val deleted: Boolean = false,
+	/** The author donated, so their name gets a crown. */
+	@SerialName("is_supporter") val isSupporter: Boolean = false,
 )
 
 @Serializable
@@ -323,6 +336,7 @@ class CommunityApi @Inject constructor(
 		)
 		val response = authedClient.newCall(request("/v1/identity/hello").post(body.asJson()).build()).await()
 		return response.use { HelloResult(json.decodeFromString(it.requireBody()), it.code == 201) }
+			.also { settings.isSupporter = it.identity.isSupporter }
 	}
 
 	suspend fun setNickname(nickname: String): IdentityResponse {
@@ -381,6 +395,24 @@ class CommunityApi @Inject constructor(
 		val response = okHttpClient.newCall(Request.Builder().url(url).get().build()).await()
 		return response.use {
 			if (it.code == 404) null else json.decodeFromString<SimilarWorksResponse>(it.requireBody())
+		}
+	}
+
+	/**
+	 * What readers have been rating and discussing in a period, asked anonymously like
+	 * [fetchSimilarPublic]. Empty when talking to a server that predates charts.
+	 *
+	 * Takes no genre or type on purpose: the whole chart is narrowed down on the device, so it says nothing about
+	 * what this reader looks for.
+	 */
+	suspend fun fetchCharts(window: String, limit: Int): List<SimilarWorkDto> {
+		val url = (settings.serverUrl + "/v1/public/charts").toHttpUrl().newBuilder()
+			.addQueryParameter("window", window)
+			.addQueryParameter("limit", limit.toString())
+			.build()
+		val response = okHttpClient.newCall(Request.Builder().url(url).get().build()).await()
+		return response.use {
+			if (it.code == 404) emptyList() else json.decodeFromString<ChartsResponse>(it.requireBody()).works
 		}
 	}
 
@@ -537,7 +569,10 @@ class CommunityApi @Inject constructor(
 			// leave the name for a daily Wi-Fi-only job, so the first comment went out as `anon`.
 			.addInterceptor { chain ->
 				val isIdentityCall = chain.request().url.encodedPath.contains("/v1/identity/")
-				if (settings.isRegistered && !isIdentityCall) pushPendingNicknameBlocking()
+				// Without waiting: a push already in flight covers this request too, since the server
+				// shows a comment under whatever name its author has when it is read. Every call
+				// queueing to repeat a failing push stacked whole timeouts onto the rating row.
+				if (settings.isRegistered && !isIdentityCall) pushPendingNicknameBlocking(wait = false)
 				chain.proceed(chain.request())
 			}
 			.authenticator(
@@ -562,8 +597,22 @@ class CommunityApi @Inject constructor(
 	 * it. The lock serialises a burst of parallel 401s, and the re-check inside means only the first
 	 * of them actually sends anything.
 	 */
-	private fun registerBlocking(): Boolean = registerLock.withLock {
-		if (settings.isRegistered) return@withLock true
+	private fun registerBlocking(): Boolean {
+		var introduced = false
+		val ok = registerLock.withLock {
+			if (settings.isRegistered) return@withLock true
+			introduceBlocking().also { introduced = it }
+		}
+		// Before the request that triggered registration is retried - a comment - so it is already
+		// shown under the chosen name rather than `anon`. Outside the lock: the push takes the nickname
+		// lock and, on a 401, comes back here for this one, so holding this one while waiting for that
+		// one deadlocked every authenticated call until the app was restarted.
+		if (introduced) pushPendingNicknameBlocking()
+		return ok
+	}
+
+	/** Sends `identity/hello`. Called with [registerLock] held. */
+	private fun introduceBlocking(): Boolean {
 		android.util.Log.i(
 			IDENTITY_TAG,
 			"registering: key " + (if (settings.peekSecret() == null) "absent, one will be generated" else "present on this device"),
@@ -588,10 +637,7 @@ class CommunityApi @Inject constructor(
 			}
 		}.getOrDefault(false)
 		settings.isRegistered = ok
-		// Before the request that triggered registration is retried - a comment - so it is already
-		// shown under the chosen name rather than `anon`.
-		if (ok) pushPendingNicknameBlocking()
-		ok
+		return ok
 	}
 
 	private val nicknameLock = ReentrantLock()
@@ -618,19 +664,26 @@ class CommunityApi @Inject constructor(
 	 *
 	 * Uses the bare client for the same reason as [registerBlocking]. Best-effort: the settings screen
 	 * and onboarding are where a rejected name is explained to the user.
+	 *
+	 * @param wait false to return at once when another thread is already pushing, rather than queue
+	 *  behind it to try again.
 	 */
-	private fun pushPendingNicknameBlocking() {
+	private fun pushPendingNicknameBlocking(wait: Boolean = true) {
 		val nickname = settings.nickname ?: return
 		if (nickname == settings.syncedNickname || nickname == attemptedNickname) return
-		nicknameLock.withLock {
+		if (wait) nicknameLock.lock() else if (!nicknameLock.tryLock()) return
+		try {
 			if (nickname == settings.syncedNickname || nickname == attemptedNickname) return
 			// Held for the whole sequence, so the push [registerBlocking] makes on success returns
 			// immediately instead of sending the same name twice.
 			attemptedNickname = nickname
 			// A 401 means this key was never introduced. Registering here rather than waiting for some
 			// later call to 401 is what stops a name chosen while the server was unreachable from
-			// staying pending forever - that call may never come.
+			// staying pending forever - that call may never come. The flag is cleared first, as the
+			// authenticator does: the interceptor only pushes when it is set, so without this the
+			// re-check in [registerBlocking] answered "registered" and the retry 401'd again.
 			val outcome = sendNicknameBlocking(nickname).let { first ->
+				if (first == NicknamePush.Unauthorized) settings.isRegistered = false
 				if (first == NicknamePush.Unauthorized && registerBlocking()) {
 					sendNicknameBlocking(nickname)
 				} else {
@@ -641,6 +694,8 @@ class CommunityApi @Inject constructor(
 			if (outcome != NicknamePush.Accepted && outcome != NicknamePush.Refused) {
 				attemptedNickname = null
 			}
+		} finally {
+			nicknameLock.unlock()
 		}
 	}
 

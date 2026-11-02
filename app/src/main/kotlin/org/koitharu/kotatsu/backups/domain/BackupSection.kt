@@ -27,12 +27,23 @@ enum class BackupSection(
 	 * not a backup.
 	 */
 	IDENTITY("identity"),
+
+	/** Images erased in the reader: "never again" should survive changing phones. */
+	HIDDEN_IMAGES("hidden_images"),
 	;
 
 	companion object {
 
 		fun of(entry: ZipEntry): BackupSection? {
-			val name = entry.name.lowercase(Locale.ROOT)
+			if (entry.isDirectory) {
+				return null
+			}
+			// By file name alone: unzipping a backup and zipping it again usually puts it all in a folder,
+			// and which tool did that, or how hard it compressed, makes no difference to what is inside
+			val name = entry.name.replace('\\', '/')
+				.substringAfterLast('/')
+				.removeSuffix(".json")
+				.lowercase(Locale.ROOT)
 			return entries.find { x -> x.entryName == name }
 		}
 	}

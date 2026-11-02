@@ -11,16 +11,13 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
-import androidx.preference.TwoStatePreference
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.os.AppShortcutManager
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ListMode
 import org.koitharu.kotatsu.core.prefs.ProgressIndicatorMode
-import org.koitharu.kotatsu.core.prefs.ScreenshotsPolicy
 import org.koitharu.kotatsu.core.prefs.SearchSuggestionType
-import org.koitharu.kotatsu.core.prefs.TriStateOption
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
 import org.koitharu.kotatsu.core.ui.util.ActivityRecreationHandle
 import org.koitharu.kotatsu.core.util.LocaleComparator
@@ -32,7 +29,6 @@ import org.koitharu.kotatsu.core.util.ext.toList
 import org.koitharu.kotatsu.parsers.util.mapToSet
 import org.koitharu.kotatsu.parsers.util.names
 import org.koitharu.kotatsu.parsers.util.toTitleCase
-import org.koitharu.kotatsu.settings.protect.ProtectSetupActivity
 import org.koitharu.kotatsu.settings.utils.ActivityListPreference
 import org.koitharu.kotatsu.settings.utils.MultiSummaryProvider
 import org.koitharu.kotatsu.settings.utils.PercentSummaryProvider
@@ -80,12 +76,6 @@ class AppearanceSettingsFragment :
         }
         findPreference<Preference>(AppSettings.KEY_SHORTCUTS)?.isVisible =
             appShortcutManager.isDynamicShortcutsAvailable()
-        findPreference<TwoStatePreference>(AppSettings.KEY_PROTECT_APP)
-            ?.isChecked = !settings.appPassword.isNullOrEmpty()
-        findPreference<ListPreference>(AppSettings.KEY_SCREENSHOTS_POLICY)?.run {
-            entryValues = ScreenshotsPolicy.entries.names()
-            setDefaultValueCompat(ScreenshotsPolicy.ALLOW.name)
-        }
         findPreference<MultiSelectListPreference>(AppSettings.KEY_SEARCH_SUGGESTION_TYPES)?.let { pref ->
             pref.entryValues = SearchSuggestionType.entries.names()
             pref.entries = SearchSuggestionType.entries.map { pref.context.getString(it.titleResId) }.toTypedArray()
@@ -124,28 +114,6 @@ class AppearanceSettingsFragment :
             AppSettings.KEY_NAV_MAIN -> {
                 bindNavSummary()
             }
-
-            AppSettings.KEY_APP_PASSWORD -> {
-                findPreference<TwoStatePreference>(AppSettings.KEY_PROTECT_APP)
-                    ?.isChecked = !settings.appPassword.isNullOrEmpty()
-            }
-        }
-    }
-
-    override fun onPreferenceTreeClick(preference: Preference): Boolean {
-        return when (preference.key) {
-            AppSettings.KEY_PROTECT_APP -> {
-                val pref = (preference as? TwoStatePreference ?: return false)
-                if (pref.isChecked) {
-                    pref.isChecked = false
-                    startActivity(Intent(preference.context, ProtectSetupActivity::class.java))
-                } else {
-                    settings.appPassword = null
-                }
-                true
-            }
-
-            else -> super.onPreferenceTreeClick(preference)
         }
     }
 

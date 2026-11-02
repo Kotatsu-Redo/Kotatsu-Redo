@@ -15,7 +15,7 @@ import org.koitharu.kotatsu.settings.userdata.storage.StorageUsage
 import javax.inject.Inject
 
 @HiltViewModel
-class StorageAndNetworkSettingsViewModel @Inject constructor(
+class StorageUsageViewModel @Inject constructor(
     private val storageManager: LocalStorageManager,
 ) : BaseViewModel() {
 

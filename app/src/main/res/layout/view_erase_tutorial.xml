@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools">
+
+	<FrameLayout
+		android:id="@+id/layout_erase_tutorial_demo"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:importantForAccessibility="no">
+
+		<View
+			android:id="@+id/view_erase_tutorial_stroke"
+			android:layout_width="152dp"
+			android:layout_height="20dp"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="14dp"
+			android:alpha="0.45"
+			android:background="@drawable/bg_card"
+			android:backgroundTint="?colorPrimary" />
+
+		<ImageView
+			android:id="@+id/imageView_erase_tutorial_hand"
+			android:layout_width="72dp"
+			android:layout_height="72dp"
+			android:layout_gravity="center_horizontal"
+			android:contentDescription="@null"
+			android:elevation="2dp"
+			android:src="@drawable/ic_erase_tutorial_hand" />
+
+	</FrameLayout>
+
+	<LinearLayout
+		android:id="@+id/card_erase_tutorial"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_gravity="top"
+		android:layout_marginHorizontal="12dp"
+		android:layout_marginTop="12dp"
+		android:background="@drawable/bg_card"
+		android:backgroundTint="?colorSurfaceContainerHigh"
+		android:clickable="true"
+		android:elevation="4dp"
+		android:focusable="true"
+		android:orientation="vertical"
+		android:paddingHorizontal="16dp"
+		android:paddingTop="14dp"
+		android:paddingBottom="6dp">
+
+		<TextView
+			android:id="@+id/textView_erase_tutorial_title"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:textAppearance="?attr/textAppearanceTitleMedium"
+			tools:text="@string/erase_tutorial_rub_title" />
+
+		<TextView
+			android:id="@+id/textView_erase_tutorial_body"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="4dp"
+			android:textAppearance="?attr/textAppearanceBodyMedium"
+			tools:text="@string/erase_tutorial_rub_body" />
+
+		<TextView
+			android:id="@+id/textView_erase_tutorial_note"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="6dp"
+			android:text="@string/erase_tutorial_practice"
+			android:textAppearance="?attr/textAppearanceLabelMedium"
+			android:textColor="?colorPrimary" />
+
+		<FrameLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="2dp">
+
+			<Button
+				android:id="@+id/button_erase_tutorial_skip"
+				style="?attr/borderlessButtonStyle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="end"
+				android:text="@string/skip" />
+
+			<Button
+				android:id="@+id/button_erase_tutorial_done"
+				style="?attr/borderlessButtonStyle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="end"
+				android:text="@string/got_it"
+				android:visibility="gone" />
+
+		</FrameLayout>
+
+	</LinearLayout>
+
+</merge>

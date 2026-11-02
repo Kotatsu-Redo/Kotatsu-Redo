@@ -182,6 +182,9 @@
 			android:name="org.koitharu.kotatsu.suggestions.ui.SuggestionsActivity"
 			android:label="@string/suggestions" />
 		<activity
+			android:name="org.koitharu.kotatsu.explore.ui.SourcesActivity"
+			android:label="@string/by_source" />
+		<activity
 			android:name="org.koitharu.kotatsu.details.ui.related.RelatedMangaActivity"
 			android:label="@string/related_manga" />
 		<activity

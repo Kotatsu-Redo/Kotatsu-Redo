@@ -17,6 +17,7 @@ import org.acra.ktx.sendWithAcra
 import org.jsoup.HttpStatusException
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
+import java.io.EOFException
 import org.koitharu.kotatsu.core.exceptions.BadBackupFormatException
 import org.koitharu.kotatsu.core.exceptions.CaughtException
 import org.koitharu.kotatsu.core.exceptions.CloudFlareBlockedException
@@ -100,7 +101,9 @@ private fun Throwable.getDisplayMessageOrNull(resources: Resources): String? = w
     is ZipException -> resources.getString(R.string.error_corrupted_zip, this.message.orEmpty())
     is SQLiteFullException -> resources.getString(R.string.error_no_space_left)
     is UnsupportedFileException -> resources.getString(R.string.text_file_not_supported)
-    is BadBackupFormatException -> resources.getString(R.string.unsupported_backup_message)
+    is BadBackupFormatException -> resources.getString(
+        if (cause is EOFException) R.string.backup_file_incomplete else R.string.unsupported_backup_message,
+    )
     is FileNotFoundException -> parseMessage(resources) ?: message
     is AccessDeniedException -> resources.getString(R.string.no_access_to_file)
     is NonFileUriException -> resources.getString(R.string.error_non_file_uri)

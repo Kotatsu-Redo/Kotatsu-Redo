@@ -108,6 +108,7 @@ class DetailsLoadUseCase @Inject constructor(
             emit(mangaDetails)
             if (remoteDetails != null) {
                 mangaDataRepository.updateChapters(mangaDetails.toManga())
+                mangaDataRepository.updateCover(remoteDetails)
             }
         }
     }
@@ -147,6 +148,7 @@ class DetailsLoadUseCase @Inject constructor(
         )
         emit(mangaDetails)
         mangaDataRepository.updateChapters(mangaDetails.toManga())
+        mangaDataRepository.updateCover(remoteDetails)
     }
 
     private suspend fun getDetails(seed: Manga, force: Boolean) = runCatchingCancellable {

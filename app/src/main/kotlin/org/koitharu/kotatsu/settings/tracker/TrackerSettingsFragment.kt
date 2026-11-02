@@ -1,12 +1,8 @@
 package org.koitharu.kotatsu.settings.tracker
 
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.text.style.URLSpan
 import android.view.View
 import androidx.core.text.buildSpannedString
@@ -15,7 +11,6 @@ import androidx.fragment.app.viewModels
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.nav.router
@@ -28,19 +23,14 @@ import org.koitharu.kotatsu.parsers.util.names
 import org.koitharu.kotatsu.settings.utils.DozeHelper
 import org.koitharu.kotatsu.settings.utils.MultiSummaryProvider
 import org.koitharu.kotatsu.tracker.ui.debug.TrackerDebugActivity
-import org.koitharu.kotatsu.tracker.work.TrackerNotificationHelper
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class TrackerSettingsFragment :
-	BasePreferenceFragment(R.string.check_for_new_chapters),
+	BasePreferenceFragment(R.string.new_chapters),
 	SharedPreferences.OnSharedPreferenceChangeListener {
 
 	private val viewModel by viewModels<TrackerSettingsViewModel>()
 	private val dozeHelper = DozeHelper(this)
-
-	@Inject
-	lateinit var notificationHelper: TrackerNotificationHelper
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 		addPreferencesFromResource(R.xml.pref_tracker)
@@ -65,11 +55,6 @@ class TrackerSettingsFragment :
 		updateCategoriesEnabled()
 	}
 
-	override fun onResume() {
-		super.onResume()
-		updateNotificationsSummary()
-	}
-
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		settings.subscribe(this)
@@ -83,7 +68,6 @@ class TrackerSettingsFragment :
 
 	override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
 		when (key) {
-			AppSettings.KEY_TRACKER_NOTIFICATIONS -> updateNotificationsSummary()
 			AppSettings.KEY_TRACK_SOURCES,
 			AppSettings.KEY_TRACKER_ENABLED -> updateCategoriesEnabled()
 		}
@@ -91,24 +75,6 @@ class TrackerSettingsFragment :
 
 	override fun onPreferenceTreeClick(preference: Preference): Boolean {
 		return when (preference.key) {
-			AppSettings.KEY_NOTIFICATIONS_SETTINGS -> when {
-				Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
-					val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-						.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
-					startActivitySafe(intent)
-					true
-				}
-
-				!notificationHelper.getAreNotificationsEnabled() -> {
-					val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-						.setData(Uri.fromParts("package", requireContext().packageName, null))
-					startActivitySafe(intent)
-					true
-				}
-
-				else -> super.onPreferenceTreeClick(preference)
-			}
-
 			AppSettings.KEY_TRACK_CATEGORIES -> {
 				router.showTrackerCategoriesConfigSheet()
 				true
@@ -128,16 +94,6 @@ class TrackerSettingsFragment :
 		}
 	}
 
-	private fun updateNotificationsSummary() {
-		val pref = findPreference<Preference>(AppSettings.KEY_NOTIFICATIONS_SETTINGS) ?: return
-		pref.setSummary(
-			when {
-				notificationHelper.getAreNotificationsEnabled() -> R.string.show_notification_new_chapters_on
-				else -> R.string.show_notification_new_chapters_off
-			},
-		)
-	}
-
 	private fun updateCategoriesEnabled() {
 		val pref = findPreference<Preference>(AppSettings.KEY_TRACK_CATEGORIES) ?: return
 		pref.isEnabled = settings.isTrackerEnabled && AppSettings.TRACK_FAVOURITES in settings.trackSources
@@ -148,13 +104,5 @@ class TrackerSettingsFragment :
 		pref.summary = count?.let {
 			getString(R.string.enabled_d_of_d, count[0], count[1])
 		}
-	}
-
-	private fun startActivitySafe(intent: Intent): Boolean = try {
-		startActivity(intent)
-		true
-	} catch (_: ActivityNotFoundException) {
-		Snackbar.make(listView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
-		false
 	}
 }

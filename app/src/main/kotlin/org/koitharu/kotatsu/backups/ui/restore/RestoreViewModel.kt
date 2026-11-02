@@ -20,6 +20,8 @@ import java.io.InputStream
 import java.util.Date
 import java.util.EnumMap
 import java.util.EnumSet
+import org.koitharu.kotatsu.core.exceptions.BadBackupFormatException
+import java.io.EOFException
 import java.util.zip.ZipInputStream
 import javax.inject.Inject
 
@@ -44,21 +46,27 @@ class RestoreViewModel @Inject constructor(
 	private suspend fun loadBackupInfo() {
 		val sections = runInterruptible(Dispatchers.IO) {
 			if (uri == null) throw FileNotFoundException()
-			ZipInputStream(contentResolver.openInputStream(uri)).use { stream ->
-				val result = EnumSet.noneOf(BackupSection::class.java)
-				var entry = stream.nextEntry
-				while (entry != null) {
-					val s = BackupSection.of(entry)
-					if (s != null) {
-						result.add(s)
-						if (s == BackupSection.INDEX) {
-							backupDate.value = stream.readDate()
+			try {
+				ZipInputStream(contentResolver.openInputStream(uri)).use { stream ->
+					val result = EnumSet.noneOf(BackupSection::class.java)
+					var entry = stream.nextEntry
+					while (entry != null) {
+						val s = BackupSection.of(entry)
+						if (s != null) {
+							result.add(s)
+							if (s == BackupSection.INDEX) {
+								backupDate.value = stream.readDate()
+							}
 						}
+						stream.closeEntry()
+						entry = stream.nextEntry
 					}
-					stream.closeEntry()
-					entry = stream.nextEntry
+					// Reading it found nothing of ours: say so, rather than offering an empty list to restore
+					result.ifEmpty { throw BadBackupFormatException(null) }
 				}
-				result
+			} catch (e: EOFException) {
+				// A file cut short, which on its own reads "Unexpected end of ZLIB input stream"
+				throw BadBackupFormatException(e)
 			}
 		}
 		availableEntries.value = BackupSection.entries.mapNotNull { entry ->

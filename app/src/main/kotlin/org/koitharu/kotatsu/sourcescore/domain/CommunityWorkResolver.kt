@@ -1,8 +1,13 @@
 package org.koitharu.kotatsu.sourcescore.domain
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koitharu.kotatsu.core.util.ext.processLifecycleScope
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -11,6 +16,7 @@ import org.koitharu.kotatsu.sourcescore.data.CommunityDatabase
 import org.koitharu.kotatsu.sourcescore.data.CommunitySettings
 import org.koitharu.kotatsu.sourcescore.data.FingerprintDto
 import org.koitharu.kotatsu.sourcescore.data.WorkRefEntity
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,6 +38,10 @@ class CommunityWorkResolver @Inject constructor(
 
 	val isAvailable: Boolean get() = settings.isEnabled
 
+	/** Resolves on their way to the server, by (source, key). See [workIdFor]. */
+	private val inFlight = ConcurrentHashMap<Pair<String, String>, Deferred<String?>>()
+	private val coverReports = ConcurrentHashMap.newKeySet<Pair<String, String>>()
+
 	suspend fun workIdFor(manga: Manga): String? {
 		if (!settings.isEnabled) return null
 		// Local files and the unknown/test placeholders have no site behind them: the key is a path on
@@ -49,8 +59,66 @@ class CommunityWorkResolver @Inject constructor(
 			return null
 		}
 		val title = manga.title.toWireTitle() ?: return null
+		database.getWorkRefDao().find(source, sourceKey)?.let { ref ->
+			reportCoverIfNew(manga, parserSource, ref, title)
+			return ref.workId
+		}
+
+		// One request per entry, however many parts of the screen ask: the details screen asks from
+		// its rating row and its related row at once, and again on each refresh of its data, and the
+		// server charges every resolve of something new against an hourly quota. Run in the process
+		// scope so a caller that goes away - the related row restarts on every refresh - does not
+		// cancel the answer the others are waiting on.
+		val entry = source to sourceKey
+		val created = processLifecycleScope.async(Dispatchers.Default, start = CoroutineStart.LAZY) {
+			resolveRemote(manga, parserSource, source, sourceKey, title)
+		}
+		// Registered outside the map's own locking: the completion handler writes to the map, which
+		// ConcurrentHashMap refuses from inside computeIfAbsent.
+		val request = inFlight.putIfAbsent(entry, created)?.also { created.cancel() }
+			?: created.also { it.invokeOnCompletion { inFlight.remove(entry, created) } }
+		request.start()
+		return request.await()
+	}
+
+	/**
+	 * An entry is only resolved once, so one resolved before covers were part of the question would otherwise
+	 * never mention its cover. Goes out once for each, the next time it is opened, and nobody waits for it.
+	 */
+	private fun reportCoverIfNew(manga: Manga, parserSource: MangaParserSource, ref: WorkRefEntity, title: String) {
+		if (ref.resolvedAt >= settings.coverReportingSince || manga.wireCoverUrl() == null) {
+			return
+		}
+		val entry = ref.source to ref.sourceKey
+		if (!coverReports.add(entry)) {
+			return
+		}
+		processLifecycleScope.launch(Dispatchers.Default) {
+			try {
+				resolveRemote(manga, parserSource, ref.source, ref.sourceKey, title, isCoverReport = true)
+			} finally {
+				coverReports.remove(entry)
+			}
+		}
+	}
+
+	private fun Manga.wireCoverUrl(): String? = coverUrl
+		?.takeIf { it.length <= MAX_COVER_URL && it.startsWith("https://", ignoreCase = true) && it.none(Char::isISOControl) }
+
+	private suspend fun resolveRemote(
+		manga: Manga,
+		parserSource: MangaParserSource,
+		source: String,
+		sourceKey: String,
+		title: String,
+		isCoverReport: Boolean = false,
+	): String? {
 		val dao = database.getWorkRefDao()
-		dao.find(source, sourceKey)?.let { return it.workId }
+		// A request that finished between the caller's cache read and this one starting has already
+		// stored the answer.
+		if (!isCoverReport) {
+			dao.find(source, sourceKey)?.let { return it.workId }
+		}
 
 		val resolved = runCatchingCancellable {
 			api.resolveWork(
@@ -75,6 +143,7 @@ class CommunityWorkResolver @Inject constructor(
 						.distinct()
 						.take(MAX_GENRES)
 						.toList(),
+					coverUrl = manga.wireCoverUrl(),
 				),
 			)
 		}.onFailure { Log.w(TAG, "Work resolution failed for ${manga.title}", it) }.getOrNull()
@@ -127,6 +196,7 @@ class CommunityWorkResolver @Inject constructor(
 		/** Bounded well under the server's own cap: a work with fifty labels has ten real genres. */
 		const val MAX_GENRES = 20
 		const val MAX_GENRE_LABEL = 60
+		const val MAX_COVER_URL = 1024
 		val SOURCE_PATTERN = Regex("[A-Za-z0-9_.-]+")
 	}
 }

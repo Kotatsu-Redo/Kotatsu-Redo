@@ -42,6 +42,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -197,7 +198,10 @@ class DetailsActivity :
 
 		val appRouter = router
 		viewModel.mangaDetails.filterNotNull().observe(this, ::onMangaUpdated)
-		viewModel.mangaDetails.filterNotNull().observe(this) { bindCommunityRating(it.toManga()) }
+		// Once per manga, not on every refresh of its details: each bind loads the rating again, and the
+		// refreshes land while the first load is still out.
+		viewModel.mangaDetails.filterNotNull().distinctUntilChangedBy { it.id }
+			.observe(this) { bindCommunityRating(it.toManga()) }
 		viewModel.coverUrl.observe(this, ::loadCover)
 		viewModel.onMangaRemoved.observeEvent(this, ::onMangaRemoved)
 		viewModel.onError

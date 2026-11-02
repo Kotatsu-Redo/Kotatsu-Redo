@@ -1,13 +1,12 @@
 package org.koitharu.kotatsu.details.domain
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.discover.domain.ReaderProfiles
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.SortOrder
@@ -25,8 +24,11 @@ import javax.inject.Inject
  * its genres come from catalogues and from many readers rather than from one site. A source's own
  * related list comes next - whatever that site chose to link. Plenty of works are new to the server
  * and plenty of parsers link nothing, so when both come up short the row is filled from this manga's
- * tags: first the reader's own suggestions that share them, which costs nothing, then one search of
- * this manga's source for its least common tags.
+ * tags: first the reader's own suggestions that share them, which costs nothing, then, with nothing
+ * at all to show, one search of this manga's source for its least common tags.
+ *
+ * All of this competes with what the reader actually came for, on the same site most of the time, so
+ * each step only runs if the one before it came up short, and the requests of the first are capped.
  */
 class RelatedMangaUseCase @Inject constructor(
 	private val mangaRepositoryFactory: MangaRepository.Factory,
@@ -35,22 +37,14 @@ class RelatedMangaUseCase @Inject constructor(
 	private val dataRepository: MangaDataRepository,
 	private val tagStatistics: TagStatistics,
 	private val settings: AppSettings,
+	private val profiles: ReaderProfiles,
 ) {
 
-	suspend operator fun invoke(seed: Manga): List<Manga>? = coroutineScope {
+	suspend operator fun invoke(seed: Manga): List<Manga>? {
 		val excludeNsfw = settings.isNsfwContentDisabled
-		// Side by side rather than one after the other, so the row waits for the slowest answer
-		// at most, not for the sum of them.
-		val remoteJob = async { remote(seed, excludeNsfw) }
-		val sourceJob = async { sourceRelated(seed) }
-		val stored = runCatchingCancellable { suggestionRepository.getTopList(MAX_STORED) }
-			.onFailure { it.printStackTraceDebug() }
-			.getOrDefault(emptyList())
-
-		val remote = remoteJob.await()
+		val remote = remote(seed, excludeNsfw)
 		if (remote.size >= MIN_RESULTS) {
-			sourceJob.cancel()
-			return@coroutineScope remote
+			return remote
 		}
 
 		val picked = LinkedHashMap<Long, Manga>()
@@ -59,10 +53,13 @@ class RelatedMangaUseCase @Inject constructor(
 				picked.putIfAbsent(it.id, it)
 			}
 		}
-		add(sourceJob.await().orEmpty())
+		add(sourceRelated(seed).orEmpty())
 		// A thin server answer still beats no answer, which is what a parser without a related
 		// section returns.
 		add(remote)
+		if (picked.size >= MIN_RESULTS) {
+			return picked.values.take(LIMIT)
+		}
 		// The details may not have loaded - a source behind a challenge, offline - and then the manga
 		// carries no tags; the ones stored when it last loaded are just as good for this.
 		val tagged = if (seed.tags.isEmpty()) {
@@ -74,19 +71,22 @@ class RelatedMangaUseCase @Inject constructor(
 		val rarity = runCatchingCancellable { tagStatistics.snapshot() }.getOrNull()
 			?.let { snapshot -> { title: String -> snapshot.rarity(title) } }
 			?: { _: String -> 1.0 }
-		if (picked.size < MIN_RESULTS) {
-			add(likeByTags(tagged, stored, rarity))
-		}
-		if (picked.size < MIN_RESULTS) {
+		val stored = runCatchingCancellable { suggestionRepository.getTopList(MAX_STORED) }
+			.onFailure { it.printStackTraceDebug() }
+			.getOrDefault(emptyList())
+		add(likeByTags(tagged, stored, rarity))
+		if (picked.isEmpty()) {
 			add(sourceByTags(tagged, rarity))
 		}
-		picked.values.take(LIMIT).ifEmpty { null }
+		return picked.values.take(LIMIT).ifEmpty { null }
 	}
 
 	/** Bounded: an unreachable server must not hold the row back for the client's whole timeout. */
 	private suspend fun remote(seed: Manga, excludeNsfw: Boolean): List<Manga> = runCatchingCancellable {
 		withTimeoutOrNull(REMOTE_TIMEOUT_MS) {
-			communitySuggestions.getSimilarTo(seed, LIMIT, excludeNsfw)
+			// Whatever is known already: this row is not worth reading the whole library for on its own
+			val taste = profiles.peek()?.taste.orEmpty()
+			communitySuggestions.getSimilarTo(seed, LIMIT, excludeNsfw, maxFetches = MAX_FETCHES, taste = taste)
 		}
 	}.onFailure { it.printStackTraceDebug() }.getOrNull().orEmpty()
 
@@ -152,6 +152,9 @@ class RelatedMangaUseCase @Inject constructor(
 
 		/** Fewer than this and the row looks empty, so the next source of answers is asked too. */
 		const val MIN_RESULTS = 4
+
+		/** Fetches of titles this device does not have yet, the failed ones included. Enough for a row that is not empty. */
+		const val MAX_FETCHES = 4
 
 		/** A resolve, the similar list and a details fetch on each result's source. */
 		const val REMOTE_TIMEOUT_MS = 8_000L

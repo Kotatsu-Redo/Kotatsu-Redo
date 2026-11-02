@@ -20,6 +20,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -48,6 +49,7 @@ import org.koitharu.kotatsu.core.exceptions.CloudFlareException
 import org.koitharu.kotatsu.core.exceptions.resolve.CaptchaHandler
 import org.koitharu.kotatsu.core.model.ids
 import org.koitharu.kotatsu.core.nav.AppRouter
+import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.TrackerDownloadStrategy
 import org.koitharu.kotatsu.core.prefs.TriStateOption
@@ -67,6 +69,7 @@ import org.koitharu.kotatsu.parsers.util.toIntUp
 import org.koitharu.kotatsu.settings.work.PeriodicWorkScheduler
 import org.koitharu.kotatsu.tracker.domain.CheckNewChaptersUseCase
 import org.koitharu.kotatsu.tracker.domain.GetTracksUseCase
+import org.koitharu.kotatsu.tracker.domain.StaleTracksUseCase
 import org.koitharu.kotatsu.tracker.domain.model.MangaTracking
 import org.koitharu.kotatsu.tracker.domain.model.MangaUpdates
 import org.koitharu.kotatsu.tracker.work.TrackerNotificationHelper.NotificationInfo
@@ -92,6 +95,8 @@ class TrackWorker @AssistedInject constructor(
 	private val downloadSchedulerLazy: Lazy<DownloadWorker.Scheduler>,
 	private val historyRepositoryLazy: Lazy<HistoryRepository>,
 	private val storageManagerLazy: Lazy<LocalStorageManager>,
+	private val mangaDataRepositoryLazy: Lazy<MangaDataRepository>,
+	private val staleTracksUseCaseLazy: Lazy<StaleTracksUseCase>,
 ) : CoroutineWorker(context, workerParams) {
 
 	private val notificationManager by lazy { NotificationManagerCompat.from(applicationContext) }
@@ -140,7 +145,35 @@ class TrackWorker @AssistedInject constructor(
 				notificationManager.notify(TAG, TrackerNotificationHelper.GROUP_NOTIFICATION_ID, groupNotification)
 			}
 		}
+		notifyStaleTracks()
 		return Result.success()
+	}
+
+	/**
+	 * After the checks, so anything found just now counts. It looks at all tracks rather than this batch, since each
+	 * run only checks some of them. Its limit is a week, however often this runs. A problem here is not a failed check.
+	 */
+	private suspend fun notifyStaleTracks() {
+		// Before anything is remembered: with these off, nothing was told to anyone
+		if (!notificationHelper.areStaleTrackNotificationsEnabled()) {
+			return
+		}
+		runCatchingCancellable {
+			val useCase = staleTracksUseCaseLazy.get()
+			val now = System.currentTimeMillis()
+			val manga = useCase.findUnreported(now)
+			if (manga.isNotEmpty()) {
+				Log.i(LOG_TAG, "notifyStaleTracks: ${manga.size} stale: ${manga.joinToString(limit = 20) { it.title }}")
+				notificationManager.notify(
+					TrackerNotificationHelper.STALE_TAG,
+					TrackerNotificationHelper.STALE_NOTIFICATION_ID,
+					notificationHelper.createStaleTracksNotification(manga),
+				)
+				useCase.markNotified(manga, now)
+			}
+		}.onFailure { e ->
+			Log.w(LOG_TAG, "notifyStaleTracks failed", e)
+		}
 	}
 
 	@CheckResult
@@ -188,6 +221,7 @@ class TrackWorker @AssistedInject constructor(
 							"newChapters=${it.newChapters.size}",
 					)
 					processDownload(it)
+					storeChapters(it)
 				}
 			}
 		}.mapNotNull {
@@ -275,6 +309,22 @@ class TrackWorker @AssistedInject constructor(
 			)
 		}
 	}.build()
+
+	/**
+	 * The stored list otherwise only changes when a title is opened, and for a title that isn't it would stop short of
+	 * the real release dates. Once the source is down this is all that says how regularly it used to update, so it has
+	 * to be kept while the source still answers. Only when something is new, to not rewrite whole lists on every check.
+	 */
+	private suspend fun storeChapters(mangaUpdates: MangaUpdates.Success) {
+		if (!mangaUpdates.isValid || mangaUpdates.newChapters.isEmpty()) {
+			return
+		}
+		runCatchingCancellable {
+			mangaDataRepositoryLazy.get().updateChapters(mangaUpdates.manga)
+		}.onFailure { e ->
+			Log.w(LOG_TAG, "[${mangaUpdates.manga.id}] storing chapters failed", e)
+		}
+	}
 
 	private suspend fun processDownload(mangaUpdates: MangaUpdates.Success) {
 		if (!mangaUpdates.isValid || mangaUpdates.newChapters.isEmpty()) {
@@ -366,7 +416,8 @@ class TrackWorker @AssistedInject constructor(
 				.addTag(TAG_ONESHOT)
 				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
 				.build()
-			workManager.enqueue(request)
+			// One at a time: each is a check of every tracked title, and refreshing again means nothing while one is on
+			workManager.enqueueUniqueWork(TAG_ONESHOT, ExistingWorkPolicy.KEEP, request)
 		}
 
 		fun observeIsRunning(): Flow<Boolean> {

@@ -87,6 +87,8 @@ import org.koitharu.kotatsu.sourcescore.data.CommunitySettings
 import org.koitharu.kotatsu.sourcescore.ui.CommunityCommentsSheet
 import org.koitharu.kotatsu.sourcescore.ui.CommunityOnboardingDialog
 import org.koitharu.kotatsu.sourcescore.domain.CommunityReplyNotifier
+import org.koitharu.kotatsu.sourcescore.domain.DonationReminder
+import org.koitharu.kotatsu.sourcescore.ui.DonationReminderDialog
 import org.koitharu.kotatsu.sourcescore.ui.SourceScoreSyncWorker
 
 @AndroidEntryPoint
@@ -105,6 +107,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	@Inject
 	lateinit var communityReplyNotifier: CommunityReplyNotifier
+
+	@Inject
+	lateinit var donationReminder: DonationReminder
 
 	@Inject
 	lateinit var settings: AppSettings
@@ -167,6 +172,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		// party learning when this user opens a manga app, to save a request that costs nothing.
 		communityReplyNotifier.watchWhileOpen(this)
 		if (savedInstanceState == null) {
+			// One thing at a time: not over the introduction, or a thread the reader came here to see
+			if (!CommunityOnboardingDialog.isNeeded(communitySettings)
+				&& intent?.action != CommunityReplyNotifier.ACTION_OPEN_COMMENTS
+			) {
+				showDonationReminderIfDue()
+			}
 			openCommentsFromNotification(intent)
 		}
 
@@ -201,6 +212,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		viewBinding.searchView.addTransitionListener(this)
 		viewBinding.searchView.addTransitionListener(exitCallback)
 		initSearch()
+	}
+
+	private fun showDonationReminderIfDue() {
+		lifecycleScope.launch {
+			if (donationReminder.takeIfDue()) {
+				withResumed { DonationReminderDialog.show(supportFragmentManager) }
+			}
+		}
 	}
 
 	override fun onNewIntent(intent: Intent) {

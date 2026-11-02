@@ -98,6 +98,19 @@ class CommunityCommentAdapter(
 			}
 
 			binding.textViewAuthor.text = comment.author
+			// Views are reused, so this has to be undone for everybody else too
+			val hasCrown = comment.isSupporter && !comment.deleted
+			binding.textViewAuthor.setCompoundDrawablesRelativeWithIntrinsicBounds(
+				0,
+				0,
+				if (hasCrown) R.drawable.ic_crown else 0,
+				0,
+			)
+			binding.textViewAuthor.contentDescription = if (hasCrown) {
+				context.getString(R.string.community_supporter_author, comment.author)
+			} else {
+				null
+			}
 			binding.textViewTime.text = relativeTime(comment.createdAt)
 
 			if (comment.deleted) {

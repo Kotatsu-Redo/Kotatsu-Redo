@@ -54,4 +54,10 @@
 		android:summary="@string/url_discord"
 		android:title="@string/telegram_group" />
 
+	<Preference
+		android:icon="@drawable/ic_heart"
+		android:key="sponsor"
+		android:persistent="false"
+		android:title="@string/community_sponsor" />
+
 </PreferenceScreen>

@@ -26,6 +26,8 @@ import org.koitharu.kotatsu.core.util.ext.toUriOrNull
 import org.koitharu.kotatsu.core.util.ext.withPartialWakeLock
 import org.koitharu.kotatsu.core.util.progress.Progress
 import java.io.FileNotFoundException
+import org.koitharu.kotatsu.core.exceptions.BadBackupFormatException
+import java.io.EOFException
 import java.util.zip.ZipInputStream
 import javax.inject.Inject
 import androidx.appcompat.R as appcompatR
@@ -61,8 +63,12 @@ class RestoreService : BaseBackupRestoreService() {
 			} else {
 				null
 			}
-			val result = ZipInputStream(contentResolver.openInputStream(source)).use { input ->
-				repository.restoreBackup(input, sections, progress)
+			val result = try {
+				ZipInputStream(contentResolver.openInputStream(source)).use { input ->
+					repository.restoreBackup(input, sections, progress)
+				}
+			} catch (e: EOFException) {
+				throw BadBackupFormatException(e)
 			}
 			progressUpdateJob?.cancelAndJoin()
 			showResultNotification(source, result)

@@ -11,8 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceScreen
-import androidx.preference.get
+import androidx.preference.PreferenceGroup
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
@@ -100,23 +99,15 @@ abstract class BasePreferenceFragment(@StringRes private val titleId: Int) :
 			return
 		}
 		scrollToPreference(pref)
-		val prefIndex = preferenceScreen.indexOf(key)
-		val view = if (prefIndex >= 0) {
-			listView.findViewHolderForAdapterPosition(prefIndex)?.itemView ?: return
-		} else {
-			return
-		}
-		view.context.getThemeDrawable(materialR.attr.colorTertiaryContainer)?.let {
-			view.background = it
-		}
-	}
-
-	private fun PreferenceScreen.indexOf(key: String): Int {
-		for (i in 0 until preferenceCount) {
-			if (get(i).key == key) {
-				return i
+		// Through the adapter: most settings are inside a category, which a position on the screen's own list misses
+		listView.post {
+			val positions = listView.adapter as? PreferenceGroup.PreferencePositionCallback ?: return@post
+			val position = positions.getPreferenceAdapterPosition(pref)
+			if (position == RecyclerView.NO_POSITION) return@post
+			val view = listView.findViewHolderForAdapterPosition(position)?.itemView ?: return@post
+			view.context.getThemeDrawable(materialR.attr.colorTertiaryContainer)?.let {
+				view.background = it
 			}
 		}
-		return -1
 	}
 }

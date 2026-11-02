@@ -4,6 +4,8 @@ import android.app.assist.AssistContent
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
@@ -12,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.MainThread
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.Insets
@@ -22,6 +25,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.withResumed
 import androidx.transition.Fade
 import androidx.transition.Slide
 import androidx.transition.TransitionManager
@@ -31,9 +35,11 @@ import androidx.window.layout.WindowInfoTracker
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -68,7 +74,11 @@ import org.koitharu.kotatsu.details.ui.pager.pages.PagesSavedObserver
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.reader.data.TapGridSettings
 import org.koitharu.kotatsu.reader.domain.TapGridArea
+import org.koitharu.kotatsu.reader.domain.erase.ImageHider
+import org.koitharu.kotatsu.reader.domain.indexOfPosition
 import org.koitharu.kotatsu.reader.ui.config.ReaderConfigSheet
+import org.koitharu.kotatsu.reader.ui.erase.EraseController
+import org.koitharu.kotatsu.reader.ui.erase.ErasePageTarget
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
 import org.koitharu.kotatsu.reader.ui.pager.ReaderUiState
 import org.koitharu.kotatsu.reader.ui.tapgrid.TapGridDispatcher
@@ -90,6 +100,9 @@ class ReaderActivity :
 
     @Inject
     lateinit var communityRating: CommunityRatingDelegate
+
+    @Inject
+    lateinit var imageHider: ImageHider
 
     @Inject
     lateinit var settings: AppSettings
@@ -116,6 +129,7 @@ class ReaderActivity :
     private lateinit var scrollTimer: ScrollTimer
     private lateinit var pageSaveHelper: PageSaveHelper
     private lateinit var touchHelper: TapGridDispatcher
+    private lateinit var eraseController: EraseController
     private lateinit var controlDelegate: ReaderControlDelegate
     private var gestureInsets: Insets = Insets.NONE
     private lateinit var readerManager: ReaderManager
@@ -137,6 +151,13 @@ class ReaderActivity :
         scrollTimer = scrollTimerFactory.create(resources, this, this)
         pageSaveHelper = pageSaveHelperFactory.create(this)
         controlDelegate = ReaderControlDelegate(resources, settings, tapGridSettings, this)
+        eraseController = EraseController(viewBinding.eraseOverlay, imageHider, lifecycleScope, EraseHost())
+        val eraseBackCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() = eraseController.onBackPressed()
+        }
+        onBackPressedDispatcher.addCallback(this, eraseBackCallback)
+        viewBinding.eraseOverlay.onActiveChanged = { eraseBackCallback.isEnabled = it }
+        offerEraseTutorial()
         viewBinding.zoomControl.listener = this
         viewBinding.actionsView.listener = this
         viewBinding.buttonTimer?.setOnClickListener(this)
@@ -204,7 +225,7 @@ class ReaderActivity :
         viewModel.isZoomControlsEnabled.observe(this) {
             viewBinding.zoomControl.isVisible = it
         }
-        addMenuProvider(ReaderMenuProvider(viewModel))
+        addMenuProvider(ReaderMenuProvider(viewModel) { router.openHiddenImages() })
 
         observeWindowLayout()
 
@@ -265,9 +286,39 @@ class ReaderActivity :
         }
     }
 
+    /** Once, the first time a chapter is on screen in webtoon mode. Leaving halfway offers it again next time. */
+    private fun offerEraseTutorial() {
+        if (!settings.isReaderEraseGestureEnabled || !settings.isTipEnabled(AppSettings.TIP_ERASE_TUTORIAL)) {
+            return
+        }
+        lifecycleScope.launch {
+            combine(viewModel.readerMode, viewModel.content) { mode, content ->
+                mode == ReaderMode.WEBTOON && content.pages.isNotEmpty()
+            }.first { it }
+            // The first page needs a moment to be there to practise on
+            delay(ERASE_TUTORIAL_DELAY_MS)
+            withResumed { startEraseTutorial() }
+        }
+    }
+
+    private fun startEraseTutorial() {
+        val tutorial = viewBinding.eraseTutorial
+        tutorial.onFinished = {
+            eraseController.practice = null
+            viewBinding.eraseOverlay.cancel()
+            settings.closeTip(AppSettings.TIP_ERASE_TUTORIAL)
+        }
+        eraseController.practice = tutorial
+        tutorial.start()
+    }
+
     private fun onInitReader(mode: ReaderMode?) {
         if (mode == null) {
             return
+        }
+        if (mode != ReaderMode.WEBTOON && eraseController.practice != null) {
+            eraseController.practice = null
+            viewBinding.eraseTutorial.stop()
         }
         if (readerManager.currentMode != mode) {
             readerManager.replace(mode)
@@ -322,6 +373,11 @@ class ReaderActivity :
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        when (eraseController.onTouchEvent(ev)) {
+            EraseController.TouchResult.NOT_CLAIMED -> Unit
+            EraseController.TouchResult.CONSUMED -> return true
+            EraseController.TouchResult.TO_OVERLAY -> return super.dispatchTouchEvent(ev)
+        }
         touchHelper.dispatchTouchEvent(ev)
         if (!viewBinding.timerControl.hasGlobalPoint(ev.rawX.toInt(), ev.rawY.toInt())) {
             scrollTimer.onTouchEvent(ev)
@@ -345,7 +401,11 @@ class ReaderActivity :
     override fun onPageSelected(page: ReaderPage): Boolean {
         lifecycleScope.launch(Dispatchers.Default) {
             val pages = viewModel.content.value.pages
-            val index = pages.indexOfFirst { it.chapterId == page.chapterId && it.id == page.id }
+            var index = pages.indexOfFirst { it.chapterId == page.chapterId && it.id == page.id }
+            if (index == -1) {
+                // The page slider counts every page of the chapter, including those since hidden
+                index = pages.indexOfPosition(page.chapterId, page.index) ?: -1
+            }
             if (index != -1) {
                 withContext(Dispatchers.Main) {
                     readerManager.currentReader?.switchPageTo(index, true)
@@ -532,6 +592,55 @@ class ReaderActivity :
         onPageSelected(ReaderPage(page, index, chapterId))
     }
 
+    private inner class EraseHost : EraseController.Host {
+
+        override val isEraseGestureEnabled: Boolean
+            get() = settings.isReaderEraseGestureEnabled
+
+        override val mangaTitle: String?
+            get() = viewModel.getMangaOrNull()?.title
+
+        override val pageBackgroundColor: Int
+            get() = if (viewModel.readerSettingsProducer.value.background.isLight(this@ReaderActivity)) {
+                Color.WHITE
+            } else {
+                Color.BLACK
+            }
+
+        override fun canStartEraseAt(rawX: Int, rawY: Int): Boolean = onProcessTouch(rawX, rawY)
+
+        override fun findEraseTarget(rawX: Float, rawY: Float): ErasePageTarget? =
+            readerManager.currentReader?.findPageHolderAt(rawX.toInt(), rawY.toInt())?.createEraseTarget()
+
+        override suspend fun findNeighbourImages(page: ReaderPage): List<Uri> = viewModel.loadNeighbourImages(page)
+
+        override fun cancelTouchFor(event: MotionEvent) {
+            val cancel = MotionEvent.obtain(event)
+            cancel.action = MotionEvent.ACTION_CANCEL
+            touchHelper.dispatchTouchEvent(cancel)
+            scrollTimer.onTouchEvent(cancel)
+            super@ReaderActivity.dispatchTouchEvent(cancel)
+            cancel.recycle()
+        }
+
+        override fun onEraseGestureRecognized() = setUiIsVisible(false)
+
+        override fun onImageErased(ruleIds: List<Long>) {
+            Snackbar.make(viewBinding.container, R.string.erase_done, Snackbar.LENGTH_LONG)
+                .setAnchorView(viewBinding.toolbarDocked)
+                .setAction(R.string.undo) {
+                    lifecycleScope.launch { ruleIds.forEach { imageHider.forget(it) } }
+                }
+                .show()
+        }
+
+        override fun showEraseMessage(message: Int) {
+            Snackbar.make(viewBinding.container, message, Snackbar.LENGTH_SHORT)
+                .setAnchorView(viewBinding.toolbarDocked)
+                .show()
+        }
+    }
+
     private fun onReaderBarChanged(isBarEnabled: Boolean) {
         viewBinding.infoBar.isVisible = isBarEnabled && viewBinding.appbarTop.isGone
     }
@@ -673,5 +782,7 @@ class ReaderActivity :
     companion object {
 
         private const val TOAST_DURATION = 2000L
+
+        private const val ERASE_TUTORIAL_DELAY_MS = 1_200L
     }
 }

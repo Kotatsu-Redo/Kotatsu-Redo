@@ -13,6 +13,7 @@ import com.awxkee.jxlcoder.ScaleMode
 import com.davemorrissey.labs.subscaleview.decoder.ImageDecodeException
 import okio.BufferedSource
 import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import okio.IOException
 import okio.buffer
@@ -46,9 +47,20 @@ object BitmapDecoderCompat {
 
 	private const val JXL_HEADER_SIZE = 12
 
+	private val FTYP_BOX = "ftyp".encodeUtf8()
+	private val AVIF_BRANDS = setOf("avif".encodeUtf8(), "avis".encodeUtf8())
+	private const val FTYP_MIN_SIZE = 16L
+	private const val FTYP_MAX_SIZE = 256L
+
+	/**
+	 * The platform decodes an AVIF as one frame of AV1 video, and video decoders have a size they stop at. A Pixel 8 Pro
+	 * refuses 720x16965 outright: it opens the file, then fails on every part of it, with nothing to say so.
+	 */
+	private const val MAX_PLATFORM_AVIF_SIZE = 4096
+
 	@Blocking
 	fun decode(file: File): Bitmap {
-		// By content, not name: sites serve JPEG XL under .jpg URLs to browsers that accept it
+		// By content, not name: sites serve JPEG XL and AVIF under .jpg URLs, labelled as JPEG
 		if (isJxl(file)) {
 			return decodeJxl(file.readBytes())
 		}
@@ -102,14 +114,60 @@ object BitmapDecoderCompat {
 	}.getOrDefault(false)
 
 	/**
+	 * Checks the brands of the opening `ftyp` box without consuming it. HEIC shares this container,
+	 * so the box alone says nothing: only the brands tell an AVIF apart.
+	 */
+	fun isAvif(source: BufferedSource): Boolean {
+		val peek = source.peek()
+		if (!peek.request(8)) {
+			return false
+		}
+		val size = peek.readInt().toLong() and 0xFFFFFFFFL
+		if (peek.readByteString(4) != FTYP_BOX || size !in FTYP_MIN_SIZE..FTYP_MAX_SIZE || !peek.request(size - 8)) {
+			return false
+		}
+		val majorBrand = peek.readByteString(4)
+		if (majorBrand in AVIF_BRANDS) {
+			return true
+		}
+		peek.skip(4) // minor version
+		return (0 until (size - FTYP_MIN_SIZE) / 4).any { peek.readByteString(4) in AVIF_BRANDS }
+	}
+
+	@Blocking
+	fun isAvif(file: File): Boolean = runCatchingCancellable {
+		file.source().buffer().use { isAvif(it) }
+	}.getOrDefault(false)
+
+	/** Whether [file] is an AVIF the platform cannot be relied on for, see [MAX_PLATFORM_AVIF_SIZE]. */
+	@Blocking
+	fun isAvifTooLargeForPlatform(file: File): Boolean = runCatchingCancellable {
+		if (!isAvif(file)) {
+			return@runCatchingCancellable false
+		}
+		val info = Info()
+		val bytes = file.source().buffer().use { it.readByteBuffer() }
+		AvifDecoder.getInfo(bytes, bytes.remaining(), info) && maxOf(info.width, info.height) > MAX_PLATFORM_AVIF_SIZE
+	}.getOrDefault(false)
+
+	/**
 	 * Free memory to ask for before decoding [file].
 	 *
-	 * Twice the file size is the rule for the formats this was written for. A JPEG XL is often a tenth
-	 * of the PNG it decodes to, so for one that guess is read from the header instead.
+	 * Twice the file size is the rule for the formats this was written for. A JPEG XL or AVIF is often a
+	 * tenth of the PNG it decodes to, so for those that guess is read from the header instead.
 	 */
 	@Blocking
 	fun estimateDecodedSize(file: File): Long {
 		val guess = file.length() * 2
+		if (isAvif(file)) {
+			val info = Info()
+			val bytes = file.source().buffer().use { it.readByteBuffer() }
+			return if (AvifDecoder.getInfo(bytes, bytes.remaining(), info)) {
+				maxOf(guess, info.width.toLong() * info.height * 4)
+			} else {
+				guess
+			}
+		}
 		if (!isJxl(file) || !JxlSupport.isAvailable) {
 			return guess
 		}
@@ -134,6 +192,9 @@ object BitmapDecoderCompat {
 	fun probeMimeType(file: File): MimeType? {
 		if (isJxl(file)) {
 			return MimeTypes.JXL
+		}
+		if (isAvif(file)) {
+			return MimeTypes.AVIF
 		}
 		return MimeTypes.probeMimeType(file) ?: detectBitmapType(file)
 	}

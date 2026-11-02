@@ -33,7 +33,12 @@ class RegionBitmapDecoder(
 ) : Decoder {
 
 	override suspend fun decode(): DecodeResult? {
-		val regionDecoder = BitmapDecoderCompat.createRegionDecoder(fetchResult.source.source().inputStream())
+		// Some phones open an AVIF here and then fail to decode it: left to the decoder made for them
+		val regionDecoder = if (BitmapDecoderCompat.isAvif(fetchResult.source.source())) {
+			null
+		} else {
+			BitmapDecoderCompat.createRegionDecoder(fetchResult.source.source().inputStream())
+		}
 		if (regionDecoder == null) {
 			val revivedFetchResult = fetchResult.copyWithNewSource()
 			return try {

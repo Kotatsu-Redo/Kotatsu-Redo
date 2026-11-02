@@ -3,246 +3,249 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:title="@string/reader_settings">
+	<PreferenceCategory android:title="@string/pages">
 
-	<ListPreference
-		android:entries="@array/reader_modes"
-		android:icon="@drawable/ic_reader_ltr"
-		android:key="reader_mode"
-		android:title="@string/default_mode"
-		app:useSimpleSummaryProvider="true" />
+		<ListPreference
+			android:entries="@array/reader_modes"
+			android:icon="@drawable/ic_reader_ltr"
+			android:key="reader_mode"
+			android:title="@string/default_mode"
+			app:useSimpleSummaryProvider="true" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_auto_fix"
-		android:key="reader_mode_detect"
-		android:summary="@string/detect_reader_mode_summary"
-		android:title="@string/detect_reader_mode" />
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_auto_fix"
+			android:key="reader_mode_detect"
+			android:summary="@string/detect_reader_mode_summary"
+			android:title="@string/detect_reader_mode" />
 
-	<ListPreference
-		android:entries="@array/zoom_modes"
-		android:icon="@drawable/ic_zoom_in"
-		android:key="zoom_mode"
-		android:title="@string/scale_mode"
-		app:allowDividerAbove="true"
-		app:useSimpleSummaryProvider="true" />
+		<ListPreference
+			android:entries="@array/zoom_modes"
+			android:icon="@drawable/ic_zoom_in"
+			android:key="zoom_mode"
+			android:title="@string/scale_mode"
+			app:useSimpleSummaryProvider="true" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_zoom_out"
-		android:key="reader_zoom_buttons"
-		android:summary="@string/reader_zoom_buttons_summary"
-		android:title="@string/reader_zoom_buttons" />
+		<ListPreference
+			android:entries="@array/reader_animation"
+			android:icon="@drawable/ic_auto_fix"
+			android:key="reader_animation2"
+			android:title="@string/pages_animation"
+			app:useSimpleSummaryProvider="true" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_reader_vertical"
-		android:key="webtoon_zoom"
-		android:summary="@string/webtoon_zoom_summary"
-		android:title="@string/webtoon_zoom" />
+		<MultiSelectListPreference
+			android:entries="@array/reader_crop"
+			android:entryValues="@array/values_reader_crop"
+			android:icon="@drawable/ic_crop"
+			android:key="reader_crop"
+			android:title="@string/crop_pages" />
 
-	<org.koitharu.kotatsu.settings.utils.SliderPreference
-		android:dependency="webtoon_zoom"
-		android:icon="@drawable/ic_size_large"
-		android:key="webtoon_zoom_out"
-		android:stepSize="10"
-		android:title="@string/default_webtoon_zoom_out"
-		android:valueFrom="0"
-		android:valueTo="50"
-		app:defaultValue="0"
-		app:tickVisible="true" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_split_horizontal"
-		android:key="webtoon_gaps"
-		android:summary="@string/webtoon_gaps_summary"
-		android:title="@string/webtoon_gaps" />
-
-	<MultiSelectListPreference
-		android:entries="@array/reader_controls"
-		android:icon="@drawable/ic_tap"
-		android:key="reader_controls"
-		android:title="@string/reader_controls_in_bottom_bar"
-		app:allowDividerAbove="true" />
-
-	<Preference
-		android:icon="@drawable/ic_tap_reorder"
-		android:key="reader_tap_actions"
-		android:persistent="false"
-		android:summary="@string/reader_actions_summary"
-		android:title="@string/reader_actions" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_reader_rtl"
-		android:key="reader_taps_ltr"
-		android:summary="@string/reader_control_ltr_summary"
-		android:title="@string/reader_control_ltr" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_gesture_vertical"
-		android:key="reader_volume_buttons"
-		android:summary="@string/switch_pages_volume_buttons_summary"
-		android:title="@string/switch_pages_volume_buttons" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_revert"
-		android:key="reader_navigation_inverted"
-		android:summary="@string/reader_navigation_inverted_summary"
-		android:title="@string/reader_navigation_inverted" />
-
-	<ListPreference
-		android:entries="@array/reader_animation"
-		android:icon="@drawable/ic_auto_fix"
-		android:key="reader_animation2"
-		android:title="@string/pages_animation"
-		app:useSimpleSummaryProvider="true" />
-
-    <SwitchPreferenceCompat
-        android:defaultValue="false"
-        android:icon="@drawable/ic_gesture_vertical"
-        android:key="webtoon_pull_gesture"
-        android:summary="@string/enable_pull_gesture_summary"
-        android:title="@string/enable_pull_gesture_title" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_appearance"
-		android:key="enhanced_colors"
-		android:summary="@string/enhanced_colors_summary"
-		android:title="@string/enhanced_colors"
-		app:allowDividerAbove="true" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_auto_fix"
-		android:key="reader_optimize"
-		android:summary="@string/reader_optimize_summary"
-		android:title="@string/reader_optimize" />
-
-	<MultiSelectListPreference
-		android:entries="@array/reader_crop"
-		android:entryValues="@array/values_reader_crop"
-		android:icon="@drawable/ic_crop"
-		android:key="reader_crop"
-		android:title="@string/crop_pages" />
-
-	<PreferenceCategory
-		android:title="@string/e_ink"
-		app:allowDividerAbove="true">
+		<ListPreference
+			android:entries="@array/reader_backgrounds"
+			android:icon="@drawable/ic_appearance"
+			android:key="reader_background"
+			android:title="@string/background"
+			app:useSimpleSummaryProvider="true" />
 
 		<SwitchPreferenceCompat
 			android:defaultValue="false"
-			android:icon="@drawable/ic_flash"
-			android:key="eink_flash"
-			android:summary="@string/flash_on_page_change_summary"
-			android:title="@string/flash_on_page_change" />
-
-		<org.koitharu.kotatsu.settings.utils.SliderPreference
-			android:dependency="eink_flash"
-			android:icon="@drawable/ic_timer"
-			android:key="eink_flash_duration"
-			android:stepSize="50"
-			android:title="@string/flash_duration"
-			android:valueFrom="100"
-			android:valueTo="1000"
-			app:defaultValue="300" />
-
-		<org.koitharu.kotatsu.settings.utils.SliderPreference
-			android:dependency="eink_flash"
-			android:icon="@drawable/ic_timelapse"
-			android:key="eink_flash_every"
-			android:stepSize="1"
-			android:title="@string/flash_every"
-			android:valueFrom="1"
-			android:valueTo="10"
-			app:defaultValue="1"
-			app:tickVisible="true" />
-
-		<ListPreference
-			android:dependency="eink_flash"
-			android:icon="@drawable/ic_appearance"
-			android:key="eink_flash_color"
-			android:title="@string/flash_with"
-			app:useSimpleSummaryProvider="true" />
+			android:icon="@drawable/ic_book_page"
+			android:key="pages_numbers"
+			android:summary="@string/show_pages_numbers_summary"
+			android:title="@string/show_pages_numbers" />
 
 	</PreferenceCategory>
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_fullscreen"
-		android:key="reader_fullscreen"
-		android:summary="@string/reader_fullscreen_summary"
-		android:title="@string/fullscreen_mode"
-		app:allowDividerAbove="true" />
+	<PreferenceCategory android:title="@string/webtoon">
 
-	<ListPreference
-		android:entries="@array/screen_orientations"
-		android:icon="@drawable/ic_screen_rotation"
-		android:key="reader_orientation"
-		android:title="@string/screen_orientation"
-		app:useSimpleSummaryProvider="true" />
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_reader_vertical"
+			android:key="webtoon_zoom"
+			android:summary="@string/webtoon_zoom_summary"
+			android:title="@string/webtoon_zoom" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_eye"
-		android:key="reader_screen_on"
-		android:summary="@string/keep_screen_on_summary"
-		android:title="@string/keep_screen_on" />
+		<org.koitharu.kotatsu.settings.utils.SliderPreference
+			android:dependency="webtoon_zoom"
+			android:icon="@drawable/ic_size_large"
+			android:key="webtoon_zoom_out"
+			android:stepSize="10"
+			android:title="@string/default_webtoon_zoom_out"
+			android:valueFrom="0"
+			android:valueTo="50"
+			app:defaultValue="0"
+			app:tickVisible="true" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_split_horizontal"
-		android:key="reader_multitask"
-		android:summary="@string/reader_multitask_summary"
-		android:title="@string/reader_multitask" />
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_split_horizontal"
+			android:key="webtoon_gaps"
+			android:summary="@string/webtoon_gaps_summary"
+			android:title="@string/webtoon_gaps" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_info_outline"
-		android:key="reader_bar"
-		android:summary="@string/reader_info_bar_summary"
-		android:title="@string/reader_info_bar"
-		app:allowDividerAbove="true" />
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_gesture_vertical"
+			android:key="webtoon_pull_gesture"
+			android:summary="@string/enable_pull_gesture_summary"
+			android:title="@string/enable_pull_gesture_title" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:dependency="reader_bar"
-		android:icon="@drawable/ic_eye_off"
-		android:key="reader_bar_transparent"
-		android:title="@string/reader_info_bar_transparent" />
+	</PreferenceCategory>
 
-	<SwitchPreferenceCompat
-		android:defaultValue="true"
-		android:icon="@drawable/ic_notification"
-		android:key="reader_chapter_toast"
-		android:summary="@string/reader_chapter_toast_summary"
-		android:title="@string/reader_chapter_toast" />
+	<PreferenceCategory android:title="@string/reader_group_controls">
 
-	<ListPreference
-		android:entries="@array/reader_backgrounds"
-		android:icon="@drawable/ic_appearance"
-		android:key="reader_background"
-		android:title="@string/background"
-		app:allowDividerAbove="true"
-		app:useSimpleSummaryProvider="true" />
+		<Preference
+			android:icon="@drawable/ic_tap_reorder"
+			android:key="reader_tap_actions"
+			android:persistent="false"
+			android:summary="@string/reader_actions_summary"
+			android:title="@string/reader_actions" />
 
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:icon="@drawable/ic_book_page"
-		android:key="pages_numbers"
-		android:summary="@string/show_pages_numbers_summary"
-		android:title="@string/show_pages_numbers" />
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_reader_rtl"
+			android:key="reader_taps_ltr"
+			android:summary="@string/reader_control_ltr_summary"
+			android:title="@string/reader_control_ltr" />
 
-	<ListPreference
-		android:defaultValue="2"
-		android:entries="@array/network_policy"
-		android:entryValues="@array/values_network_policy"
-		android:icon="@drawable/ic_download"
-		android:key="pages_preload"
-		android:title="@string/preload_pages"
-		app:useSimpleSummaryProvider="true" />
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_gesture_vertical"
+			android:key="reader_volume_buttons"
+			android:summary="@string/switch_pages_volume_buttons_summary"
+			android:title="@string/switch_pages_volume_buttons" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_revert"
+			android:key="reader_navigation_inverted"
+			android:summary="@string/reader_navigation_inverted_summary"
+			android:title="@string/reader_navigation_inverted" />
+
+		<MultiSelectListPreference
+			android:entries="@array/reader_controls"
+			android:icon="@drawable/ic_tap"
+			android:key="reader_controls"
+			android:title="@string/reader_controls_in_bottom_bar" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_zoom_out"
+			android:key="reader_zoom_buttons"
+			android:summary="@string/reader_zoom_buttons_summary"
+			android:title="@string/reader_zoom_buttons" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/reader_group_screen">
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_fullscreen"
+			android:key="reader_fullscreen"
+			android:summary="@string/reader_fullscreen_summary"
+			android:title="@string/fullscreen_mode" />
+
+		<ListPreference
+			android:entries="@array/screen_orientations"
+			android:icon="@drawable/ic_screen_rotation"
+			android:key="reader_orientation"
+			android:title="@string/screen_orientation"
+			app:useSimpleSummaryProvider="true" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_eye"
+			android:key="reader_screen_on"
+			android:summary="@string/keep_screen_on_summary"
+			android:title="@string/keep_screen_on" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_info_outline"
+			android:key="reader_bar"
+			android:summary="@string/reader_info_bar_summary"
+			android:title="@string/reader_info_bar" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:dependency="reader_bar"
+			android:icon="@drawable/ic_eye_off"
+			android:key="reader_bar_transparent"
+			android:title="@string/reader_info_bar_transparent" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_notification"
+			android:key="reader_chapter_toast"
+			android:summary="@string/reader_chapter_toast_summary"
+			android:title="@string/reader_chapter_toast" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/hidden_images">
+
+		<SwitchPreferenceCompat
+			android:defaultValue="true"
+			android:icon="@drawable/ic_delete"
+			android:key="reader_erase_gesture"
+			android:summary="@string/erase_gesture_summary"
+			android:title="@string/erase_gesture" />
+
+		<Preference
+			android:icon="@drawable/ic_info_outline"
+			android:key="erase_tutorial"
+			android:persistent="false"
+			android:summary="@string/erase_tutorial_again_summary"
+			android:title="@string/erase_tutorial_again" />
+
+		<PreferenceScreen
+			android:fragment="org.koitharu.kotatsu.reader.ui.erase.HiddenImagesFragment"
+			android:icon="@drawable/ic_eye_off"
+			android:key="hidden_images"
+			android:summary="@string/hidden_images_summary"
+			android:title="@string/hidden_images" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/advanced">
+
+		<ListPreference
+			android:defaultValue="2"
+			android:entries="@array/network_policy"
+			android:entryValues="@array/values_network_policy"
+			android:icon="@drawable/ic_download"
+			android:key="pages_preload"
+			android:title="@string/preload_pages"
+			app:useSimpleSummaryProvider="true" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_appearance"
+			android:key="enhanced_colors"
+			android:summary="@string/enhanced_colors_summary"
+			android:title="@string/enhanced_colors" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_auto_fix"
+			android:key="reader_optimize"
+			android:summary="@string/reader_optimize_summary"
+			android:title="@string/reader_optimize" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_split_horizontal"
+			android:key="reader_multitask"
+			android:summary="@string/reader_multitask_summary"
+			android:title="@string/reader_multitask" />
+
+		<PreferenceScreen
+			android:fragment="org.koitharu.kotatsu.settings.EInkSettingsFragment"
+			android:icon="@drawable/ic_flash"
+			android:key="eink"
+			android:title="@string/e_ink" />
+
+	</PreferenceCategory>
 
 </PreferenceScreen>

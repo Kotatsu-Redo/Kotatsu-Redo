@@ -84,7 +84,7 @@ class PagePickerViewModel @Inject constructor(
 		}
 	}
 
-	private fun updateList() {
+	private suspend fun updateList() {
 		val snapshot = chaptersLoader.snapshot()
 		val pages = buildList(snapshot.size + chaptersLoader.size + 2) {
 			var previousChapterId = 0L

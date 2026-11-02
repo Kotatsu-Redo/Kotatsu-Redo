@@ -147,6 +147,36 @@ class TrackingRepository @Inject constructor(
 		return disableKey?.defaultValue == true
 	}
 
+	/** Every track with no known chapter for the silence [StaleTrackPolicy] goes by, however long ago. */
+	suspend fun getSilentTrackIds(now: Long): Set<Long> {
+		return db.getTracksDao().findIdsWithLastChapterBefore(StaleTrackPolicy.maxLastChapterDate(now)).toSet()
+	}
+
+	/**
+	 * Tracks to put through [StaleTrackPolicy]. Everything used here stays in the database while a source is failing:
+	 * failed checks keep the track's last chapter date and don't touch the stored chapter list.
+	 */
+	suspend fun getStaleTrackCandidates(now: Long, excludeIds: Set<Long>): List<Pair<Manga, StaleTrackPolicy.Track>> {
+		val rows = db.getTracksDao().findByLastChapterDate(
+			minChapterDate = StaleTrackPolicy.minLastChapterDate(now),
+			maxChapterDate = StaleTrackPolicy.maxLastChapterDate(now),
+		)
+		return rows.mapNotNull { row ->
+			val manga = row.manga.toManga(emptySet(), null)
+			if (manga.id in excludeIds || isUpdateCheckingDisabled(manga)) {
+				return@mapNotNull null
+			}
+			manga to StaleTrackPolicy.Track(
+				mangaId = manga.id,
+				state = manga.state,
+				lastChapterDate = row.track.lastChapterDate,
+				lastLogTime = db.getTrackLogsDao().getLastLogTime(manga.id) ?: 0L,
+				lastCheckTime = row.track.lastCheckTime,
+				releaseDates = db.getChaptersDao().findUploadDates(manga.id, row.track.lastChapterId, RELEASE_DATES_LIMIT),
+			)
+		}
+	}
+
 	@Deprecated("")
 	suspend fun getTrack(manga: Manga): MangaTracking {
 		return getTrackOrNull(manga) ?: MangaTracking(
@@ -357,5 +387,8 @@ class TrackingRepository @Inject constructor(
 		const val TAG = "Tracker"
 		const val MAX_STALE_UPDATE_DAYS = 90L
 		const val REMOVED_IDS_LOG_LIMIT = 20
+
+		// Enough for the release days StaleTrackPolicy looks at, unless several chapters land on most of them
+		const val RELEASE_DATES_LIMIT = 64
 	}
 }

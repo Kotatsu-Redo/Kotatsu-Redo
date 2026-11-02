@@ -46,6 +46,13 @@ abstract class TracksDao : MangaQueryBuilder.ConditionCallback {
 	@Query("SELECT manga_id FROM tracks")
 	abstract suspend fun findAllIds(): LongArray
 
+	@Transaction
+	@Query("SELECT * FROM tracks WHERE last_chapter_date BETWEEN :minChapterDate AND :maxChapterDate")
+	abstract suspend fun findByLastChapterDate(minChapterDate: Long, maxChapterDate: Long): List<TrackWithManga>
+
+	@Query("SELECT manga_id FROM tracks WHERE last_chapter_date > 0 AND last_chapter_date <= :maxChapterDate")
+	abstract suspend fun findIdsWithLastChapterBefore(maxChapterDate: Long): LongArray
+
 	@Query("SELECT * FROM tracks WHERE manga_id = :mangaId")
 	abstract suspend fun find(mangaId: Long): TrackEntity?
 

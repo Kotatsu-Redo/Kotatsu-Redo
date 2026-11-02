@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="@string/network">
+	<PreferenceCategory android:title="@string/mobile_data">
+
+		<ListPreference
+			android:entries="@array/metered_network_options"
+			android:icon="@drawable/ic_network_cellular"
+			android:key="downloads_metered_network"
+			android:title="@string/download_over_cellular"
+			app:useSimpleSummaryProvider="true" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_wifi"
+			android:key="tracker_wifi"
+			android:summary="@string/tracker_wifi_only_summary"
+			android:title="@string/new_chapters_wifi_only" />
+
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_wifi"
+			android:key="suggestions_wifi"
+			android:summary="@string/suggestions_wifi_only_summary"
+			android:title="@string/suggestions_wifi_only" />
+
+		<ListPreference
+			android:defaultValue="0"
+			android:entries="@array/network_policy"
+			android:entryValues="@array/values_network_policy"
+			android:icon="@drawable/ic_download"
+			android:key="prefetch_content"
+			android:title="@string/prefetch_content"
+			app:useSimpleSummaryProvider="true" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/connection">
+
+		<PreferenceScreen
+			android:fragment="org.koitharu.kotatsu.settings.ProxySettingsFragment"
+			android:icon="@drawable/ic_split_horizontal"
+			android:key="proxy"
+			android:title="@string/proxy" />
+
+		<ListPreference
+			android:entries="@array/doh_providers"
+			android:icon="@drawable/ic_web"
+			android:key="doh"
+			android:title="@string/dns_over_https"
+			app:useSimpleSummaryProvider="true" />
+
+		<ListPreference
+			android:defaultValue="-1"
+			android:entries="@array/image_proxies"
+			android:entryValues="@array/values_image_proxies"
+			android:icon="@drawable/ic_images"
+			android:key="images_proxy_2"
+			android:title="@string/images_proxy_title"
+			app:useSimpleSummaryProvider="true" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/troubleshooting">
+
+		<SwitchPreferenceCompat
+			android:icon="@drawable/ic_lock"
+			android:key="ssl_bypass"
+			android:summary="@string/ignore_ssl_errors_summary"
+			android:title="@string/ignore_ssl_errors" />
+
+		<SwitchPreferenceCompat
+			android:icon="@drawable/ic_offline"
+			android:key="no_offline"
+			android:summary="@string/disable_connectivity_check_summary"
+			android:title="@string/disable_connectivity_check" />
+
+	</PreferenceCategory>
+
+</PreferenceScreen>

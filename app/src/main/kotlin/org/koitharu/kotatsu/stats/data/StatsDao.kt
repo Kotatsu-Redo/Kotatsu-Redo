@@ -29,6 +29,10 @@ abstract class StatsDao {
 	@Query("SELECT IFNULL(SUM(duration)/SUM(pages), 0) FROM stats")
 	abstract suspend fun getAverageTimePerPage(): Long
 
+	/** How much of each manga has actually gone past the reader's eyes, for everything they have read. */
+	@Query("SELECT manga_id AS mangaId, SUM(pages) AS pages FROM stats GROUP BY manga_id")
+	abstract suspend fun findPagesPerManga(): List<MangaPagesRead>
+
 	@Query("DELETE FROM stats")
 	abstract suspend fun clear()
 
@@ -81,3 +85,5 @@ abstract class StatsDao {
 		}
 	}
 }
+
+data class MangaPagesRead(val mangaId: Long, val pages: Int)

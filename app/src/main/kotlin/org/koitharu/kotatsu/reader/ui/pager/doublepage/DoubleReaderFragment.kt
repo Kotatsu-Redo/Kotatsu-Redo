@@ -18,7 +18,9 @@ import org.koitharu.kotatsu.core.ui.list.lifecycle.RecyclerViewLifecycleDispatch
 import org.koitharu.kotatsu.core.util.ext.firstVisibleItemPosition
 import org.koitharu.kotatsu.databinding.FragmentReaderDoubleBinding
 import org.koitharu.kotatsu.reader.domain.PageLoader
+import org.koitharu.kotatsu.reader.domain.indexOfPosition
 import org.koitharu.kotatsu.reader.ui.ReaderState
+import org.koitharu.kotatsu.reader.ui.pager.BasePageHolder
 import org.koitharu.kotatsu.reader.ui.pager.BaseReaderAdapter
 import org.koitharu.kotatsu.reader.ui.pager.BaseReaderFragment
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
@@ -101,9 +103,7 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 			}
 		}
 		if (pendingState != null) {
-			var position = paddedPages.indexOfFirst {
-				it.chapterId == pendingState.chapterId && it.index == pendingState.page
-			}
+			var position = paddedPages.indexOfPosition(pendingState.chapterId, pendingState.page) ?: -1
 			items.join()
 			if (position != -1) {
 				position = position.toPagePosition()
@@ -125,6 +125,9 @@ open class DoubleReaderFragment : BaseReaderFragment<FragmentReaderDoubleBinding
 		networkState = networkState,
 		exceptionResolver = exceptionResolver,
 	)
+
+	override fun findPageHolderAt(rawX: Int, rawY: Int): BasePageHolder<*>? =
+		with(viewBinding?.recyclerView) { this?.findPageHolderAt(rawX, rawY) }
 
 	override fun onZoomIn() {
 		viewBinding?.frame?.onZoomIn()

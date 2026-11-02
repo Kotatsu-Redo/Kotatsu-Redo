@@ -7,7 +7,7 @@
 		android:icon="@drawable/ic_discord"
 		android:key="discord_rpc"
 		android:layout="@layout/preference_toggle_header"
-		android:title="@string/discord_rpc" />
+		android:title="@string/discord_share_reading" />
 
 	<EditTextPreference
 		android:dependency="discord_rpc"
@@ -15,12 +15,5 @@
 		android:key="discord_token"
 		android:summary="@string/discord_token_summary"
 		android:title="@string/discord_token" />
-
-	<SwitchPreferenceCompat
-		android:dependency="discord_rpc"
-		android:icon="@drawable/ic_sfw"
-		android:key="discord_rpc_skip_nsfw"
-		android:summary="@string/rpc_skip_nsfw_summary"
-		android:title="@string/disable_nsfw" />
 
 </androidx.preference.PreferenceScreen>

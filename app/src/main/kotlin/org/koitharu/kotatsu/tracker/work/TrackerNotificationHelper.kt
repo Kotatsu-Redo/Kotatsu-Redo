@@ -4,7 +4,9 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.VISIBILITY_PRIVATE
@@ -17,6 +19,7 @@ import coil3.request.ImageRequest
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.LocalizedAppContext
 import org.koitharu.kotatsu.core.model.getLocalizedTitle
+import org.koitharu.kotatsu.core.model.getTitle
 import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.nav.AppRouter
 import org.koitharu.kotatsu.core.prefs.AppSettings
@@ -150,6 +153,81 @@ class TrackerNotificationHelper @Inject constructor(
 		return builder.build()
 	}
 
+	/**
+	 * Has its own channel so it can be turned off without losing new chapter notifications. Android 7 and older have
+	 * no channels, so there it goes by the one switch for tracker notifications.
+	 */
+	fun areStaleTrackNotificationsEnabled(): Boolean {
+		return applicationContext.checkNotificationPermission(STALE_CHANNEL_ID) &&
+			(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || settings.isTrackerNotificationsEnabled)
+	}
+
+	fun createStaleTracksNotification(manga: List<Manga>): Notification {
+		val builder = NotificationCompat.Builder(applicationContext, STALE_CHANNEL_ID)
+		with(builder) {
+			val title = applicationContext.resources.getQuantityStringSafe(
+				R.plurals.tracker_stale_title,
+				manga.size,
+				manga.size,
+			)
+			setContentTitle(title)
+			setContentText(
+				applicationContext.getString(
+					R.string.tracker_stale_text,
+					manga.joinToString(limit = STALE_TEXT_TITLES, truncated = "…") { it.title },
+				),
+			)
+			setNumber(manga.size)
+			setSmallIcon(R.drawable.ic_stat_paused)
+			val style = NotificationCompat.InboxStyle(this)
+			for (item in manga.take(STALE_INBOX_LINES)) {
+				style.addLine(
+					applicationContext.getString(
+						R.string.tracker_stale_line,
+						item.title,
+						item.source.getTitle(applicationContext),
+					),
+				)
+			}
+			if (manga.size > STALE_INBOX_LINES) {
+				style.addLine("…")
+			}
+			style.setBigContentTitle(title)
+			style.setSummaryText(applicationContext.getString(R.string.tracker_stale_summary))
+			setStyle(style)
+			setVisibility(if (manga.any { it.isNsfw() }) VISIBILITY_SECRET else VISIBILITY_PRIVATE)
+			// No screen lists several of them: the updates screen shows titles with new chapters, the opposite of these
+			val intent = manga.singleOrNull()?.let { AppRouter.detailsIntent(applicationContext, it) }
+				?: AppRouter.homeIntent(applicationContext)
+			setContentIntent(
+				PendingIntentCompat.getActivity(
+					applicationContext,
+					STALE_NOTIFICATION_ID,
+					intent,
+					PendingIntent.FLAG_UPDATE_CURRENT,
+					false,
+				),
+			)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				addAction(
+					R.drawable.ic_settings,
+					applicationContext.getString(R.string.notifications_settings),
+					PendingIntentCompat.getActivity(
+						applicationContext,
+						STALE_SETTINGS_ACTION_CODE,
+						Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+							.putExtra(Settings.EXTRA_APP_PACKAGE, applicationContext.packageName)
+							.putExtra(Settings.EXTRA_CHANNEL_ID, STALE_CHANNEL_ID),
+						0,
+						false,
+					),
+				)
+			}
+			applyCommonSettings(this)
+		}
+		return builder.build()
+	}
+
 	fun updateChannels() {
 		val manager = NotificationManagerCompat.from(applicationContext)
 		manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
@@ -163,6 +241,14 @@ class TrackerNotificationHelper @Inject constructor(
 			.setLightColor(ContextCompat.getColor(applicationContext, R.color.blue_primary))
 			.build()
 		manager.createNotificationChannel(channel)
+
+		val staleChannel = NotificationChannelCompat.Builder(STALE_CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+			.setName(applicationContext.getString(R.string.tracker_stale_channel))
+			.setDescription(applicationContext.getString(R.string.tracker_stale_channel_description))
+			.setShowBadge(false)
+			.setLightColor(ContextCompat.getColor(applicationContext, R.color.blue_primary))
+			.build()
+		manager.createNotificationChannel(staleChannel)
 	}
 
 	private fun applyCommonSettings(builder: NotificationCompat.Builder) {
@@ -197,6 +283,15 @@ class TrackerNotificationHelper @Inject constructor(
 		const val GROUP_NOTIFICATION_ID = 0
 		const val GROUP_NEW_CHAPTERS = "org.koitharu.kotatsu.NEW_CHAPTERS"
 		const val TAG = "tracker"
+		const val STALE_CHANNEL_ID = "tracker_stale_sources"
+		const val STALE_NOTIFICATION_ID = 1
+
+		// Its own tag: per-manga notifications use ids from url hashes, which could land on any id under theirs
+		const val STALE_TAG = "tracker_stale"
+
+		private const val STALE_TEXT_TITLES = 3
+		private const val STALE_INBOX_LINES = 5
+		private const val STALE_SETTINGS_ACTION_CODE = 6
 
 		private const val LEGACY_CHANNELS_GROUP_ID = "trackers"
 		private const val LEGACY_CHANNEL_ID_HISTORY = "track_history"

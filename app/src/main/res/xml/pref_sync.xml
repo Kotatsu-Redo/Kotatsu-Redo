@@ -18,7 +18,7 @@
 		android:enabled="false"
 		android:icon="@drawable/ic_timer"
 		android:key="sync_period"
-		android:title="@string/frequency_of_check"
+		android:title="@string/sync_frequency"
 		app:useSimpleSummaryProvider="true" />
 
 	<Preference

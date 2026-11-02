@@ -48,6 +48,10 @@ object SourceScoreModule {
 		.connectTimeout(10, TimeUnit.SECONDS)
 		.readTimeout(20, TimeUnit.SECONDS)
 		.writeTimeout(20, TimeUnit.SECONDS)
+		// The whole call, retries included. The timeouts above are per step, so
+		// one call could otherwise spend minutes connecting, retrying and reading - long enough for a
+		// reader to watch the rating row spin and give up on it.
+		.callTimeout(30, TimeUnit.SECONDS)
 		.retryOnConnectionFailure(true)
 		.build()
 }

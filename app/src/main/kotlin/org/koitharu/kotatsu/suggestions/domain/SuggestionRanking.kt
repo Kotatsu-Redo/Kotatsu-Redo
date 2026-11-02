@@ -9,6 +9,9 @@ import kotlin.math.pow
 /** A work the server suggested, with the score it has on this device so far. */
 internal data class RankedWork(val dto: SimilarWorkDto, val score: Double)
 
+/** Something the reader has read, as a place to start suggesting from. */
+internal class SeedCandidate<T>(val item: T, val tags: Set<String>, val weight: Double)
+
 /**
  * The ranking decisions made on the device, kept free of Android and network code so each one can be
  * tested on its own.
@@ -80,6 +83,93 @@ internal object SuggestionRanking {
 	 */
 	fun isDropped(percent: Float, updatedAt: Instant, now: Instant): Boolean =
 		percent in 0f..DROPPED_MAX_PERCENT && Duration.between(updatedAt, now) > DROPPED_AFTER
+
+	/** How fast reading something longer ago stops saying what they want now: half as much 10 titles back. */
+	private const val SEED_RECENCY_SPAN = 10.0
+	private const val SEED_FINISHED_BONUS = 1.5
+	private const val SEED_FAVOURITE_BONUS = 1.3
+	private const val SEED_MIN_FINISHED = 0.5f
+
+	/** Pages read for a title to count twice as much as one merely opened. */
+	private const val ENGAGEMENT_PAGES = 200.0
+	private const val ENGAGEMENT_MAX = 3.0
+
+	/** Roughly, and only used to compare titles with each other. */
+	private const val PAGES_PER_CHAPTER = 25
+
+	/** How long until something read says half as much about what they want now, and how little it can come to. */
+	private const val FADE_HALF_LIFE_DAYS = 180.0
+	private const val FADE_FLOOR = 0.25
+
+	/**
+	 * How much time spent on a title says, beyond having opened it. Percent read cannot say this: a third of a
+	 * thousand chapters is far more of someone's time than all of a short one. Grows slowly and stops, so that
+	 * the one enormous series somebody has been on for years does not become all there is to them.
+	 */
+	fun engagement(pagesRead: Int): Double =
+		(1.0 + ln(1.0 + pagesRead.coerceAtLeast(0) / ENGAGEMENT_PAGES) / ln(2.0)).coerceAtMost(ENGAGEMENT_MAX)
+
+	/**
+	 * Pages read of a title, as well as can be told. Reading statistics are off unless turned on, so for most
+	 * people the only record is how far through how many chapters they are. Never less than either says.
+	 */
+	fun pagesRead(recorded: Int, percent: Float?, chapters: Int?): Int {
+		val estimated = if (percent != null && chapters != null && chapters > 0) {
+			(percent.coerceIn(0f, 1f) * chapters * PAGES_PER_CHAPTER).toInt()
+		} else {
+			0
+		}
+		return maxOf(recorded, estimated)
+	}
+
+	/** What they read long ago still says something about them, only less than what they are reading now. */
+	fun fade(age: Duration): Double =
+		0.5.pow(age.toHours().coerceAtLeast(0) / 24.0 / FADE_HALF_LIFE_DAYS).coerceAtLeast(FADE_FLOOR)
+
+	/**
+	 * How much one title has to say as a place to start.
+	 *
+	 * @param recency how many others they have read since
+	 * @param percent how far they got, negative if not known
+	 * @param pagesRead how many pages of it they have read, 0 if not known
+	 */
+	fun seedWeight(recency: Int, percent: Float, isFavourite: Boolean, pagesRead: Int = 0): Double {
+		var weight = 1.0 / (1.0 + recency / SEED_RECENCY_SPAN)
+		if (percent >= SEED_MIN_FINISHED) weight *= SEED_FINISHED_BONUS
+		if (isFavourite) weight *= SEED_FAVOURITE_BONUS
+		return weight * engagement(pagesRead)
+	}
+
+	/**
+	 * The best places to start from, best first, and not all alike. Only so many can be asked about, and eight
+	 * villainess titles in a row would be asking the same question eight times, while they also read action.
+	 */
+	fun <T> pickSeeds(candidates: List<SeedCandidate<T>>, limit: Int): List<T> {
+		val pool = candidates.toMutableList()
+		val picked = ArrayList<SeedCandidate<T>>(minOf(limit, pool.size))
+		while (pool.isNotEmpty() && picked.size < limit) {
+			var bestIndex = 0
+			var bestScore = Double.NEGATIVE_INFINITY
+			pool.forEachIndexed { index, candidate ->
+				val overlap = picked.maxOfOrNull { tagOverlap(it.tags, candidate.tags) } ?: 0.0
+				val score = candidate.weight * (1.0 - DIVERSITY * overlap)
+				if (score > bestScore) {
+					bestScore = score
+					bestIndex = index
+				}
+			}
+			picked += pool.removeAt(bestIndex)
+		}
+		return picked.map { it.item }
+	}
+
+	private fun tagOverlap(a: Set<String>, b: Set<String>): Double {
+		if (a.isEmpty() || b.isEmpty()) {
+			return 0.0
+		}
+		val shared = a.count { it in b }
+		return shared.toDouble() / (a.size + b.size - shared)
+	}
 
 	/** How strongly being widely read counts against a work - see [dampPopularity]. */
 	const val POPULARITY_DAMPING = 0.2

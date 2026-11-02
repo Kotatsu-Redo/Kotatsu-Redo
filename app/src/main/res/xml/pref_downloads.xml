@@ -1,50 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:title="@string/downloads"
-	xmlns:app="http://schemas.android.com/apk/res-auto">
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="@string/downloads_and_storage">
+	<PreferenceCategory android:title="@string/downloads">
 
-	<Preference
-		android:icon="@drawable/ic_folder_file"
-		android:key="local_manga_dirs"
-		android:persistent="false"
-		android:title="@string/local_manga_directories" />
+		<Preference
+			android:icon="@drawable/ic_storage"
+			android:key="local_storage"
+			android:persistent="false"
+			android:title="@string/manga_save_location" />
 
-	<Preference
-		android:icon="@drawable/ic_storage"
-		android:key="local_storage"
-		android:persistent="false"
-		android:title="@string/manga_save_location" />
+		<Preference
+			android:icon="@drawable/ic_folder_file"
+			android:key="local_manga_dirs"
+			android:persistent="false"
+			android:title="@string/local_manga_directories" />
 
-	<ListPreference
-		android:entries="@array/download_formats"
-		android:icon="@drawable/ic_file_zip"
-		android:key="downloads_format"
-		android:title="@string/preferred_download_format"
-		app:useSimpleSummaryProvider="true" />
+		<ListPreference
+			android:entries="@array/download_formats"
+			android:icon="@drawable/ic_file_zip"
+			android:key="downloads_format"
+			android:title="@string/preferred_download_format"
+			app:useSimpleSummaryProvider="true" />
 
-	<ListPreference
-		android:entries="@array/metered_network_options"
-		android:icon="@drawable/ic_network_cellular"
-		android:key="downloads_metered_network"
-		android:title="@string/download_over_cellular"
-		app:useSimpleSummaryProvider="true" />
+		<SwitchPreferenceCompat
+			android:defaultValue="false"
+			android:icon="@drawable/ic_delete_all"
+			android:key="chapters_clear_auto"
+			android:summary="@string/runs_on_app_start"
+			android:title="@string/delete_read_chapters_auto" />
 
-	<Preference
-		android:icon="@drawable/ic_info_outline"
-		android:key="tracker_notifications_info"
-		android:persistent="false"
-		android:selectable="false"
-		android:summary="@string/downloads_settings_info" />
+		<Preference
+			android:icon="@drawable/ic_info_outline"
+			android:key="downloads_info"
+			android:persistent="false"
+			android:selectable="false"
+			android:summary="@string/downloads_settings_info" />
 
-	<Preference
-		android:icon="@drawable/ic_battery_outline"
-		android:key="ignore_dose"
-		android:persistent="false"
-		android:summary="@string/disable_battery_optimization_summary_downloads"
-		android:title="@string/disable_battery_optimization"
-		app:allowDividerAbove="true"
-		app:isPreferenceVisible="false" />
+	</PreferenceCategory>
 
 	<PreferenceCategory android:title="@string/pages_saving">
 
@@ -59,6 +53,21 @@
 			android:icon="@drawable/ic_edit"
 			android:key="pages_dir_ask"
 			android:title="@string/ask_for_dest_dir_every_time" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/storage_usage">
+
+		<org.koitharu.kotatsu.settings.userdata.storage.StorageUsagePreference
+			android:icon="@drawable/ic_usage"
+			android:key="storage_usage" />
+
+		<Preference
+			android:fragment="org.koitharu.kotatsu.settings.userdata.storage.DataCleanupSettingsFragment"
+			android:icon="@drawable/ic_clear_all"
+			android:key="data_removal"
+			android:persistent="false"
+			android:title="@string/data_removal" />
 
 	</PreferenceCategory>
 

@@ -38,6 +38,7 @@ import org.koitharu.kotatsu.core.util.ext.buildBundle
 import org.koitharu.kotatsu.core.util.ext.setContentDescriptionAndTooltip
 import org.koitharu.kotatsu.core.util.ext.smoothScrollToTop
 import org.koitharu.kotatsu.databinding.NavigationRailFabBinding
+import org.koitharu.kotatsu.discover.ui.DiscoverFragment
 import org.koitharu.kotatsu.explore.ui.ExploreFragment
 import org.koitharu.kotatsu.favourites.ui.container.FavouritesContainerFragment
 import org.koitharu.kotatsu.history.ui.HistoryListFragment
@@ -190,7 +191,8 @@ class MainNavigationDelegate(
 		val newFragment = when (itemId) {
 			R.id.nav_history -> HistoryListFragment::class.java
 			R.id.nav_favorites -> FavouritesContainerFragment::class.java
-			R.id.nav_explore -> ExploreFragment::class.java
+			R.id.nav_explore -> DiscoverFragment::class.java
+			R.id.nav_sources -> ExploreFragment::class.java
 			R.id.nav_feed -> FeedFragment::class.java
 			R.id.nav_local -> LocalListFragment::class.java
 			R.id.nav_suggestions -> SuggestionsFragment::class.java
@@ -208,7 +210,8 @@ class MainNavigationDelegate(
 	private fun getItemId(fragment: Fragment) = when (fragment) {
 		is HistoryListFragment -> R.id.nav_history
 		is FavouritesContainerFragment -> R.id.nav_favorites
-		is ExploreFragment -> R.id.nav_explore
+		is DiscoverFragment -> R.id.nav_explore
+		is ExploreFragment -> R.id.nav_sources
 		is FeedFragment -> R.id.nav_feed
 		is LocalListFragment -> R.id.nav_local
 		is SuggestionsFragment -> R.id.nav_suggestions

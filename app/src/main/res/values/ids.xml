@@ -13,6 +13,7 @@
 	<item name="nav_favorites" type="id" />
 	<item name="nav_local" type="id" />
 	<item name="nav_explore" type="id" />
+	<item name="nav_sources" type="id" />
 	<item name="nav_feed" type="id" />
 	<item name="nav_updated" type="id" />
 	<item name="nav_suggestions" type="id" />

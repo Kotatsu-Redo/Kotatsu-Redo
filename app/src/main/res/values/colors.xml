@@ -32,6 +32,9 @@
 	<color name="settings_icon_tracker">#D32F2F</color>
 	<color name="settings_icon_services">#3F51B5</color>
 	<color name="settings_icon_backup">#00796B</color>
+	<color name="settings_icon_suggestions">#C2185B</color>
+	<color name="settings_icon_notifications">#F9A825</color>
+	<color name="settings_icon_privacy">#5E35B1</color>
 	<color name="settings_icon_about">#546E7A</color>
 	<color name="common_yellow">#FBC02D</color>
 	<color name="nsfw_18">#FF8A65</color>

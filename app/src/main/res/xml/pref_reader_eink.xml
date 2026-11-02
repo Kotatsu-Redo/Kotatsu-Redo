@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="@string/e_ink">
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
+		android:icon="@drawable/ic_flash"
+		android:key="eink_flash"
+		android:summary="@string/flash_on_page_change_summary"
+		android:title="@string/flash_on_page_change" />
+
+	<org.koitharu.kotatsu.settings.utils.SliderPreference
+		android:dependency="eink_flash"
+		android:icon="@drawable/ic_timer"
+		android:key="eink_flash_duration"
+		android:stepSize="50"
+		android:title="@string/flash_duration"
+		android:valueFrom="100"
+		android:valueTo="1000"
+		app:defaultValue="300" />
+
+	<org.koitharu.kotatsu.settings.utils.SliderPreference
+		android:dependency="eink_flash"
+		android:icon="@drawable/ic_timelapse"
+		android:key="eink_flash_every"
+		android:stepSize="1"
+		android:title="@string/flash_every"
+		android:valueFrom="1"
+		android:valueTo="10"
+		app:defaultValue="1"
+		app:tickVisible="true" />
+
+	<ListPreference
+		android:dependency="eink_flash"
+		android:icon="@drawable/ic_appearance"
+		android:key="eink_flash_color"
+		android:title="@string/flash_with"
+		app:useSimpleSummaryProvider="true" />
+
+</PreferenceScreen>

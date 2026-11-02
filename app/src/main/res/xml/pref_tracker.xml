@@ -2,22 +2,13 @@
 <PreferenceScreen
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:title="@string/check_for_new_chapters">
-
+	android:title="@string/new_chapters">
 	<SwitchPreferenceCompat
 		android:defaultValue="true"
 		android:icon="@drawable/ic_feed"
 		android:key="tracker_enabled"
 		android:layout="@layout/preference_toggle_header"
 		android:title="@string/check_new_chapters_title" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:dependency="tracker_enabled"
-		android:icon="@drawable/ic_wifi"
-		android:key="tracker_wifi"
-		android:summary="@string/tracker_wifi_only_summary"
-		android:title="@string/only_using_wifi" />
 
 	<ListPreference
 		android:defaultValue="1"
@@ -36,28 +27,12 @@
 		android:entryValues="@array/values_track_sources"
 		android:icon="@drawable/ic_manga_source"
 		android:key="track_sources"
-		android:title="@string/track_sources"
-		app:allowDividerAbove="true" />
+		android:title="@string/track_sources" />
 
 	<Preference
 		android:icon="@drawable/ic_heart"
 		android:key="track_categories"
 		android:title="@string/favourites_categories" />
-
-	<Preference
-		android:dependency="tracker_enabled"
-		android:fragment="org.koitharu.kotatsu.settings.NotificationSettingsLegacyFragment"
-		android:icon="@drawable/ic_notification"
-		android:key="notifications_settings"
-		android:title="@string/notifications_settings" />
-
-	<SwitchPreferenceCompat
-		android:defaultValue="false"
-		android:dependency="tracker_enabled"
-		android:icon="@drawable/ic_sfw"
-		android:key="tracker_no_nsfw"
-		android:summary="@string/disable_nsfw_notifications_summary"
-		android:title="@string/disable_nsfw_notifications" />
 
 	<ListPreference
 		android:dependency="tracker_enabled"
@@ -67,7 +42,7 @@
 		android:title="@string/download_new_chapters"
 		app:useSimpleSummaryProvider="true" />
 
-	<PreferenceCategory android:title="@string/debug">
+	<PreferenceCategory android:title="@string/troubleshooting">
 
 		<Preference
 			android:dependency="tracker_enabled"
@@ -94,4 +69,5 @@
 			android:summary="@string/tracker_warning" />
 
 	</PreferenceCategory>
+
 </PreferenceScreen>

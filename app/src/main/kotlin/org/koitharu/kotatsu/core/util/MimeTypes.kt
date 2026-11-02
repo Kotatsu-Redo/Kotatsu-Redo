@@ -19,6 +19,10 @@ object MimeTypes {
 	private const val EXTENSION_JXL = "jxl"
 	val JXL = MimeType("image/jxl")
 
+	// The platform's table only knows AVIF on recent Android versions
+	private const val EXTENSION_AVIF = "avif"
+	val AVIF = MimeType("image/avif")
+
 	fun getMimeTypeFromExtension(fileName: String): MimeType? {
 		val extension = getNormalizedExtension(fileName) ?: return null
 		if (extension == EXTENSION_JXL) {
@@ -38,6 +42,9 @@ object MimeTypes {
 	fun getExtension(mimeType: MimeType?): String? {
 		if (mimeType == JXL) {
 			return EXTENSION_JXL
+		}
+		if (mimeType == AVIF) {
+			return EXTENSION_AVIF
 		}
 		return MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType?.toString() ?: return null)?.nullIfEmpty()
 	}
