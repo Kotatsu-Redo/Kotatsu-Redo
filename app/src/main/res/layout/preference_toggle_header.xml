@@ -33,6 +33,7 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textAppearance="?textAppearanceTitleLarge"
+				android:textColor="?colorOnPrimaryContainer"
 				android:textSize="20sp"
 				tools:text="Title" />
 
@@ -44,6 +45,7 @@
 				android:layout_gravity="start"
 				android:maxLines="10"
 				android:textAppearance="?textAppearanceTitleSmall"
+				android:textColor="?colorOnPrimaryContainer"
 				tools:text="Subtitle" />
 
 		</LinearLayout>
