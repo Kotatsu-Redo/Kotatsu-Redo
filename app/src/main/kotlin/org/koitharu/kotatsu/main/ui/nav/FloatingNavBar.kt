@@ -7,8 +7,10 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -42,9 +44,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -53,10 +59,12 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlin.math.roundToInt
 import org.koitharu.kotatsu.R
 
 data class FloatingNavBarItem(
@@ -78,6 +86,17 @@ data class FloatingNavBarColors(
 private val SpringFloat = spring<Float>(dampingRatio = 0.9f, stiffness = 380f)
 private val SpringColor = spring<Color>(dampingRatio = 0.9f, stiffness = 380f)
 private val SpringSize = spring<IntSize>(dampingRatio = 0.9f, stiffness = 380f)
+
+// M3's floating toolbar levels: Level1 for a toolbar with a FAB beside it, Level2 for that FAB. An 8dp
+// shadow reached past the room the hosting view leaves under the pill and was cut off in a hard line.
+private val PillElevation = 1.dp
+private val ContinueElevation = 3.dp
+// Material3's FloatingActionButtonDefaults.ShowHideTargetScale, and the room its reveal layer leaves round it.
+private const val ContinueHiddenScale = 0.2f
+private val RevealLayerInset = 16.dp
+// Level with the pill (48dp items plus 8dp padding either side); at 56dp it sat shorter than the bar and
+// looked a size down.
+private val ContinueSize = 64.dp
 
 @Composable
 fun FloatingNavBar(
@@ -109,7 +128,7 @@ fun FloatingNavBar(
 		val iconOnlyBarWidth = 16.dp +
 			(48.dp * items.size) +
 			(4.dp * (items.size - 1).coerceAtLeast(0))
-		val continueWidth = 56.dp + 8.dp
+		val continueWidth = ContinueSize + 8.dp
 		val stackContinue = showContinue && iconOnlyBarWidth + continueWidth > maxWidth
 		val availableBarWidth = if (showContinue && !stackContinue) {
 			maxWidth - continueWidth
@@ -173,7 +192,7 @@ private fun FloatingNavItemsSurface(
 ) {
 	Surface(
 		modifier = Modifier
-			.shadow(8.dp, RoundedCornerShape(50))
+			.shadow(PillElevation, RoundedCornerShape(50))
 			.wrapContentWidth(),
 		shape = RoundedCornerShape(50),
 		color = Color(colors.container),
@@ -214,19 +233,52 @@ private fun FloatingContinueVisibility(
 ) {
 	AnimatedVisibility(
 		visible = visible,
-		enter = fadeIn(animationSpec = SpringFloat) +
-			expandHorizontally(animationSpec = SpringSize, expandFrom = Alignment.Start),
-		exit = fadeOut(animationSpec = SpringFloat) +
-			shrinkHorizontally(animationSpec = SpringSize, shrinkTowards = Alignment.Start),
+		// The slot only grows and shrinks, so the pill slides over. Neither the slot nor fadeIn/scaleIn may
+		// draw the button: a clipped slot, and the bounds-sized offscreen layer a fade uses below full alpha,
+		// both cut its round edge and shadow off in a straight line. The fade and scale go to revealLayer.
+		enter = expandHorizontally(animationSpec = SpringSize, expandFrom = Alignment.Start, clip = false),
+		exit = shrinkHorizontally(animationSpec = SpringSize, shrinkTowards = Alignment.Start, clip = false),
 	) {
-		FloatingContinueButton(colors = colors, onClick = onContinueClick)
+		val progress by transition.animateFloat(
+			transitionSpec = { SpringFloat },
+			label = "continueReveal",
+		) { state -> if (state == EnterExitState.Visible) 1f else 0f }
+		FloatingContinueButton(
+			colors = colors,
+			onClick = onContinueClick,
+			modifier = Modifier.revealLayer { progress },
+		)
 	}
+}
+
+/**
+ * Fades and scales the content in a layer larger than its bounds, as Material3's own
+ * `Modifier.animateFloatingActionButton` does (it is not in the material3 this app uses), so the elevation
+ * shadow is not clipped while the alpha is below one.
+ */
+private fun Modifier.revealLayer(progress: () -> Float): Modifier = drawWithCache {
+	val layer = obtainGraphicsLayer()
+	val inset = RevealLayerInset.toPx().roundToInt()
+	val fraction = progress()
+	val layerSize = IntSize(size.width.roundToInt() + inset * 2, size.height.roundToInt() + inset * 2)
+	layer.apply {
+		topLeft = IntOffset(-inset, -inset)
+		alpha = fraction
+		val scale = lerp(ContinueHiddenScale, 1f, fraction)
+		scaleX = scale
+		scaleY = scale
+		record(size = layerSize) {
+			inset(inset.toFloat(), inset.toFloat()) { this@record.drawContent() }
+		}
+	}
+	onDrawWithContent { drawLayer(layer) }
 }
 
 @Composable
 private fun FloatingContinueButton(
 	colors: FloatingNavBarColors,
 	onClick: () -> Unit,
+	modifier: Modifier = Modifier,
 ) {
 	val container by animateColorAsState(
 		targetValue = Color(colors.selectedContainer),
@@ -241,12 +293,13 @@ private fun FloatingContinueButton(
 	val label = stringResource(R.string._continue)
 	Surface(
 		onClick = onClick,
+		// A detached circle, as Google Photos, Chat and Finance place beside their floating navigation pill.
 		shape = CircleShape,
 		color = container,
 		contentColor = content,
-		shadowElevation = 8.dp,
-		modifier = Modifier
-			.size(56.dp)
+		shadowElevation = ContinueElevation,
+		modifier = modifier
+			.size(ContinueSize)
 			.semantics { contentDescription = label },
 	) {
 		Box(contentAlignment = Alignment.Center) {

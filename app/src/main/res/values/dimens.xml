@@ -17,6 +17,8 @@
 	<!-- Inset of the floating nav bar from the screen edges. Wider than margin_normal so the bar
 	     reads as a pill rather than an edge-to-edge strip with rounded ends. -->
 	<dimen name="nav_bar_floating_margin_horizontal">40dp</dimen>
+	<!-- How far the scrim behind the floating nav bar takes to go from clear to its full strength. -->
+	<dimen name="floating_nav_fade_height">60dp</dimen>
 
 	<dimen name="grid_spacing">8dp</dimen>
 	<dimen name="list_spacing">8dp</dimen>

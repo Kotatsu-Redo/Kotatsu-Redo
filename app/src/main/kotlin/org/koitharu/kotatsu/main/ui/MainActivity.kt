@@ -13,7 +13,9 @@ import androidx.activity.viewModels
 import androidx.appcompat.view.ActionMode
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.MenuProvider
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -58,8 +60,10 @@ import org.koitharu.kotatsu.core.ui.util.FadingAppbarMediator
 import org.koitharu.kotatsu.core.ui.util.MenuInvalidator
 import org.koitharu.kotatsu.core.ui.widgets.FloatingBottomNavigationView
 import org.koitharu.kotatsu.core.ui.widgets.SlidingBottomNavigationView
+import org.koitharu.kotatsu.core.util.ext.applySystemAnimatorScale
 import org.koitharu.kotatsu.core.util.ext.consume
 import org.koitharu.kotatsu.core.util.ext.end
+import org.koitharu.kotatsu.core.util.ext.getThemeColor
 import org.koitharu.kotatsu.core.util.ext.observe
 import org.koitharu.kotatsu.core.util.ext.observeEvent
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
@@ -70,6 +74,7 @@ import org.koitharu.kotatsu.favourites.ui.container.FavouritesContainerFragment
 import org.koitharu.kotatsu.history.ui.HistoryListFragment
 import org.koitharu.kotatsu.local.ui.LocalIndexUpdateService
 import org.koitharu.kotatsu.local.ui.LocalStorageCleanupWorker
+import org.koitharu.kotatsu.main.ui.nav.BottomFadeDrawable
 import org.koitharu.kotatsu.main.ui.owners.AppBarOwner
 import org.koitharu.kotatsu.main.ui.owners.BottomNavOwner
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -122,6 +127,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	/** Mirrors the filter of the screen currently shown, so the menu can be prepared synchronously. */
 	private var activeScreenFilter: String = ""
+	private var floatingNavInset = 0
 	private val voiceInputLauncher = registerForActivityResult(VoiceInputContract()) { result ->
 		if (result != null) {
 			viewBinding.searchView.setText(result)
@@ -209,6 +215,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}.launchIn(lifecycleScope)
 		searchSuggestionViewModel.isIncognitoModeEnabled.observe(this, this::onIncognitoModeChanged)
 		viewBinding.bottomNav?.addOnLayoutChangeListener(this)
+		ViewCompat.setOnApplyWindowInsetsListener(viewBinding.container) { _, insets ->
+			applyFloatingNavInset(insets)
+		}
+		viewBinding.bottomFade?.background = BottomFadeDrawable(
+			color = getThemeColor(android.R.attr.colorBackground),
+			fadeHeight = resources.getDimensionPixelSize(R.dimen.floating_nav_fade_height),
+		)
 		viewBinding.searchView.addTransitionListener(this)
 		viewBinding.searchView.addTransitionListener(exitCallback)
 		initSearch()
@@ -552,7 +565,25 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
 	private fun updateContainerBottomMargin() {
 		val bottomNavBar = viewBinding.bottomNav ?: return
-		val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) bottomNavBar.height else 0
+		val isFloating = settings.isFloatingNavBar
+		// The floating pill sits above the system bar with its own bottom margin, so reserving only its
+		// height left a strip under its lower half where nothing was drawn but the window background.
+		// Let the content run beneath it instead and push the lists' bottom inset past it.
+		val newFloatingInset = if (isFloating && bottomNavBar.isShownOrShowing && bottomNavBar.height > 0) {
+			bottomNavBar.height + ((bottomNavBar.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0)
+		} else {
+			0
+		}
+		if (newFloatingInset != floatingNavInset) {
+			floatingNavInset = newFloatingInset
+			viewBinding.container.requestApplyInsets()
+		}
+		updateBottomFade()
+		val newMargin = if (!isFloating && bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
+			bottomNavBar.height
+		} else {
+			0
+		}
 		with(viewBinding.container) {
 			val params = layoutParams as MarginLayoutParams
 			if (params.bottomMargin != newMargin) {
@@ -560,6 +591,34 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				layoutParams = params
 			}
 		}
+	}
+
+	/** Covers the strip the floating bar occupies, from its top edge down to the bottom of the screen. */
+	private fun updateBottomFade() {
+		val fade = viewBinding.bottomFade ?: return
+		val isVisible = floatingNavInset > 0
+		if (isVisible && fade.layoutParams.height != floatingNavInset) {
+			fade.updateLayoutParams { height = floatingNavInset }
+		}
+		val targetAlpha = if (isVisible) 1f else 0f
+		if (fade.isVisible == isVisible && fade.alpha == targetAlpha) return
+		fade.animate().cancel()
+		if (isVisible) fade.isVisible = true
+		fade.animate()
+			.alpha(targetAlpha)
+			.setDuration(FADE_ANIMATION_DURATION)
+			.applySystemAnimatorScale(this)
+			.withEndAction { if (!isVisible) fade.isVisible = false }
+	}
+
+	private fun applyFloatingNavInset(insets: WindowInsetsCompat): WindowInsetsCompat {
+		if (floatingNavInset == 0) return insets
+		val typeMask = WindowInsetsCompat.Type.navigationBars()
+		val navInsets = insets.getInsets(typeMask)
+		if (navInsets.bottom >= floatingNavInset) return insets
+		return WindowInsetsCompat.Builder(insets)
+			.setInsets(typeMask, Insets.of(navInsets.left, navInsets.top, navInsets.right, floatingNavInset))
+			.build()
 	}
 
 	private fun SearchView.observeState() = callbackFlow {
@@ -570,3 +629,5 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		awaitClose { removeTransitionListener(listener) }
 	}
 }
+
+private const val FADE_ANIMATION_DURATION = 200L
