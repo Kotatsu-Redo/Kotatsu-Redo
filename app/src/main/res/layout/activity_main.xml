@@ -79,6 +79,16 @@
 		tools:ignore="InconsistentLayout"
 		tools:visibility="visible" />
 
+	<!-- Scrim behind the floating navigation bar; sized and shown from MainActivity. -->
+	<View
+		android:id="@+id/bottomFade"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_gravity="bottom"
+		android:alpha="0"
+		android:importantForAccessibility="no"
+		android:visibility="gone" />
+
 	<org.koitharu.kotatsu.core.ui.widgets.FloatingBottomNavigationView
 		android:id="@+id/bottomNav"
 		android:layout_width="match_parent"
