@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+
+	<!-- Always a button of its own, with the thumb the covers in Explore carry: it is what a selection here is
+	     mostly made for, and among the shared actions it used to end up behind the three dots -->
+	<item
+		android:id="@+id/action_not_interested"
+		android:icon="@drawable/ic_thumb_down"
+		android:title="@string/not_interested"
+		app:showAsAction="always" />
+
+</menu>

@@ -145,8 +145,33 @@ abstract class HiddenImagesDao {
 	@Query("SELECT COUNT(*) FROM hidden_images WHERE parent_id = :parentId AND page_id = :pageId")
 	abstract suspend fun countRemainders(parentId: Long, pageId: Long): Int
 
+	/**
+	 * Pages left out of the reader's list for this image together with others, whichever of them the page was noted against.
+	 *
+	 * A page is noted against one of the images that hid it. Two bands of a page of credits hide it between them, and with
+	 * one of them taken back the note against the other stayed: the page was left out for good, the part of it that was
+	 * meant to show again with it. A page whose reasons were not kept is looked over again too, as it cannot be known.
+	 */
+	@Query(
+		"""DELETE FROM hidden_pages WHERE page_id IN (
+			SELECT page_id FROM page_scans WHERE is_hidden = 1 AND (',' || rule_ids || ',') LIKE '%,' || :id || ',%'
+		) OR page_id NOT IN (SELECT page_id FROM page_scans)""",
+	)
+	protected abstract suspend fun deleteHiddenPagesHiddenWith(id: Long)
+
+	/** The same for what was found next door of this image, which goes with it. */
+	@Query(
+		"""DELETE FROM hidden_pages WHERE page_id IN (
+			SELECT scan.page_id FROM page_scans scan JOIN hidden_images rest ON rest.parent_id = :id
+			WHERE scan.is_hidden = 1 AND (',' || scan.rule_ids || ',') LIKE '%,' || rest.id || ',%'
+		)""",
+	)
+	protected abstract suspend fun deleteHiddenPagesHiddenWithRemaindersOf(id: Long)
+
 	@Transaction
 	open suspend fun delete(id: Long) {
+		deleteHiddenPagesHiddenWith(id)
+		deleteHiddenPagesHiddenWithRemaindersOf(id)
 		deleteHiddenPagesOfRemainders(id)
 		deleteRemainders(id)
 		deleteHiddenPagesOf(id)

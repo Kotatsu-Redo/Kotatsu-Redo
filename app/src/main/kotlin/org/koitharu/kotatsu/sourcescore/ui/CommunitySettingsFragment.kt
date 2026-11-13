@@ -19,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BasePreferenceFragment
@@ -49,6 +50,9 @@ class CommunitySettingsFragment : BasePreferenceFragment(R.string.community) {
 
 	@Inject
 	lateinit var database: CommunityDatabase
+
+	@Inject
+	lateinit var dismissals: DiscoverDismissals
 
 	@Inject
 	lateinit var syncScheduler: SourceScoreSyncWorker.Scheduler
@@ -381,6 +385,8 @@ class CommunitySettingsFragment : BasePreferenceFragment(R.string.community) {
 			withContext(Dispatchers.Default) {
 				database.getSourceScoreDao().clear()
 				database.getSourceStatsDao().clear()
+				// The server has just erased everything, passes included: nothing is left to send or to take back
+				dismissals.store.forgetServerState()
 			}
 			communitySettings.forget()
 			updateVisibility()

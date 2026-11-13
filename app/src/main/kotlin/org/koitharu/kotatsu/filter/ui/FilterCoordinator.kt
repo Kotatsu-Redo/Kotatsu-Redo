@@ -34,7 +34,7 @@ import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.ContentType
 import org.koitharu.kotatsu.parsers.model.Demographic
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaState
 import org.koitharu.kotatsu.parsers.model.MangaTag
@@ -60,7 +60,7 @@ class FilterCoordinator @Inject constructor(
 
     private val coroutineScope = lifecycle.lifecycleScope + Dispatchers.Default
     private val repository = mangaRepositoryFactory.create(MangaSource(savedStateHandle[RemoteListFragment.ARG_SOURCE]))
-    private val sourceLocale = (repository.source as? MangaParserSource)?.locale
+    private val sourceLocale = (repository.source as? ParserMangaSource)?.locale
 
     private val currentListFilter = MutableStateFlow(MangaListFilter.EMPTY)
     private val currentSortOrder = MutableStateFlow(repository.defaultSortOrder)

@@ -32,6 +32,7 @@ class SourceScoreSyncUseCase @Inject constructor(
 	private val api: CommunityApi,
 	private val database: CommunityDatabase,
 	private val settings: CommunitySettings,
+	private val dismissalReporter: DismissalReporter,
 ) {
 
 	suspend operator fun invoke(): Boolean {
@@ -67,6 +68,11 @@ class SourceScoreSyncUseCase @Inject constructor(
 		if (settings.isTelemetryEnabled) {
 			uploadPending()
 		}
+
+		// What the reader passed on while the server could not be told. Not behind the telemetry switch: it is the
+		// same community account as ratings, and each one is tried once, so a server that is down costs nothing
+		runCatchingCancellable { dismissalReporter.retryPending() }
+			.onFailure { Log.w(TAG, "Retrying passes failed", it) }
 	}
 
 	/** Retried until the server accepts it, and skipped once it has. */

@@ -655,6 +655,8 @@ class DetailsActivity :
 		val loading = viewBinding.loadingIndicatorCommunity
 		if (!communityRating.isAvailable) {
 			group.isVisible = false
+			// Nothing is being loaded, and nothing would ever come to hide it: it went on turning for good
+			loading?.isVisible = false
 			return
 		}
 		val binder = StarRowBinder(

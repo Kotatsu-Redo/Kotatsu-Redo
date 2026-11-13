@@ -21,6 +21,21 @@
 			app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Kotatsu.Cover.Medium"
 			tools:src="@tools:sample/backgrounds/scenic" />
 
+		<!-- Always-visible "Not interested" for Explore. A 24dp disc (bg inset) inside a 36dp touch target. -->
+		<ImageView
+			android:id="@+id/button_dismiss"
+			android:layout_width="36dp"
+			android:layout_height="36dp"
+			android:layout_gravity="top|end"
+			android:background="@drawable/bg_cover_action"
+			android:clickable="true"
+			android:contentDescription="@string/not_interested"
+			android:focusable="true"
+			android:foreground="?selectableItemBackgroundBorderless"
+			android:padding="11dp"
+			android:src="@drawable/ic_thumb_down"
+			app:tint="@android:color/white" />
+
 		<TextView
 			android:id="@+id/textView_rank"
 			android:layout_width="wrap_content"

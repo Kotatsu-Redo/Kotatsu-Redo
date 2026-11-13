@@ -19,6 +19,10 @@ plugins {
 // Properties.load only splits on the first '=', so a base64 token's '=' padding survives untouched
 // and needs no quoting. Quotes would in fact become part of the value, so they are stripped here -
 // along with stray whitespace - to make that paste mistake harmless instead of silently wrong.
+// The key parsers downloaded by the official builds have to be signed with. Its other half is a secret of the
+// parsers repository, PARSERS_SIGNING_KEY.
+def parsersBundlePublicKey = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEA4WroqfxGfT+ObvS1ZrFVeTv3fV5kpS6j2CofE+USn0HsGaHAe0t70RdjBlNhOEDCyF8c/49w4S2IXQYpU5paA=='
+
 def readSecret = { String fileKey, String envKey ->
 	def props = new Properties()
 	def file = rootProject.file('local.properties')
@@ -50,8 +54,8 @@ android {
 		applicationId 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 37
-		versionCode = 2048
-        versionName = '9.8.6'
+		versionCode = 2049
+        versionName = '9.8.7'
 		generatedDensities = []
 		ndk {
 			// ARM only. x86 and x86_64 devices - Intel Chromebooks, emulators, BlueStacks - run these
@@ -85,6 +89,20 @@ android {
 		def appLinkHost = 'kotatsuredo.app'
 		manifestPlaceholders = [appLinkHost: appLinkHost]
 		buildConfigField 'String', 'APP_LINK_HOST', "\"${appLinkHost}\""
+
+		// Where parsers newer than the ones built in are published, and the public half of the key they are signed
+		// with: see docs/BUNDLE.md in the parsers repository. Whoever holds the private half can run code in every
+		// installed copy of this app, so a fork must set both to its own, with `parsers_bundle_url` and
+		// `parsers_bundle_key` in local.properties or PARSERS_BUNDLE_URL and PARSERS_BUNDLE_KEY in the
+		// environment, or set the key to `none` to take no parsers from anywhere.
+		def parsersBundleUrl = readSecret('parsers_bundle_url', 'PARSERS_BUNDLE_URL')
+			?: 'https://github.com/Kotatsu-Redo/kotatsu-parsers-redo/releases/download/parsers-bundle'
+		def parsersBundleKey = readSecret('parsers_bundle_key', 'PARSERS_BUNDLE_KEY') ?: parsersBundlePublicKey
+		if (parsersBundleKey == 'none') {
+			parsersBundleKey = ''
+		}
+		buildConfigField 'String', 'PARSERS_BUNDLE_URL', "\"${parsersBundleUrl}\""
+		buildConfigField 'String', 'PARSERS_BUNDLE_KEY', "\"${parsersBundleKey}\""
 	}
 	buildTypes {
 		debug {

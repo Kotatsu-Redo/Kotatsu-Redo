@@ -13,7 +13,7 @@ import org.koitharu.kotatsu.core.parser.MangaLoaderContextImpl
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.parser.ParserMangaRepository
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.mergeWith
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -31,7 +31,7 @@ class CommonHeadersInterceptor @Inject constructor(
 		val request = chain.request()
 		val source = request.tag(MangaSource::class.java)
 			?: request.headers[CommonHeaders.MANGA_SOURCE]?.let { MangaSource(it) }
-		val repository = if (source is MangaParserSource) {
+		val repository = if (source is ParserMangaSource) {
 			mangaRepositoryFactoryLazy.get().create(source) as? ParserMangaRepository
 		} else {
 			if (BuildConfig.DEBUG && source == null) {

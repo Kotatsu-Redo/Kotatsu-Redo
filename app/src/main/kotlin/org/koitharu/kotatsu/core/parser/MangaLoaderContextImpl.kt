@@ -20,14 +20,15 @@ import org.koitharu.kotatsu.core.network.MangaHttpClient
 import org.koitharu.kotatsu.core.network.cookies.MutableCookieJar
 import org.koitharu.kotatsu.core.network.webview.WebViewExecutor
 import org.koitharu.kotatsu.core.prefs.SourceSettings
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import org.koitharu.kotatsu.core.util.ext.toList
 import org.koitharu.kotatsu.core.util.ext.toMimeType
 import org.koitharu.kotatsu.core.util.ext.use
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.MangaParser
+import org.koitharu.kotatsu.parsers.ParsersBundle
 import org.koitharu.kotatsu.parsers.bitmap.Bitmap
 import org.koitharu.kotatsu.parsers.config.MangaSourceConfig
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.core.network.webview.WebViewRequestInterceptorExecutor
 import org.koitharu.kotatsu.parsers.webview.InterceptedRequest
@@ -51,6 +52,10 @@ class MangaLoaderContextImpl @Inject constructor(
 ) : MangaLoaderContext() {
 
     private val webViewUserAgent by lazy { obtainWebViewUserAgent() }
+
+    /** Whichever are in use at the moment: a parser asking for another gets one of the same age as the rest. */
+    override val parsers: ParsersBundle
+        get() = ActiveParsers.bundle
 
     @Deprecated("Provide a base url")
     @SuppressLint("SetJavaScriptEnabled")
@@ -81,7 +86,7 @@ class MangaLoaderContextImpl @Inject constructor(
         parser: MangaParser,
         url: String,
     ): Nothing {
-        if (parser.source == MangaParserSource.COMIX) {
+        if (parser.source.name == SOURCE_COMIX) {
             throw CloudFlareProtectedException(url, parser.source, parser.getRequestHeaders())
         }
         throw InteractiveActionRequiredException(parser.source, url)
@@ -197,6 +202,12 @@ class MangaLoaderContextImpl @Inject constructor(
         timeout: Long
     ): List<String> {
         return webViewRequestInterceptorExecutor.captureWebViewUrls(pageUrl, urlPattern, timeout)
+    }
+
+    private companion object {
+
+        /** By its name: which sources there are is no longer something the app is compiled with. */
+        const val SOURCE_COMIX = "COMIX"
     }
 
     private fun obtainWebViewUserAgent(): String {

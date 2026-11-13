@@ -14,8 +14,9 @@ import org.koitharu.kotatsu.core.parser.external.ExternalMangaSource
 import org.koitharu.kotatsu.core.util.ext.getDisplayName
 import org.koitharu.kotatsu.core.util.ext.toLocale
 import org.koitharu.kotatsu.core.util.ext.toLocaleOrNull
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.splitTwoParts
 import java.util.Locale
@@ -42,7 +43,7 @@ fun MangaSource(name: String?): MangaSource {
 		val parts = name.substringAfter(':').splitTwoParts('/') ?: return UnknownMangaSource
 		return ExternalMangaSource(packageName = parts.first, authority = parts.second)
 	}
-	MangaParserSource.entries.forEach {
+	ActiveParsers.sources.forEach {
 		if (it.name == name) return it
 	}
 	return UnknownMangaSource
@@ -52,7 +53,7 @@ fun Collection<String>.toMangaSources() = map(::MangaSource)
 
 fun MangaSource.isNsfw(): Boolean = when (this) {
 	is MangaSourceInfo -> mangaSource.isNsfw()
-	is MangaParserSource -> contentType == ContentType.HENTAI
+	is ParserMangaSource -> contentType == ContentType.HENTAI
 	else -> false
 }
 
@@ -79,10 +80,10 @@ tailrec fun MangaSource.unwrap(): MangaSource = if (this is MangaSourceInfo) {
 	this
 }
 
-fun MangaSource.getLocale(): Locale? = (unwrap() as? MangaParserSource)?.locale?.toLocaleOrNull()
+fun MangaSource.getLocale(): Locale? = (unwrap() as? ParserMangaSource)?.locale?.toLocaleOrNull()
 
 fun MangaSource.getSummary(context: Context): String? = when (val source = unwrap()) {
-	is MangaParserSource -> {
+	is ParserMangaSource -> {
 		val type = context.getString(source.contentType.titleResId)
 		val locale = source.locale.toLocale().getDisplayName(context)
 		context.getString(R.string.source_summary_pattern, type, locale)
@@ -94,7 +95,7 @@ fun MangaSource.getSummary(context: Context): String? = when (val source = unwra
 }
 
 fun MangaSource.getTitle(context: Context): String = when (val source = unwrap()) {
-	is MangaParserSource -> source.title
+	is ParserMangaSource -> source.title
 	LocalMangaSource -> context.getString(R.string.local_storage)
 	TestMangaSource -> context.getString(R.string.test_parser)
 	is ExternalMangaSource -> source.resolveName(context)

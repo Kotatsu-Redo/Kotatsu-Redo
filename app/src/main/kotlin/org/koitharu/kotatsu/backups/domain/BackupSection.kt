@@ -30,6 +30,9 @@ enum class BackupSection(
 
 	/** Images erased in the reader: "never again" should survive changing phones. */
 	HIDDEN_IMAGES("hidden_images"),
+
+	/** What the reader said they are not interested in on the Explore screen. */
+	DISMISSED("dismissed"),
 	;
 
 	companion object {

@@ -1,6 +1,7 @@
 package org.koitharu.kotatsu.reader.domain
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
 import androidx.annotation.AnyThread
@@ -100,6 +101,7 @@ class PageLoader @Inject constructor(
 	private val captchaAutoResolveCoordinator: CaptchaAutoResolveCoordinator,
 	val imageHider: ImageHider,
 	private val preloader: PagePreloader,
+	val animatedPages: AnimatedPages,
 ) {
 
 	val loaderScope = lifecycle.lifecycleScope + InternalErrorHandler() + Dispatchers.Default
@@ -272,26 +274,49 @@ class PageLoader @Inject constructor(
 	@CheckResult
 	suspend fun convertBimap(uri: Uri): Uri = convertLock.withLock {
 		if (uri.isZipUri()) {
-			runInterruptible(Dispatchers.IO) {
-				ZipFile(uri.schemeSpecificPart).use { zip ->
-					val entry = zip.getEntry(uri.fragment)
-					context.ensureRamAtLeast(entry.size * 2)
-					zip.getInputStream(entry).use {
-						BitmapDecoderCompat.decode(it, MimeTypes.getMimeTypeFromExtension(entry.name))
-					}
-				}
-			}.use { image ->
+			decodeWhole(uri).use { image ->
 				cache.set(uri.toString(), image).toUri()
 			}
 		} else {
-			val file = uri.toFile()
-			runInterruptible(Dispatchers.IO) {
-				context.ensureRamAtLeast(BitmapDecoderCompat.estimateDecodedSize(file))
-				BitmapDecoderCompat.decode(file)
-			}.use { image ->
-				image.compressToPNG(file)
+			decodeWhole(uri).use { image ->
+				image.compressToPNG(uri.toFile())
 			}
 			uri
+		}
+	}
+
+	/**
+	 * The first frame of a page that moves, in a file of its own beside the page, for the view to show when it
+	 * cannot open the page itself, as it cannot a GIF. The frames are then played over it. Converting the page
+	 * where it is, as is done for any other one the view cannot open, would leave nothing to play.
+	 *
+	 * Costs what that conversion costs, and is only asked for where that was already being paid.
+	 */
+	@CheckResult
+	suspend fun getStillOf(uri: Uri): Uri = convertLock.withLock {
+		val key = STILL_KEY_PREFIX + uri
+		cache.get(key)?.let { return@withLock it.toUri() }
+		decodeWhole(uri).use { image ->
+			cache.set(key, image).toUri()
+		}
+	}
+
+	/** What [getStillOf] made before, if it is still kept. Nothing is decoded to find out. */
+	suspend fun findStillOf(uri: Uri): Uri? = cache.get(STILL_KEY_PREFIX + uri)?.toUri()
+
+	private suspend fun decodeWhole(uri: Uri): Bitmap = runInterruptible(Dispatchers.IO) {
+		if (uri.isZipUri()) {
+			ZipFile(uri.schemeSpecificPart).use { zip ->
+				val entry = zip.getEntry(uri.fragment)
+				context.ensureRamAtLeast(entry.size * 2)
+				zip.getInputStream(entry).use {
+					BitmapDecoderCompat.decode(it, MimeTypes.getMimeTypeFromExtension(entry.name))
+				}
+			}
+		} else {
+			val file = uri.toFile()
+			context.ensureRamAtLeast(BitmapDecoderCompat.estimateDecodedSize(file))
+			BitmapDecoderCompat.decode(file)
 		}
 	}
 
@@ -489,6 +514,9 @@ class PageLoader @Inject constructor(
 		private const val PREFETCH_LIMIT_DEFAULT = 6
 		private const val ONISAGA_PREFETCH_LIMIT = 5
 		private const val PREFETCH_MIN_RAM_MB = 80L
+
+		/** No address starts like this, so the first frame of a page is never taken for the page. */
+		private const val STILL_KEY_PREFIX = "still:"
 
 		fun createPageRequest(pageUrl: String, mangaSource: MangaSource) = Request.Builder()
 			.url(pageUrl)

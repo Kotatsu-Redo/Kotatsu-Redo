@@ -14,6 +14,7 @@ import org.koitharu.kotatsu.parsers.util.ifNullOrEmpty
 import org.koitharu.kotatsu.parsers.util.nullIfEmpty
 import org.koitharu.kotatsu.settings.utils.validation.DomainValidator
 import java.io.File
+import java.net.IDN
 
 class SourceSettings(context: Context, source: MangaSource) : MangaSourceConfig {
 
@@ -56,9 +57,13 @@ class SourceSettings(context: Context, source: MangaSource) : MangaSourceConfig 
 				.ifNullOrEmpty { key.defaultValue }
 				.sanitizeHeaderValue()
 
+			// In the form that goes over the wire: parsers put it into headers as it is, and a header can not
+			// hold other letters
 			is ConfigKey.Domain -> prefs.getString(key.key, key.defaultValue)
 				?.trim()
 				?.takeIf { DomainValidator.isValidDomain(it) }
+				?.let { runCatching { IDN.toASCII(it) }.getOrNull() }
+				?.nullIfEmpty()
 				?: key.defaultValue
 
 			is ConfigKey.ShowSuspiciousContent -> prefs.getBoolean(key.key, key.defaultValue)

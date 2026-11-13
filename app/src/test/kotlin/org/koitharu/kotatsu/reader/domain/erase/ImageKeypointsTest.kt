@@ -210,6 +210,129 @@ class ImageKeypointsTest {
 		assertTrue(find(pageWith(480, 900, edited, 400, 200, 40, 300), rule).isEmpty())
 	}
 
+	/** Mostly black, with shapes in white and some in one red: what a page of credits is like. */
+	private fun credits(width: Int, height: Int, seed: Long, red: Int = 0xC83C5A, pixelsToAShape: Int = 600): IntArray {
+		val random = Random(seed)
+		val image = IntArray(width * height)
+		repeat(width * height / pixelsToAShape + 30) { index ->
+			val w = 6 + random.nextInt(width / 6 + 1)
+			val h = 4 + random.nextInt(height / 8 + 1)
+			val x = random.nextInt((width - w).coerceAtLeast(1))
+			val y = random.nextInt((height - h).coerceAtLeast(1))
+			val colour = if (index % 3 == 0) red else 0xFFFFFF
+			for (row in y until (y + h).coerceAtMost(height)) {
+				for (column in x until (x + w).coerceAtMost(width)) {
+					image[row * width + column] = colour
+				}
+			}
+		}
+		return image
+	}
+
+	private fun saved(image: IntArray, change: (Int) -> Int, colour: (luma: Int, value: Int) -> Int = { _, value -> value }): IntArray =
+		IntArray(image.size) {
+			val pixel = image[it]
+			val red = pixel shr 16 and 0xFF
+			val green = pixel shr 8 and 0xFF
+			val blue = pixel and 0xFF
+			val luma = (77 * red + 150 * green + 29 * blue) shr 8
+			fun one(value: Int) = change(colour(luma, value)).coerceIn(0, 255)
+			(one(red) shl 16) or (one(green) shl 8) or one(blue)
+		}
+
+	private fun evidenceOf(page: PageDetail, rule: RuleDetail): KeypointMatcher.Evidence =
+		checkNotNull(KeypointMatcher.lookFor(page, KeypointMatcher.keypointsOf(page), rule))
+
+	@Test
+	fun `saved again with its blacks a dark grey, it is the same image`() {
+		val image = credits(400, 300, 31, pixelsToAShape = 4000)
+		val rule = RuleDetail.of(rgbOf(image), 400, 300)
+		// As a group saves the same page of credits for another chapter: black comes out lighter, white as it was
+		val lighter = pageWith(480, 900, saved(image, { it + (255 - it) * BLACK_SAVED_AGAIN / 255 }), 400, 300, 40, 300)
+		// As far as real copies came to, which is further than they were once thought to
+		val shift = evidenceOf(lighter, rule).shift
+		assertTrue("brighter by $shift", shift > 10.0 && shift < KeypointMatcher.MAX_BRIGHTNESS_SHIFT)
+		assertEquals(1, find(lighter, rule).size)
+		// Twice as far is no longer a matter of how it was saved
+		val washedOut = pageWith(480, 900, saved(image, { it + (255 - it) * BLACK_SAVED_AGAIN * 2 / 255 }), 400, 300, 40, 300)
+		assertTrue(evidenceOf(washedOut, rule).shift > KeypointMatcher.MAX_BRIGHTNESS_SHIFT)
+		assertTrue(find(washedOut, rule).isEmpty())
+	}
+
+	@Test
+	fun `saved again with its colours more vivid, it is the same image`() {
+		// A dull red, as on the page this was measured on: with a strong one the same share is more than any copy came to
+		val image = credits(400, 300, 32, red = 0xA05A6E)
+		val rule = RuleDetail.of(rgbOf(image), 400, 300)
+		val vivid = pageWith(480, 900, saved(image, { it }, { luma, value -> luma + (value - luma) * 145 / 100 }), 400, 300, 40, 300)
+		val evidence = evidenceOf(vivid, rule)
+		// A quarter stronger was as far as this used to go
+		val share = evidence.colourDifference / evidence.colourStrength
+		assertTrue(
+			"stronger by $share: ${evidence.colourDifference} of ${evidence.colourStrength}, ${evidence.hue} degrees",
+			share > 0.26 && share < 0.45 && evidence.colourDifference < KeypointMatcher.MAX_COLOUR_DIFFERENCE,
+		)
+		assertEquals(1, find(vivid, rule).size)
+	}
+
+	@Test
+	fun `the same image with its red an orange stays`() {
+		val image = credits(400, 300, 33)
+		val rule = RuleDetail.of(rgbOf(image), 400, 300)
+		assertEquals(1, find(pageWith(480, 900, image, 400, 300, 40, 300), rule).size)
+		assertTrue(find(pageWith(480, 900, credits(400, 300, 33, red = 0xC8783C), 400, 300, 40, 300), rule).isEmpty())
+	}
+
+	@Test
+	fun `the same image in the red next to its own stays`() {
+		val image = credits(400, 300, 34, red = 0xFF0000)
+		val rule = RuleDetail.of(rgbOf(image), 400, 300)
+		val page = pageWith(480, 900, credits(400, 300, 34, red = 0xFF4500), 400, 300, 40, 300)
+		// As near as two colours with names of their own get. With this much colour, still further round than a copy comes to
+		val evidence = evidenceOf(page, rule)
+		assertTrue(
+			"${evidence.hue} degrees round at ${evidence.colourStrength}",
+			evidence.hue > 12.0 && evidence.hue < 25.0 && evidence.colourStrength >= 24.0,
+		)
+		assertTrue(find(page, rule).isEmpty())
+	}
+
+	@Test
+	fun `colours a saving apart are the same, and other colours are not`() {
+		// As measured on a phone, on the same picture saved again: how far apart, the degrees round, and how strong
+		assertTrue(KeypointMatcher.isSameColour(6.3, 8.0, 21.7, false))
+		assertTrue(KeypointMatcher.isSameColour(7.3, 8.0, 22.7, false))
+		assertTrue(KeypointMatcher.isSameColour(7.1, 11.0, 17.8, false))
+		assertTrue(KeypointMatcher.isSameColour(4.3, 16.0, 13.0, false))
+		assertTrue(KeypointMatcher.isSameColour(3.4, 16.0, 15.0, false))
+		// Further round than that
+		assertFalse(KeypointMatcher.isSameColour(3.4, 19.0, 15.0, false))
+		assertFalse(KeypointMatcher.isSameColour(4.0, 13.0, 30.0, false))
+		// Red against gold, however alike in strength
+		assertFalse(KeypointMatcher.isSameColour(8.0, 56.0, 60.0, false))
+		// Far stronger or weaker
+		assertFalse(KeypointMatcher.isSameColour(10.5, 2.0, 22.0, false))
+		assertFalse(KeypointMatcher.isSameColour(13.0, 2.0, 60.0, false))
+	}
+
+	@Test
+	fun `with next to no colour, what counts as the same colour is as it was`() {
+		// Thin lettering in red against the same in an orange red: no more than a few steps apart, and a long way round
+		assertFalse(KeypointMatcher.isSameColour(4.3, 21.1, 11.1, false))
+		assertTrue(KeypointMatcher.isSameColour(3.0, 21.1, 11.1, false))
+		assertFalse(KeypointMatcher.isSameColour(2.0, 30.0, 9.0, false))
+	}
+
+	@Test
+	fun `what was the same colour before still is`() {
+		for (strength in 12..60) {
+			for (hue in 0..12) {
+				val difference = minOf(strength * 0.25, KeypointMatcher.MAX_COLOUR_DIFFERENCE)
+				assertTrue("$difference apart, $hue round, at $strength", KeypointMatcher.isSameColour(difference, hue.toDouble(), strength.toDouble(), false))
+			}
+		}
+	}
+
 	@Test
 	fun `only the rules that are on a page are looked at properly`() {
 		val rules = List(40) { RuleDetail.of(rgbOf(banner(300, 100, 100L + it)), 300, 100) }
@@ -295,5 +418,11 @@ class ImageKeypointsTest {
 			shrinker.addRow(row)
 		}
 		return shrinker.output
+	}
+
+	private companion object {
+
+		/** How far up black came out in the copy of a page of credits saved again, of 255. */
+		const val BLACK_SAVED_AGAIN = 17
 	}
 }

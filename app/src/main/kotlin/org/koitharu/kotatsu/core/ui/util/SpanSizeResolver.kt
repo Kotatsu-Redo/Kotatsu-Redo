@@ -9,8 +9,18 @@ import kotlin.math.abs
 
 class SpanSizeResolver(
 	private val recyclerView: RecyclerView,
-	@Px private val minItemWidth: Int,
+	@Px minItemWidth: Int,
 ) : View.OnLayoutChangeListener {
+
+	/** The narrowest a column may get. Changing it lays the list out again with as many as now fit. */
+	@Px
+	var minItemWidth: Int = minItemWidth
+		set(value) {
+			if (field != value) {
+				field = value
+				invalidate()
+			}
+		}
 
 	fun attach() {
 		recyclerView.addOnLayoutChangeListener(this)
@@ -43,7 +53,7 @@ class SpanSizeResolver(
 			return
 		}
 		val lm = recyclerView.layoutManager as? GridLayoutManager ?: return
-		val estimatedCount = (width / minItemWidth.toFloat()).toIntUp()
+		val estimatedCount = (width / minItemWidth.coerceAtLeast(1).toFloat()).toIntUp()
 		if (lm.spanCount != estimatedCount) {
 			lm.spanCount = estimatedCount
 			lm.spanSizeLookup?.run {

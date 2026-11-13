@@ -13,7 +13,6 @@ import org.koitharu.kotatsu.core.util.ext.call
 import org.koitharu.kotatsu.explore.data.SourcePreset
 import org.koitharu.kotatsu.explore.data.SourcePresetsRepository
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import javax.inject.Inject
 
 @HiltViewModel

@@ -78,6 +78,10 @@ class ChipsView @JvmOverloads constructor(
 		chipStyle = ta.getResourceId(R.styleable.ChipsView_chipStyle, R.style.Widget_Kotatsu_Chip)
 		iconsVisible = ta.getBoolean(R.styleable.ChipsView_chipIconVisible, true)
 		ta.recycle()
+		// Chips get made-up ids, and so do other views on screen. Those start again from one when the app is
+		// brought back after being killed, so a chip could then be handed what a list had saved under the same
+		// number, and crashed on it. There is nothing of a chip to keep: all of them are built from the model.
+		isSaveFromParentEnabled = false
 
 		if (isInEditMode) {
 			setChips(

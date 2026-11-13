@@ -74,6 +74,13 @@
 		app:showAsAction="never" />
 
 	<item
+		android:id="@+id/action_not_interested"
+		android:orderInCategory="52"
+		android:title="@string/not_interested"
+		android:visible="false"
+		app:showAsAction="never" />
+
+	<item
 		android:id="@+id/action_shortcut"
 		android:orderInCategory="50"
 		android:title="@string/create_shortcut"

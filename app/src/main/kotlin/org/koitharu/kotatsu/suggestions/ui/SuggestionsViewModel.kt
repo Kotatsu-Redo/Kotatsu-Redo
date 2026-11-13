@@ -15,6 +15,9 @@ import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.observeAsFlow
 import org.koitharu.kotatsu.core.util.ext.onFirst
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
+import org.koitharu.kotatsu.discover.domain.MangaDismisser
+import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.list.domain.MangaListMapper
 import org.koitharu.kotatsu.list.domain.QuickFilterListener
 import org.koitharu.kotatsu.list.ui.MangaListViewModel
@@ -35,6 +38,8 @@ class SuggestionsViewModel @Inject constructor(
 	private val mangaListMapper: MangaListMapper,
 	private val quickFilter: SuggestionsListQuickFilter,
 	private val suggestionsScheduler: SuggestionsWorker.Scheduler,
+	dismissals: DiscoverDismissals,
+	private val dismisser: MangaDismisser,
 	mangaDataRepository: MangaDataRepository,
 	@LocalStorageChanges localStorageChanges: SharedFlow<LocalManga?>,
 ) : MangaListViewModel(settings, mangaDataRepository, localStorageChanges), QuickFilterListener by quickFilter {
@@ -46,7 +51,10 @@ class SuggestionsViewModel @Inject constructor(
 		quickFilter.appliedOptions.combineWithSettings().flatMapLatest { repository.observeAll(0, it) },
 		quickFilter.appliedOptions,
 		observeListModeWithTriggers(),
-	) { list, filters, mode ->
+		dismissals.observe(),
+	) { stored, filters, mode, dismissed ->
+		// Also what was passed on since the worker last ran, or under another name than the one it is stored by
+		val list = stored.filterNot { dismissed.matches(it) }
 		when {
 			list.isEmpty() -> if (filters.isEmpty()) {
 				listOf(
@@ -85,6 +93,11 @@ class SuggestionsViewModel @Inject constructor(
 	override fun onRefresh() = Unit
 
 	override fun onRetry() = Unit
+
+	/** @return what to pass to [undoDismiss] to take them back */
+	fun dismiss(manga: Collection<Manga>): List<String> = dismisser.dismiss(manga)
+
+	fun undoDismiss(keys: Collection<String>) = dismisser.undo(keys)
 
 	fun updateSuggestions() {
 		launchJob(Dispatchers.Default) {

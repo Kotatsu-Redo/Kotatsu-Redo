@@ -106,6 +106,11 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		get() = prefs.getInt(KEY_GRID_SIZE_PAGES, 100)
 		set(value) = prefs.edit { putInt(KEY_GRID_SIZE_PAGES, value) }
 
+	/** The covers of the Explore tab, set apart from the library's: its charts are laid out closer together. */
+	var gridSizeDiscover: Int
+		get() = prefs.getInt(KEY_GRID_SIZE_DISCOVER, 100)
+		set(value) = prefs.edit { putInt(KEY_GRID_SIZE_DISCOVER, value) }
+
 	val isQuickFilterEnabled: Boolean
 		get() = prefs.getBoolean(KEY_QUICK_FILTER, true)
 
@@ -381,6 +386,15 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 	var sourcesVersion: Int
 		get() = prefs.getInt(KEY_SOURCES_VERSION, 0)
 		set(value) = prefs.edit { putInt(KEY_SOURCES_VERSION, value) }
+
+	/** Sources were added by parsers downloaded since the list of new ones was last looked at. */
+	var hasNewDownloadedSources: Boolean
+		get() = prefs.getBoolean(KEY_SOURCES_NEW_DOWNLOADED, false)
+		set(value) = prefs.edit { putBoolean(KEY_SOURCES_NEW_DOWNLOADED, value) }
+
+	/** Whether newer parsers than the app's own are looked for and taken in, see ParsersUpdater. */
+	val isParsersAutoUpdateEnabled: Boolean
+		get() = prefs.getBoolean(KEY_PARSERS_AUTO_UPDATE, true)
 
 	var isAllSourcesEnabled: Boolean
 		get() = prefs.getBoolean(KEY_SOURCES_ENABLED_ALL, false)
@@ -825,6 +839,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_UPDATES_FEED_CLEAR = "updates_feed_clear"
 		const val KEY_GRID_SIZE = "grid_size"
 		const val KEY_GRID_SIZE_PAGES = "grid_size_pages"
+		const val KEY_GRID_SIZE_DISCOVER = "grid_size_discover"
 		const val KEY_REMOTE_SOURCES = "remote_sources"
 		const val KEY_LOCAL_STORAGE = "local_storage"
 		const val KEY_READER_DOUBLE_PAGES = "reader_double_pages"
@@ -921,6 +936,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_READER_ERASE_GESTURE = "reader_erase_gesture"
 		const val KEY_ERASE_TUTORIAL = "erase_tutorial"
 		const val TIP_ERASE_TUTORIAL = "erase_tutorial"
+		const val TIP_DISCOVER_DISMISS = "discover_dismiss"
 		private const val KEY_NAV_SOURCES_OFFERED = "nav_sources_offered"
 		private const val NAV_ITEMS_ALWAYS_FIT = 5
 		const val KEY_PREFETCH_CONTENT = "prefetch_content"
@@ -967,6 +983,8 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
 		const val KEY_SEARCH_SUGGESTION_TYPES = "search_suggest_types"
 		const val KEY_SOURCES_VERSION = "sources_version"
 		const val KEY_SOURCES_ENABLED_ALL = "sources_enabled_all"
+		const val KEY_SOURCES_NEW_DOWNLOADED = "sources_new_downloaded"
+		const val KEY_PARSERS_AUTO_UPDATE = "parsers_auto_update"
 		const val KEY_QUICK_FILTER = "quick_filter"
 		const val KEY_COLLAPSE_DESCRIPTION = "description_collapse"
 		const val KEY_BACKUP_TG_ENABLED = "backup_periodic_tg_enabled"

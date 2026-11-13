@@ -2,8 +2,10 @@ package org.koitharu.kotatsu.reader.ui.pager
 
 import android.content.ComponentCallbacks2
 import android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE
+import android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.view.View
 import androidx.annotation.CallSuper
 import androidx.core.view.isGone
@@ -15,16 +17,14 @@ import com.davemorrissey.labs.subscaleview.DefaultOnImageEventListener
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.resolve.ExceptionResolver
-import org.koitharu.kotatsu.core.image.CoilImageView
 import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.ui.list.lifecycle.LifecycleAwareViewHolder
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
-import org.koitharu.kotatsu.core.util.ext.isAnimatedImage
+import org.koitharu.kotatsu.core.util.ext.isAnimationsEnabled
 import org.koitharu.kotatsu.core.util.ext.isLowRamDevice
 import org.koitharu.kotatsu.core.util.ext.isSerializable
 import org.koitharu.kotatsu.core.util.ext.observe
@@ -63,8 +63,16 @@ abstract class BasePageHolder<B : ViewBinding>(
 	protected val bindingInfo = LayoutPageInfoBinding.bind(binding.root)
 	protected abstract val ssiv: SubsamplingScaleImageView
 
-	protected val animatedView: CoilImageView? by lazy {
-		itemView.findViewById(R.id.animatedView)
+	/**
+	 * Plays a page that moves, over the view. Null on a system that cannot play one. Not made until asked for:
+	 * the view is not there yet while this is being put together.
+	 */
+	private val animationPlayer: PageAnimationPlayer? by lazy(LazyThreadSafetyMode.NONE) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			PageAnimationPlayer(ssiv, itemView, pageLoader.animatedPages, lifecycleScope)
+		} else {
+			null
+		}
 	}
 
 	protected val settings: ReaderSettings
@@ -118,9 +126,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 		boundData?.let { pageLoader.onPageUnbound(it.id) }
 		pageLoader.onPageBound(data.id)
 		boundData = data
-		ssiv.isVisible = true
-		animatedView?.isVisible = false
-		animatedView?.disposeImage()
+		animationPlayer?.reset()
 		viewModel.onBind(data.toMangaPage())
 		onBind(data)
 	}
@@ -151,6 +157,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 		super.onResume()
 		setPageOnScreen(boundData?.id)
 		ssiv.applyDownSampling(isForeground = true)
+		updateAnimation()
 		if (viewModel.state.value is PageState.Error && !viewModel.isLoading()) {
 			boundData?.let { viewModel.retry(it.toMangaPage(), isFromUser = false) }
 		}
@@ -160,6 +167,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 		super.onPause()
 		setPageOnScreen(null)
 		ssiv.applyDownSampling(isForeground = false)
+		updateAnimation()
 	}
 
 	override fun onDestroy() {
@@ -177,12 +185,15 @@ abstract class BasePageHolder<B : ViewBinding>(
 		viewModel.onRecycle()
 		boundData?.let { pageLoader.onPageUnbound(it.id) }
 		boundData = null
+		animationPlayer?.reset()
 		ssiv.recycle()
-		animatedView?.disposeImage()
 	}
 
 	override fun onTrimMemory(level: Int) {
-		// TODO
+		// The frames of a page that moves are the first thing that can go: the page itself stays on screen
+		if (level >= TRIM_MEMORY_RUNNING_LOW) {
+			animationPlayer?.stop()
+		}
 	}
 
 	override fun onConfigurationChanged(newConfig: Configuration) = Unit
@@ -202,7 +213,6 @@ abstract class BasePageHolder<B : ViewBinding>(
 			bindingInfo.progressBar.isIndeterminate = true
 			bindingInfo.textViewStatus.setText(R.string.loading_)
 		}
-		val isAnimated = boundData?.url?.isAnimatedImage() == true
 		when (state) {
 			is PageState.Converting -> {
 				bindingInfo.textViewStatus.setText(R.string.processing_)
@@ -222,14 +232,9 @@ abstract class BasePageHolder<B : ViewBinding>(
 			}
 
 			is PageState.Loaded -> {
-				if (isAnimated) {
-					showAnimated(boundData!!, state)
-					bindingInfo.layoutProgress.isGone = true
-				} else {
-					bindingInfo.textViewStatus.setText(R.string.preparing_)
-					applyMask(state.mask)
-					ssiv.setImage(state.source)
-				}
+				bindingInfo.textViewStatus.setText(R.string.preparing_)
+				applyMask(state.mask)
+				ssiv.setImage(state.source)
 			}
 
 			is PageState.Loading -> {
@@ -242,13 +247,30 @@ abstract class BasePageHolder<B : ViewBinding>(
 
 			is PageState.Hidden -> ssiv.recycle()
 		}
+		updateAnimation()
+	}
+
+	/**
+	 * Plays a page that moves while it is the one on screen, and only then. A frame takes as much memory as the page
+	 * does and several are held at once, and the pages on either side of this one are kept ready as well.
+	 *
+	 * Not at all with animations switched off for the whole phone, which is asking for nothing to move.
+	 */
+	private fun updateAnimation() {
+		val player = animationPlayer ?: return
+		val animation = viewModel.shownAnimation
+		if (animation != null && isResumed() && context.isAnimationsEnabled) {
+			player.play(animation, viewModel.shownRegion)
+		} else {
+			player.stop()
+		}
 	}
 
 	/** This page as something a scrub can act on, or null while nothing erasable is on it. */
 	fun createEraseTarget(): ErasePageTarget? {
 		val page = boundData ?: return null
 		val uri = viewModel.shownImage ?: return null
-		if (!ssiv.isReady || page.url.isAnimatedImage()) {
+		if (!ssiv.isReady) {
 			return null
 		}
 		return ErasePageTarget(page, uri, ssiv, viewModel.shownRegion, viewModel.shownMask, viewModel.state)
@@ -262,21 +284,6 @@ abstract class BasePageHolder<B : ViewBinding>(
 		val current = ssiv.regionDecoderFactory
 		val plain = (current as? MaskedRegionDecoder.Factory)?.delegate ?: current
 		ssiv.regionDecoderFactory = if (mask != null) MaskedRegionDecoder.Factory(plain, mask) else plain
-	}
-
-	private fun showAnimated(page: ReaderPage, loadedState: PageState.Loaded) {
-		ssiv.isVisible = false
-		animatedView?.let {
-			it.isVisible = true
-			it.setImageAsync(page)
-		}
-		viewModel.state.update { currentState ->
-			if (currentState is PageState.Loaded) {
-				PageState.Shown(loadedState.source, loadedState.isConverted, loadedState.mask)
-			} else {
-				currentState
-			}
-		}
 	}
 
 	protected fun SubsamplingScaleImageView.applyDownSampling(isForeground: Boolean) {

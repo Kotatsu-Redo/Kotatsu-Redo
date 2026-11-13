@@ -9,6 +9,11 @@
 		app:showAsAction="ifRoom" />
 
 	<item
+		android:id="@+id/action_grid_size"
+		android:title="@string/grid_size"
+		app:showAsAction="never" />
+
+	<item
 		android:id="@+id/action_refresh"
 		android:title="@string/update"
 		app:showAsAction="never" />

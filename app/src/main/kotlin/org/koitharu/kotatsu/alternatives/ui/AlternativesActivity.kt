@@ -38,7 +38,7 @@ import org.koitharu.kotatsu.list.ui.adapter.loadingFooterAD
 import org.koitharu.kotatsu.list.ui.adapter.loadingStateAD
 import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import javax.inject.Inject
 import androidx.appcompat.R as appcompatR
 
@@ -209,7 +209,7 @@ class AlternativesActivity : BaseActivity<ActivityAlternativesBinding>(),
 
 	private fun buildReferenceSubtitle(reference: MangaAlternativeReference): String = buildList {
 		add(reference.manga.source.getTitle(this@AlternativesActivity))
-		(reference.manga.source as? MangaParserSource)?.locale?.uppercase()?.let(::add)
+		(reference.manga.source as? ParserMangaSource)?.locale?.uppercase()?.let(::add)
 		add(
 			resources.getQuantityStringSafe(
 				R.plurals.chapters,

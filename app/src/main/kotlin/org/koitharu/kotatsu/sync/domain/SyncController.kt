@@ -172,30 +172,36 @@ class SyncController @Inject constructor(
 		if (!favourites && !history) {
 			return
 		}
-		val db = dbProvider.get()
 		val account = peekAccount()
-		if (account == null || !ContentResolver.getMasterSyncAutomatically()) {
-			db.gc(favourites, history)
+		if (account == null) {
+			dbProvider.get().gc(favourites, history)
 			return
 		}
-		var gcHistory = false
-		var gcFavourites = false
-		if (favourites) {
-			if (ContentResolver.getSyncAutomatically(account, authorityFavourites)) {
-				ContentResolver.requestSync(account, authorityFavourites, Bundle.EMPTY)
-			} else {
-				gcFavourites = true
-			}
+		// With an account, what was removed is only cleared out by the sync that has sent it. A removal is a mark on
+		// the row until then, and clearing marked rows out while syncing was switched off, for the phone or for this
+		// account, left the server with the manga still on it: the next sync that did run brought it back, two days
+		// after it was removed.
+		if (!ContentResolver.getMasterSyncAutomatically()) {
+			return
 		}
-		if (history) {
-			if (ContentResolver.getSyncAutomatically(account, authorityHistory)) {
-				ContentResolver.requestSync(account, authorityHistory, Bundle.EMPTY)
-			} else {
-				gcHistory = true
-			}
+		if (favourites && ContentResolver.getSyncAutomatically(account, authorityFavourites)) {
+			ContentResolver.requestSync(account, authorityFavourites, Bundle.EMPTY)
 		}
-		if (gcHistory || gcFavourites) {
-			db.gc(gcFavourites, gcHistory)
+		if (history && ContentResolver.getSyncAutomatically(account, authorityHistory)) {
+			ContentResolver.requestSync(account, authorityHistory, Bundle.EMPTY)
+		}
+	}
+
+	/**
+	 * Up to when a removal from favourites may already have reached the server: the time of the last sync, or any
+	 * time at all while one is under way or waiting. Zero with no account, as nothing has gone anywhere.
+	 */
+	fun getFavouritesSyncedUntil(): Long {
+		val account = peekAccount() ?: return 0L
+		return if (isSyncActiveOrPending(authorityFavourites)) {
+			Long.MAX_VALUE
+		} else {
+			getLastSync(account, authorityFavourites)
 		}
 	}
 

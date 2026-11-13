@@ -23,6 +23,7 @@ import org.koitharu.kotatsu.reader.domain.erase.ImageHider
 import org.koitharu.kotatsu.reader.domain.erase.PageLuma
 import org.koitharu.kotatsu.reader.domain.erase.SourceRegion
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
+import kotlin.math.abs
 
 /**
  * Runs an erase from the first stroke to the undo offer: watches every touch before the reader does, and
@@ -191,6 +192,13 @@ class EraseController(
 			playPractice(listener, rect)
 			return
 		}
+		val offered = current.offered
+		val offeredRegion = current.offeredRegion
+		if (offered != null && offeredRegion != null && rect.isSameAs(offered)) {
+			// Taken as offered: the object, and the blank around it that the borders leave out
+			erase(current, offeredRegion, rect)
+			return
+		}
 		val region = current.target.screenToRegion(
 			rect.left, rect.top, rect.right, rect.bottom,
 			current.luma.sourceWidth, current.luma.sourceHeight,
@@ -199,7 +207,7 @@ class EraseController(
 			abort(R.string.erase_not_possible)
 			return
 		}
-		erase(current, region, rect)
+		erase(current, EraseProposer.withBlankAround(current.luma, region), rect)
 	}
 
 	override fun onSelectionCancelled() {
@@ -266,14 +274,25 @@ class EraseController(
 		return withContext(Dispatchers.Default) { EraseProposer.isUnlikeTheRest(luma, proposal, neighbours) }
 	}
 
+	/**
+	 * The borders go around the object itself. The blank space around it goes with it all the same, but showing
+	 * that put the borders on white, out to both edges of the page for anything narrower than it.
+	 *
+	 * An object far bigger than what was rubbed gets them around the rub instead, unless it is going without
+	 * asking: rubbing a watermark in the corner of a panel used to put them around the whole panel.
+	 */
 	private fun present(current: Session, proposal: EraseProposal, eraseNow: Boolean) {
-		val rect = current.target.regionToScreen(proposal.region)
+		val aroundStroke = proposal.aroundStroke?.takeUnless { eraseNow }
+		val shown = aroundStroke ?: proposal.objectRegion
+		val rect = current.target.regionToScreen(shown)
 		if (rect == null) {
 			abort(R.string.erase_not_possible)
 			return
 		}
-		val snapX = proposal.snapX.asList().mapNotNull { current.target.sourceToScreen(it.toFloat(), proposal.region.top.toFloat())?.x }
-		val snapY = proposal.snapY.asList().mapNotNull { current.target.sourceToScreen(proposal.region.left.toFloat(), it.toFloat())?.y }
+		current.offered = RectF(rect)
+		current.offeredRegion = if (aroundStroke != null) EraseProposer.withBlankAround(current.luma, aroundStroke) else proposal.region
+		val snapX = proposal.snapX.asList().mapNotNull { current.target.sourceToScreen(it.toFloat(), shown.top.toFloat())?.x }
+		val snapY = proposal.snapY.asList().mapNotNull { current.target.sourceToScreen(shown.left.toFloat(), it.toFloat())?.y }
 		overlay.showSelection(
 			rect = rect,
 			offerHandles = !eraseNow,
@@ -401,7 +420,19 @@ class EraseController(
 		return RectF(start.x, start.y, end.x, end.y)
 	}
 
-	private class Session(val target: ErasePageTarget, val luma: PageLuma)
+	/** Borders the reader has not moved are still where they were put, give or take what drawing them rounds off. */
+	private fun RectF.isSameAs(other: RectF): Boolean =
+		abs(left - other.left) <= SAME_BORDER_PX && abs(top - other.top) <= SAME_BORDER_PX &&
+			abs(right - other.right) <= SAME_BORDER_PX && abs(bottom - other.bottom) <= SAME_BORDER_PX
+
+	private class Session(val target: ErasePageTarget, val luma: PageLuma) {
+
+		/** Where on screen the borders were put, to tell whether the reader has moved them since. */
+		var offered: RectF? = null
+
+		/** What goes if they have not: more than is inside the borders, by the blank around it. */
+		var offeredRegion: SourceRegion? = null
+	}
 
 	private class OtherPage(val target: ErasePageTarget, val luma: PageLuma, val region: SourceRegion)
 
@@ -419,6 +450,8 @@ class EraseController(
 		const val OTHER_PAGE_PROBE_DP = 8
 
 		const val MIN_OTHER_PAGE_DP = 24
+
+		const val SAME_BORDER_PX = 1.5f
 
 		/** Long enough for the wipe to play out, with nothing to wait for since no page is changing. */
 		const val PRACTICE_ERASE_MS = 650L

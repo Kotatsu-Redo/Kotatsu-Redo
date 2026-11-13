@@ -41,7 +41,7 @@ import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.LoadingFooter
 import org.koitharu.kotatsu.list.ui.model.LoadingState
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.search.domain.SearchKind
@@ -221,7 +221,7 @@ class SearchViewModel @Inject constructor(
 		},
 		onFailure = { error ->
 			error.printStackTraceDebug()
-			if (source is MangaParserSource && source.isBroken) {
+			if (source is ParserMangaSource && source.isBroken) {
 				null
 			} else {
 				SearchResultsListModel(
@@ -340,7 +340,7 @@ class SearchViewModel @Inject constructor(
 
 	private fun MangaSource.priority(): Int {
 		var res = 0
-		if (this is MangaParserSource) {
+		if (this is ParserMangaSource) {
 			if (locale.toLocale() == Locale.getDefault()) res += 2
 		}
 		return res

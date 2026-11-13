@@ -90,6 +90,22 @@
 			android:layout_margin="@dimen/card_indicator_offset"
 			app:progressStyle="?attr/readingProgressStyle" />
 
+		<!-- Always-visible "Not interested" for Explore. A 24dp disc (bg inset) inside a 36dp touch target. -->
+		<ImageView
+			android:id="@+id/button_dismiss"
+			android:layout_width="36dp"
+			android:layout_height="36dp"
+			android:layout_gravity="top|end"
+			android:background="@drawable/bg_cover_action"
+			android:clickable="true"
+			android:contentDescription="@string/not_interested"
+			android:focusable="true"
+			android:foreground="?selectableItemBackgroundBorderless"
+			android:padding="11dp"
+			android:src="@drawable/ic_thumb_down"
+			android:visibility="gone"
+			app:tint="@android:color/white" />
+
 		<!-- Backdrop for the overlaid title. Sized for two lines and faded to transparent at the
 		     top; the gradient itself is built in MangaGridItemAD so it can pick up the theme accent.
 		     Kept directly above the cover so the badges and icons still draw over it. -->

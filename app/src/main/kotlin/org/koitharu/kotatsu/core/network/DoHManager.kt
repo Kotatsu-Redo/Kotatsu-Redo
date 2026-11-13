@@ -26,6 +26,14 @@ class DoHManager(
 		} catch (e: UnknownHostException) {
 			// fallback
 			Dns.SYSTEM.lookup(hostname)
+		} catch (e: RuntimeException) {
+			// A name that cannot be looked up at all, or the secure lookup itself failing to start: neither is
+			// anything the caller expects from here, and both took the app down
+			try {
+				Dns.SYSTEM.lookup(hostname)
+			} catch (e2: RuntimeException) {
+				throw UnknownHostException(hostname).apply { initCause(e2) }
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ import org.koitharu.kotatsu.backups.data.model.BackupIndex
 import org.koitharu.kotatsu.backups.data.model.BookmarkBackup
 import org.koitharu.kotatsu.backups.data.model.CategoryBackup
 import org.koitharu.kotatsu.backups.data.model.FavouriteBackup
+import org.koitharu.kotatsu.backups.data.model.DismissedBackup
 import org.koitharu.kotatsu.backups.data.model.HiddenImageBackup
 import org.koitharu.kotatsu.backups.data.model.HistoryBackup
 import org.koitharu.kotatsu.backups.data.model.MangaBackup
@@ -40,6 +41,7 @@ import org.koitharu.kotatsu.filter.data.PersistableFilter
 import org.koitharu.kotatsu.filter.data.SavedFiltersRepository
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.reader.data.TapGridSettings
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
 import org.koitharu.kotatsu.reader.data.erase.HiddenImagesRepository
 import org.koitharu.kotatsu.sourcescore.data.CommunitySettings
 import java.io.InputStream
@@ -64,6 +66,8 @@ class BackupRepository @Inject constructor(
     private val communitySettings: CommunitySettings? = null,
     /** Nullable for the same reason: a backup agent's has no Hilt graph, and writes an empty section. */
     private val hiddenImages: HiddenImagesRepository? = null,
+    /** Nullable for the same reason: a backup agent writes an empty section and restores nothing. */
+    private val dismissals: DiscoverDismissals? = null,
 ) {
 
     private companion object {
@@ -156,6 +160,12 @@ class BackupRepository @Inject constructor(
                     serializer = serializer(),
                 )
 
+                BackupSection.DISMISSED -> output.writeJsonArray(
+                    section = BackupSection.DISMISSED,
+                    data = dismissals?.get()?.entries.orEmpty().entries.asFlow().map { DismissedBackup.of(it.key, it.value) },
+                    serializer = serializer(),
+                )
+
                 BackupSection.SAVED_FILTERS -> {
                     val sources = mangaSourcesRepository.getEnabledSources()
                     val filters = sources.flatMap { source ->
@@ -242,6 +252,12 @@ class BackupRepository @Inject constructor(
                     BackupSection.HIDDEN_IMAGES -> input.readJsonArray<HiddenImageBackup>(serializer())
                         .restoreWithoutTransaction {
                             hiddenImages?.restore(it.toEntity())
+                        }
+
+                    // Merged with what is here: a pass already on this device is kept as it is
+                    BackupSection.DISMISSED -> input.readJsonArray<DismissedBackup>(serializer())
+                        .restoreWithoutTransaction {
+                            dismissals?.store?.restore(listOf(it.key to it.entry))
                         }
 
                     null -> CompositeResult.EMPTY // skip unknown entries

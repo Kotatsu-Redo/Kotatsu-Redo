@@ -1424,7 +1424,14 @@ object KeypointMatcher {
 	const val MAX_FAR_SHARE = 0.05
 	private const val FAR_DIFFERENCE = 40.0
 	private const val MOSTLY_BLANK = 0.68
-	const val MAX_BRIGHTNESS_SHIFT = 8.0
+
+	/**
+	 * How much brighter or darker all of it may be. A group saves its page of credits again for each chapter, and not always
+	 * with the same settings: on 725 pages someone was reading it came back 12 to 13 brighter in four chapters, its black a
+	 * dark grey, and the same to the last block otherwise. Every copy found at 8 was within 7. This cannot tell such a copy
+	 * from the same lettering printed in grey, which comes to as much, and the reader would rather lose both than keep both.
+	 */
+	const val MAX_BRIGHTNESS_SHIFT = 14.0
 
 	/**
 	 * Less than half of it on a page is left to the page with the rest of it, where it is found and has this removed too. On
@@ -1445,9 +1452,26 @@ object KeypointMatcher {
 	private const val MAX_COLOUR_DIFFERENCE_SHARE = 0.25
 	const val MAX_HUE_DEGREES = 25.0
 
-	/** With a strong colour, which colour it is has little room to change. */
+	/** With a strong colour, which colour it is has little room to change: however strong, it may be this far round. */
 	private const val STRONG_COLOUR = 12.0
 	private const val MAX_HUE_DEGREES_STRONG = 12.0
+
+	/**
+	 * What a site saving the same picture again comes to. Measured on a phone, on 725 pages someone was reading: one page saved
+	 * dull and vivid was 0.29 to 0.40 of its strength apart and 8 to 11 degrees round, at a strength of 18 to 23, and a page of
+	 * credits saved at another size was 0.33 apart and 16 degrees round at a strength of 13. All were the same to the last block
+	 * otherwise, and all were turned away at a quarter of the strength and 12 degrees.
+	 *
+	 * So from [STRONG_COLOUR] up a copy may be this share of its strength apart. How far round goes by how much colour there
+	 * is: which colour it is comes from an average, a faint cast over a page's black moves that by a few steps, and the less
+	 * colour, the more degrees those steps are. That is 18 degrees up to a strength of 15, and the 12 of a strong colour from 24.
+	 *
+	 * Red against gold is over 50 degrees and stays another image. Two shades as close as a copy is to its original, an orange
+	 * and an orange red in thin lettering, cannot be told from one by colour, and with this are taken for copies more often.
+	 */
+	private const val MAX_COLOUR_DIFFERENCE_SHARE_SAVED_AGAIN = 0.45
+	private const val MAX_HUE_DEGREES_SAVED_AGAIN = 18.0
+	private const val HUE_SLACK_IN_STEPS = 5.0
 
 	/** All the colour there is on the page is in a row cut off by its edge, which the rule has more of. Which colour still tells. */
 	private const val MAX_HUE_DEGREES_PARTLY = 15.0
@@ -1600,14 +1624,19 @@ object KeypointMatcher {
 	}
 
 	/**
-	 * Copies differ most in how strong a colour is, at the edge of what is on a page, and hardly in which colour it is. The same
-	 * image in other colours is the other way round.
+	 * Copies differ most in how strong a colour is, at the edge of what is on a page, and less in which colour it is, unless
+	 * there is little of it. The same image in other colours is the other way round.
 	 */
-	private fun isSameColour(difference: Double, hue: Double, strength: Double, isPartly: Boolean): Boolean {
+	internal fun isSameColour(difference: Double, hue: Double, strength: Double, isPartly: Boolean): Boolean {
 		if (difference > MAX_COLOUR_DIFFERENCE) return false
 		if (isPartly) return hue <= MAX_HUE_DEGREES_PARTLY
-		return hue <= (if (strength >= STRONG_COLOUR) MAX_HUE_DEGREES_STRONG else MAX_HUE_DEGREES) &&
-			difference <= maxOf(MIN_COLOUR_DIFFERENCE_ALLOWED, strength * MAX_COLOUR_DIFFERENCE_SHARE)
+		if (strength < STRONG_COLOUR) {
+			// Next to no colour, and any colour at all is a lot of degrees: all that tells here is how little apart they are
+			return hue <= MAX_HUE_DEGREES && difference <= maxOf(MIN_COLOUR_DIFFERENCE_ALLOWED, strength * MAX_COLOUR_DIFFERENCE_SHARE)
+		}
+		// See [MAX_COLOUR_DIFFERENCE_SHARE_SAVED_AGAIN]
+		val steps = Math.toDegrees(Math.atan2(HUE_SLACK_IN_STEPS, strength))
+		return hue <= steps.coerceIn(MAX_HUE_DEGREES_STRONG, MAX_HUE_DEGREES_SAVED_AGAIN) && difference <= strength * MAX_COLOUR_DIFFERENCE_SHARE_SAVED_AGAIN
 	}
 
 	/**

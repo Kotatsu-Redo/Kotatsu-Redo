@@ -1,7 +1,7 @@
 package org.koitharu.kotatsu.sourcescore.domain
 
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import kotlinx.coroutines.flow.Flow
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.sourcescore.data.CommunityDatabase
 import org.koitharu.kotatsu.sourcescore.data.SourceScoreEntity
@@ -59,7 +59,7 @@ class SourceRanker @Inject constructor(
 		val hot = SourceRank.hotSources(
 			scores = scoreList,
 			language = Locale.getDefault().language,
-			localeOf = { name -> parserLocales[name] },
+			localeOf = { name -> ActiveParsers.findSource(name)?.locale },
 		)
 		return RankingSnapshot(scores, stats, median, hot)
 	}
@@ -72,11 +72,6 @@ class SourceRanker @Inject constructor(
 	}
 
 	private companion object {
-
-		/** Name to language for every source this build can open; built once, the registry is static. */
-		val parserLocales: Map<String, String> by lazy {
-			MangaParserSource.entries.associate { it.name to it.locale }
-		}
 
 		/**
 		 * Used before any score has been downloaded. Deliberately mid-range rather than zero: on a

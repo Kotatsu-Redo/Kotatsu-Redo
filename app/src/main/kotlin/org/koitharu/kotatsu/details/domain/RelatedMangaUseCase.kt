@@ -6,6 +6,9 @@ import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
+import org.koitharu.kotatsu.discover.data.DismissedIndex
+import org.koitharu.kotatsu.discover.domain.DiscoverRanking
 import org.koitharu.kotatsu.discover.domain.ReaderProfiles
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
@@ -38,18 +41,21 @@ class RelatedMangaUseCase @Inject constructor(
 	private val tagStatistics: TagStatistics,
 	private val settings: AppSettings,
 	private val profiles: ReaderProfiles,
+	private val dismissals: DiscoverDismissals,
 ) {
 
 	suspend operator fun invoke(seed: Manga): List<Manga>? {
 		val excludeNsfw = settings.isNsfwContentDisabled
-		val remote = remote(seed, excludeNsfw)
+		// What the reader passed on is not offered here either, and counts against its genres
+		val dismissed = runCatchingCancellable { dismissals.get() }.getOrDefault(DismissedIndex.EMPTY)
+		val remote = remote(seed, excludeNsfw, dismissed).filterNot { dismissed.matches(it) }
 		if (remote.size >= MIN_RESULTS) {
 			return remote
 		}
 
 		val picked = LinkedHashMap<Long, Manga>()
 		fun add(list: List<Manga>) = list.forEach {
-			if (it.id != seed.id && !(excludeNsfw && it.isNsfw())) {
+			if (it.id != seed.id && !(excludeNsfw && it.isNsfw()) && !dismissed.matches(it)) {
 				picked.putIfAbsent(it.id, it)
 			}
 		}
@@ -82,11 +88,13 @@ class RelatedMangaUseCase @Inject constructor(
 	}
 
 	/** Bounded: an unreachable server must not hold the row back for the client's whole timeout. */
-	private suspend fun remote(seed: Manga, excludeNsfw: Boolean): List<Manga> = runCatchingCancellable {
+	private suspend fun remote(seed: Manga, excludeNsfw: Boolean, dismissed: DismissedIndex): List<Manga> = runCatchingCancellable {
 		withTimeoutOrNull(REMOTE_TIMEOUT_MS) {
 			// Whatever is known already: this row is not worth reading the whole library for on its own
-			val taste = profiles.peek()?.taste.orEmpty()
-			communitySuggestions.getSimilarTo(seed, LIMIT, excludeNsfw, maxFetches = MAX_FETCHES, taste = taste)
+			val taste = DiscoverRanking.applyDismissals(profiles.peek()?.taste.orEmpty(), dismissed.tagLists)
+			communitySuggestions.getSimilarTo(
+				seed, LIMIT, excludeNsfw, maxFetches = MAX_FETCHES, taste = taste, dismissed = dismissed,
+			)
 		}
 	}.onFailure { it.printStackTraceDebug() }.getOrNull().orEmpty()
 

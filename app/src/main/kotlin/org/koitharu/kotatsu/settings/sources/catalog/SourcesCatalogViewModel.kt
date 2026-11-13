@@ -26,7 +26,7 @@ import org.koitharu.kotatsu.explore.data.SourcesSortOrder
 import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.LoadingState
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.sourcescore.domain.SourceRanker
@@ -102,7 +102,7 @@ class SourcesCatalogViewModel @Inject constructor(
 		}
 	}
 
-	fun togglePresetSource(source: MangaParserSource) {
+	fun togglePresetSource(source: ParserMangaSource) {
 		if (activePresetId == 0L) return
 		launchJob(Dispatchers.Default) {
 			val current = presetSources.value.toMutableSet()
@@ -181,12 +181,12 @@ class SourcesCatalogViewModel @Inject constructor(
 	 * and the sort is stable, so names still break every tie - and if the community database cannot
 	 * be read the list simply stays alphabetical.
 	 */
-	private suspend fun rankForCatalog(sources: List<MangaParserSource>): List<Pair<MangaParserSource, Boolean>> {
+	private suspend fun rankForCatalog(sources: List<ParserMangaSource>): List<Pair<ParserMangaSource, Boolean>> {
 		val snapshot = runCatchingCancellable { sourceRanker.snapshot() }.getOrNull()
 			?: return sources.map { it to false }
 		val ranks = sources.associate { it.name to snapshot.rank(it) }
 		return sources.sortedWith(
-			compareBy<MangaParserSource> { it.isBroken }
+			compareBy<ParserMangaSource> { it.isBroken }
 				.thenByDescending { ranks.getValue(it.name).isHot }
 				.thenByDescending { ranks.getValue(it.name).composite },
 		).map { it to ranks.getValue(it.name).isHot }

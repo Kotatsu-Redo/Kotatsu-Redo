@@ -208,12 +208,14 @@
 					app:layout_constraintStart_toEndOf="@id/button_community_rating"
 					app:layout_constraintTop_toTopOf="@id/button_community_rating" />
 
+				<!-- Hidden until a rating is being loaded: with the community features off, none ever is. -->
 				<com.google.android.material.loadingindicator.LoadingIndicator
 					android:id="@+id/loadingIndicator_community"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="12dp"
 					android:layout_marginTop="6dp"
+					android:visibility="gone"
 					app:indicatorSize="24dp"
 					app:layout_constraintStart_toEndOf="@id/imageView_cover"
 					app:layout_constraintTop_toBottomOf="@id/chip_favorite" />

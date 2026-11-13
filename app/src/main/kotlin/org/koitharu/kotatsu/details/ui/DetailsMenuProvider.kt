@@ -8,7 +8,6 @@ import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -49,10 +48,14 @@ class DetailsMenuProvider(
 		menu.findItem(R.id.action_browser).isVisible = manga?.publicUrl?.isHttpUrl() == true
 		menu.findItem(R.id.action_alternatives).isVisible = manga?.source != LocalMangaSource
 		menu.findItem(R.id.action_replace_source).isVisible = manga?.source != LocalMangaSource
-		menu.findItem(R.id.action_shortcut).isVisible = ShortcutManagerCompat.isRequestPinShortcutSupported(activity)
+		menu.findItem(R.id.action_shortcut).isVisible = appShortcutManager.isPinShortcutSupported
 		menu.findItem(R.id.action_scrobbling).isVisible = viewModel.isScrobblingAvailable
 		menu.findItem(R.id.action_online).isVisible = viewModel.remoteManga.value != null
 		menu.findItem(R.id.action_stats).isVisible = viewModel.isStatsAvailable.value
+		// Only for what the reader has no stake in yet: saving or reading it already says they are interested
+		menu.findItem(R.id.action_not_interested).isVisible = manga != null &&
+			viewModel.favouriteCategories.value.isEmpty() && viewModel.history.value == null &&
+			!viewModel.dismissedIndex.value.matches(manga)
 	}
 
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -101,6 +104,10 @@ class DetailsMenuProvider(
 
 			R.id.action_scrobbling -> {
 				router.showScrobblingSelectorSheet(manga, null)
+			}
+
+			R.id.action_not_interested -> {
+				viewModel.dismissFromSuggestions()
 			}
 
 			R.id.action_shortcut -> {

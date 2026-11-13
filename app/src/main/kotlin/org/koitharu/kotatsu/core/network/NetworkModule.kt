@@ -80,6 +80,8 @@ interface NetworkModule {
 			}
 			cache(cache)
 			//addInterceptor(GZipInterceptor())
+			addInterceptor(UnexpectedErrorInterceptor())
+			addInterceptor(proxyProvider.configInterceptor)
 			addInterceptor(CloudFlareInterceptor())
 			addInterceptor(RateLimitInterceptor())
 			if (BuildConfig.DEBUG) {

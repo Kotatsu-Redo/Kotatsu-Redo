@@ -18,7 +18,7 @@ import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.explore.data.SourcePreset
 import org.koitharu.kotatsu.explore.data.SourcePresetsRepository
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.config.ConfigKey
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
@@ -308,11 +308,11 @@ class AlternativesUseCase @Inject constructor(
 	}
 
 	private fun MangaSource.hasSameContentTypeAs(ref: MangaSource): Boolean =
-		this is MangaParserSource && ref is MangaParserSource && contentType == ref.contentType
+		this is ParserMangaSource && ref is ParserMangaSource && contentType == ref.contentType
 
 	private fun MangaSource.priority(ref: MangaSource): Int {
 		var res = 0
-		if (this is MangaParserSource && ref is MangaParserSource) {
+		if (this is ParserMangaSource && ref is ParserMangaSource) {
 			if (locale == ref.locale) {
 				res += 4
 			} else if (locale.toLocale() == Locale.getDefault()) {

@@ -21,14 +21,18 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ListMode
+import org.koitharu.kotatsu.core.prefs.observeAsFlow
 import org.koitharu.kotatsu.core.ui.BaseViewModel
 import org.koitharu.kotatsu.discover.data.DiscoverDismissals
+import org.koitharu.kotatsu.discover.data.DismissedIndex
 import org.koitharu.kotatsu.discover.domain.DiscoverFilter
 import org.koitharu.kotatsu.discover.domain.DiscoverRanking
 import org.koitharu.kotatsu.discover.domain.DiscoverRepository
 import org.koitharu.kotatsu.discover.domain.DiscoverSection
 import org.koitharu.kotatsu.discover.domain.DiscoverWindow
+import org.koitharu.kotatsu.discover.domain.MangaDismisser
 import org.koitharu.kotatsu.discover.domain.ReaderCategory
 import org.koitharu.kotatsu.discover.domain.ReaderProfile
 import org.koitharu.kotatsu.list.domain.MangaListMapper
@@ -37,9 +41,10 @@ import org.koitharu.kotatsu.list.ui.model.ListHeader
 import org.koitharu.kotatsu.list.ui.model.ListModel
 import org.koitharu.kotatsu.list.ui.model.LoadingState
 import org.koitharu.kotatsu.list.ui.model.MangaListModel
+import org.koitharu.kotatsu.list.ui.model.TipModel
 import org.koitharu.kotatsu.parsers.model.ContentType
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -48,7 +53,9 @@ import javax.inject.Inject
 class DiscoverViewModel @Inject constructor(
 	private val repository: DiscoverRepository,
 	private val mapper: MangaListMapper,
-	private val dismissals: DiscoverDismissals,
+	dismissals: DiscoverDismissals,
+	private val dismisser: MangaDismisser,
+	private val settings: AppSettings,
 ) : BaseViewModel() {
 
 	val tab = MutableStateFlow(DiscoverTab.FOR_YOU)
@@ -72,7 +79,17 @@ class DiscoverViewModel @Inject constructor(
 	/** Kept between one drawing of the screen and the next, which happens every time another source answers. */
 	private val models = ConcurrentHashMap<Long, MangaListModel>()
 
-	private val dismissed: Flow<Map<String, List<String>>> = dismissals.observe().shared()
+	private val dismissed: Flow<DismissedIndex> = dismissals.observe()
+		.onEach { index ->
+			// Passes made by an older version, or brought back by a backup, count: the hint is for whoever has not done it
+			if (!index.isEmpty) settings.closeTip(AppSettings.TIP_DISCOVER_DISMISS)
+		}
+		.shared()
+
+	/** The hint about long pressing a cover, until it is closed. Watched, so closing it anywhere closes it here. */
+	private val isTipOpen: Flow<Boolean> = settings.observeAsFlow(AppSettings.KEY_TIPS_CLOSED) {
+		isTipEnabled(AppSettings.TIP_DISCOVER_DISMISS)
+	}
 
 	/** Worked out from the whole library, and so not something the screen should wait for. */
 	private val profile: Flow<ReaderProfile?> = combine(refreshes, returns, ::Pair)
@@ -131,7 +148,7 @@ class DiscoverViewModel @Inject constructor(
 							repository.observeLike(seed, force).loading().map { section ->
 								seed to section.copy(
 									manga = section.manga.filter { manga ->
-										DiscoverRanking.matchesType(manga, filter.type, (manga.source as? MangaParserSource)?.contentType)
+										DiscoverRanking.matchesType(manga, filter.type, (manga.source as? ParserMangaSource)?.contentType)
 									},
 								)
 							}
@@ -164,7 +181,7 @@ class DiscoverViewModel @Inject constructor(
 	}.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.WhileSubscribed(5000), DiscoverChips(tab.value, window.value, filter.value, emptyList()))
 
 	val forYouContent = combine(
-		combine(filter, hasSources, dismissed, profile, ::ForYouSetting),
+		combine(filter, hasSources, dismissed, profile, isTipOpen, ::ForYouSetting),
 		forYou,
 		newFinds,
 		combine(categoryRows, likeRows, ::Pair),
@@ -179,7 +196,7 @@ class DiscoverViewModel @Inject constructor(
 	val topContent = hasOpenedTop.flatMapLatest { isOpened ->
 		if (isOpened) {
 			combine(filter, hasSources, dismissed, top) { filter, hasSources, dismissed, top ->
-				if (hasSources) buildTop(filter, top, dismissed.keys) else noSources()
+				if (hasSources) buildTop(filter, top, dismissed) else noSources()
 			}
 		} else {
 			flowOf(listOf<ListModel>(LoadingState()))
@@ -217,11 +234,15 @@ class DiscoverViewModel @Inject constructor(
 	}
 
 	/** @return what to pass to [undoDismiss] to take it back */
-	fun dismiss(manga: Manga): String = dismissals.add(manga)
+	fun dismiss(manga: Manga): String = dismisser.dismiss(manga)
 
-	fun undoDismiss(key: String) = dismissals.remove(key)
+	fun undoDismiss(key: String) = dismisser.undo(key)
 
-	fun clearDismissed() = dismissals.clear()
+	fun clearDismissed() = dismisser.undoAll()
+
+	fun closeTip() {
+		settings.closeTip(AppSettings.TIP_DISCOVER_DISMISS)
+	}
 
 	private suspend fun buildForYou(snapshot: ForYouSnapshot): List<ListModel> = buildList {
 		val forYou = snapshot.forYou
@@ -230,10 +251,23 @@ class DiscoverViewModel @Inject constructor(
 		// Each row leaves out what a row above has already shown: repeating a cover wastes the space
 		val shown = HashSet<String>()
 		val dismissed = snapshot.setting.dismissed
+		// Told once, where the reader will see it, and never after they have passed on anything
+		if (snapshot.setting.showTip && dismissed.isEmpty) {
+			add(
+				TipModel(
+					key = AppSettings.TIP_DISCOVER_DISMISS,
+					title = R.string.not_interested,
+					text = R.string.not_interested_tip,
+					icon = R.drawable.ic_tap,
+					primaryButtonText = R.string.got_it,
+					secondaryButtonText = 0,
+				),
+			)
+		}
 		val readerProfile = snapshot.setting.profile
 		val known = readerProfile?.knownTitles.orEmpty()
 		fun List<Manga>.available() = this.asSequence()
-			.filter { manga -> DiscoverRanking.titleKey(manga.title).let { it !in shown && it !in dismissed } }
+			.filter { manga -> DiscoverRanking.titleKey(manga.title) !in shown && !dismissed.matches(manga) }
 			// Lists are kept for hours, and they may have read or saved something on one since
 			.filterNot { manga -> DiscoverRanking.isKnown(manga, known) }
 			.distinctBy { manga -> DiscoverRanking.titleKey(manga.title) }
@@ -245,14 +279,17 @@ class DiscoverViewModel @Inject constructor(
 		fun List<Manga>.rotatedRow() = DiscoverRanking.rotate(available().toList(), LocalDate.now().toEpochDay(), ROW_SIZE)
 			.also { list -> list.mapTo(shown) { DiscoverRanking.titleKey(it.title) } }
 
-		// Until the suggestions worker has run there is nothing stored, and this still has a lot to go on. Many
-		// sources list no tags, so taste alone can come up short, but the rows are in their genres by asking for them
+		// Until the suggestions worker has run there is nothing stored, and under a filter few of what it stored
+		// are left. The rest of the screen still has a lot to go on: many sources list no tags, so taste alone can
+		// come up short, but the rows are in their genres, and of the type asked for, by asking for them
 		val rowManga = rows.flatMap { (_, section) -> section.manga }
-		val recommended = forYou.ifEmpty {
-			val taste = DiscoverRanking.applyDismissals(readerProfile?.taste.orEmpty(), dismissed.values)
-			DiscoverRanking.closestToTaste(rowManga + finds.manga, taste, ROW_SIZE * 2) +
-				DiscoverRanking.interleave(rows.map { (_, section) -> section.manga })
-		}.notShownYet(ROW_SIZE)
+		val recommended = DiscoverRanking.recommendedRow(
+			stored = forYou.available().toList(),
+			rows = rows.map { (_, section) -> section.manga },
+			others = finds.manga,
+			taste = DiscoverRanking.applyDismissals(readerProfile?.taste.orEmpty(), dismissed.tagLists),
+			size = ROW_SIZE,
+		).notShownYet(ROW_SIZE)
 		if (recommended.isNotEmpty()) {
 			add(
 				DiscoverRowItem(
@@ -330,9 +367,9 @@ class DiscoverViewModel @Inject constructor(
 	private fun buildTop(
 		filter: DiscoverFilter,
 		top: DiscoverSection,
-		dismissed: Set<String>,
+		dismissed: DismissedIndex,
 	): List<ListModel> = buildList {
-		val manga = top.manga.filterNot { DiscoverRanking.titleKey(it.title) in dismissed }
+		val manga = top.manga.filterNot { dismissed.matches(it) }
 		when {
 			manga.isNotEmpty() -> manga.forEachIndexed { index, item -> add(DiscoverRankedManga(index + 1, item)) }
 			top.isFinal -> add(nothingFound(filter))
@@ -375,8 +412,9 @@ class DiscoverViewModel @Inject constructor(
 	private class ForYouSetting(
 		val filter: DiscoverFilter,
 		val hasSources: Boolean,
-		val dismissed: Map<String, List<String>>,
+		val dismissed: DismissedIndex,
 		val profile: ReaderProfile?,
+		val showTip: Boolean,
 	)
 
 	private class ForYouSnapshot(

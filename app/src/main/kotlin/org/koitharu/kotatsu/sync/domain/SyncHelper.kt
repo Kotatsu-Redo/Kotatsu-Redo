@@ -4,11 +4,14 @@ import android.accounts.Account
 import android.content.ContentProviderClient
 import android.content.ContentProviderOperation
 import android.content.ContentProviderResult
+import android.content.ContentResolver
 import android.content.Context
 import android.content.OperationApplicationException
 import android.content.SyncResult
 import android.content.SyncStats
 import android.database.Cursor
+import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 import androidx.annotation.WorkerThread
 import androidx.core.net.toUri
@@ -47,8 +50,28 @@ import org.koitharu.kotatsu.sync.data.model.HistorySyncDto
 import org.koitharu.kotatsu.sync.data.model.MangaSyncDto
 import org.koitharu.kotatsu.sync.data.model.MangaTagSyncDto
 import org.koitharu.kotatsu.sync.data.model.SyncDto
+import org.koitharu.kotatsu.sync.ui.SyncProvider
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
+
+/**
+ * Whether the server's copy of a row is to replace the one here before the one here is sent: only when one of the
+ * two has been removed and the other has not, and the server's is the later of them.
+ *
+ * @param localChangedAt when the row here was added
+ * @param remoteChangedAt when the server's was
+ */
+internal fun isRemoteCopyNewer(
+	localChangedAt: Long,
+	localDeletedAt: Long,
+	remoteChangedAt: Long,
+	remoteDeletedAt: Long,
+): Boolean {
+	if ((localDeletedAt == 0L) == (remoteDeletedAt == 0L)) {
+		return false
+	}
+	return maxOf(remoteChangedAt, remoteDeletedAt) > maxOf(localChangedAt, localDeletedAt)
+}
 
 class SyncHelper @AssistedInject constructor(
 	@ApplicationContext context: Context,
@@ -77,6 +100,9 @@ class SyncHelper @AssistedInject constructor(
 
 	@WorkerThread
 	fun syncFavourites(stats: SyncStats) {
+		// Before anything is read: whatever changes here from now on is newer than what comes back
+		val startedAt = System.currentTimeMillis()
+		fetchFavourites()?.let { stats.numUpdates += takeNewer(it, startedAt) }
 		val payload = json.encodeToString(
 			SyncDto(
 				history = null,
@@ -90,23 +116,29 @@ class SyncHelper @AssistedInject constructor(
 			.post(payload.toRequestBody(mediaTypeJson))
 			.build()
 		val response = httpClient.newCall(request).execute().parseDtoOrNull()
+		val hasChangedMeanwhile = hasChangedSince(authorityFavourites, TABLE_FAVOURITES, "created_at", startedAt)
 		response?.categories?.let { categories ->
-			val categoriesResult = upsertFavouriteCategories(categories)
+			val categoriesResult = upsertFavouriteCategories(categories, startedAt)
 			stats.numDeletes += categoriesResult.firstOrNull()?.count?.toLong() ?: 0L
 			stats.numInserts += categoriesResult.drop(1).sumOf { it.count?.toLong() ?: 0L }
 		}
 		response?.favourites?.let { favourites ->
-			val favouritesResult = upsertFavourites(favourites)
+			val favouritesResult = upsertFavourites(favourites, startedAt)
 			stats.numDeletes += favouritesResult.firstOrNull()?.count?.toLong() ?: 0L
 			stats.numInserts += favouritesResult.drop(1).sumOf { it.count?.toLong() ?: 0L }
 			stats.numEntries += stats.numInserts + stats.numDeletes
 		}
 		gcFavourites()
+		if (hasChangedMeanwhile) {
+			ContentResolver.requestSync(account, authorityFavourites, Bundle.EMPTY)
+		}
 	}
 
 	@Blocking
 	@WorkerThread
 	fun syncHistory(stats: SyncStats) {
+		// Before anything is read: whatever changes here from now on is newer than what comes back
+		val startedAt = System.currentTimeMillis()
 		val payload = json.encodeToString(
 			SyncDto(
 				history = getHistory(),
@@ -120,13 +152,108 @@ class SyncHelper @AssistedInject constructor(
 			.post(payload.toRequestBody(mediaTypeJson))
 			.build()
 		val response = httpClient.newCall(request).execute().parseDtoOrNull()
+		val hasChangedMeanwhile = hasChangedSince(authorityHistory, TABLE_HISTORY, "updated_at", startedAt)
 		response?.history?.let { history ->
-			val result = upsertHistory(history)
+			val result = upsertHistory(history, startedAt)
 			stats.numDeletes += result.firstOrNull()?.count?.toLong() ?: 0L
 			stats.numInserts += result.drop(1).sumOf { it.count?.toLong() ?: 0L }
 			stats.numEntries += stats.numInserts + stats.numDeletes
 		}
 		gcHistory()
+		if (hasChangedMeanwhile) {
+			ContentResolver.requestSync(account, authorityHistory, Bundle.EMPTY)
+		}
+	}
+
+	/**
+	 * Whether anything was changed here while the server was being waited for. Such rows are kept as they are when
+	 * the answer is written down, but the server has not heard of them, and the change itself asked for no sync as
+	 * one was running. So another is asked for once this one is done, which ends when nothing changes any more.
+	 *
+	 * Only up to now: a row another phone wrote with its clock running ahead would otherwise count every time.
+	 */
+	private fun hasChangedSince(authority: String, table: String, changedColumn: String, startedAt: Long): Boolean {
+		val from = startedAt.toString()
+		val until = System.currentTimeMillis().toString()
+		return provider.query(
+			uri(authority, table),
+			arrayOf("manga_id"),
+			"(`$changedColumn` >= ? AND `$changedColumn` <= ?) OR (deleted_at >= ? AND deleted_at <= ?)",
+			arrayOf(from, until, from, until),
+			null,
+		)?.use { it.count > 0 } == true
+	}
+
+	/**
+	 * Takes over what another device has removed, or added back, later than the copy here was last touched, before
+	 * the copy here is sent.
+	 *
+	 * The server keeps whichever copy of a row reaches it last, and a sync sends every row before it reads any. So a
+	 * device that still had a manga put it back on the server each time, over its removal on another device: it never
+	 * went from the one, and came back on the other once the record of the removal was cleared out there, days later.
+	 *
+	 * Rows that are not here at all, and everything else about a row, are left to the answer to what is sent.
+	 *
+	 * @return how many rows were taken
+	 */
+	@WorkerThread
+	internal fun takeNewer(remote: SyncDto, startedAt: Long): Int {
+		var taken = 0
+		remote.categories?.let { categories ->
+			val local = getTimes(TABLE_FAVOURITE_CATEGORIES, "category_id", null)
+			val newer = categories.filter { remoteRow ->
+				val times = local[RowKey(remoteRow.categoryId.toLong(), 0L)] ?: return@filter false
+				isRemoteCopyNewer(times.createdAt, times.deletedAt, remoteRow.createdAt, remoteRow.deletedAt)
+			}
+			if (newer.isNotEmpty()) {
+				upsertFavouriteCategories(newer, startedAt)
+				taken += newer.size
+			}
+		}
+		remote.favourites?.let { favourites ->
+			val local = getTimes(TABLE_FAVOURITES, "manga_id", "category_id")
+			val newer = favourites.filter { remoteRow ->
+				val times = local[RowKey(remoteRow.mangaId, remoteRow.categoryId.toLong())] ?: return@filter false
+				isRemoteCopyNewer(times.createdAt, times.deletedAt, remoteRow.createdAt, remoteRow.deletedAt)
+			}
+			if (newer.isNotEmpty()) {
+				upsertFavourites(newer, startedAt)
+				taken += newer.size
+			}
+		}
+		return taken
+	}
+
+	/** What the server has, without sending it anything. Null from a server that cannot be asked that way. */
+	private fun fetchFavourites(): SyncDto? {
+		val request = Request.Builder()
+			.url("$baseUrl/resource/$TABLE_FAVOURITES")
+			.get()
+			.build()
+		val response = httpClient.newCall(request).execute()
+		if (response.code == HttpURLConnection.HTTP_NOT_FOUND || response.code == HttpURLConnection.HTTP_BAD_METHOD) {
+			// Synced as it always was, which is no worse than it was
+			response.close()
+			return null
+		}
+		return response.parseDtoOrNull()
+	}
+
+	/** When each row of [table] was added and removed, by its key. */
+	private fun getTimes(table: String, keyColumn: String, secondKeyColumn: String?): Map<RowKey, RowTimes> {
+		val uri = uri(authorityFavourites, table)
+		val projection = listOfNotNull(keyColumn, secondKeyColumn, "created_at", "deleted_at").toTypedArray()
+		val cursor = provider.query(uri, projection, null, null, null)
+			?: throw OperationApplicationException("Query failed: $uri")
+		return cursor.use {
+			val result = HashMap<RowKey, RowTimes>(it.count)
+			val timesAt = projection.size - 2
+			while (it.moveToNext()) {
+				val key = RowKey(it.getLong(0), if (secondKeyColumn != null) it.getLong(1) else 0L)
+				result[key] = RowTimes(createdAt = it.getLong(timesAt), deletedAt = it.getLong(timesAt + 1))
+			}
+			result
+		}
 	}
 
 	fun onError(e: Throwable) {
@@ -139,8 +266,8 @@ class SyncHelper @AssistedInject constructor(
 		}
 	}
 
-	private fun upsertHistory(history: List<HistorySyncDto>): Array<ContentProviderResult> {
-		val uri = uri(authorityHistory, TABLE_HISTORY)
+	private fun upsertHistory(history: List<HistorySyncDto>, startedAt: Long): Array<ContentProviderResult> {
+		val uri = uri(authorityHistory, TABLE_HISTORY).unchangedSince(startedAt)
 		val operations = ArrayList<ContentProviderOperation>()
 		history.mapTo(operations) {
 			operations.addAll(upsertManga(it.manga, authorityHistory))
@@ -151,8 +278,8 @@ class SyncHelper @AssistedInject constructor(
 		return provider.applyBatch(operations)
 	}
 
-	private fun upsertFavouriteCategories(categories: List<FavouriteCategorySyncDto>): Array<ContentProviderResult> {
-		val uri = uri(authorityFavourites, TABLE_FAVOURITE_CATEGORIES)
+	private fun upsertFavouriteCategories(categories: List<FavouriteCategorySyncDto>, startedAt: Long): Array<ContentProviderResult> {
+		val uri = uri(authorityFavourites, TABLE_FAVOURITE_CATEGORIES).unchangedSince(startedAt)
 		val operations = ArrayList<ContentProviderOperation>()
 		categories.mapTo(operations) {
 			ContentProviderOperation.newInsert(uri)
@@ -162,8 +289,8 @@ class SyncHelper @AssistedInject constructor(
 		return provider.applyBatch(operations)
 	}
 
-	private fun upsertFavourites(favourites: List<FavouriteSyncDto>): Array<ContentProviderResult> {
-		val uri = uri(authorityFavourites, TABLE_FAVOURITES)
+	private fun upsertFavourites(favourites: List<FavouriteSyncDto>, startedAt: Long): Array<ContentProviderResult> {
+		val uri = uri(authorityFavourites, TABLE_FAVOURITES).unchangedSince(startedAt)
 		val operations = ArrayList<ContentProviderOperation>()
 		favourites.mapTo(operations) {
 			operations.addAll(upsertManga(it.manga, authorityFavourites))
@@ -289,6 +416,11 @@ class SyncHelper @AssistedInject constructor(
 
 	private fun uri(authority: String, table: String) = "content://$authority/$table".toUri()
 
+	/** See [SyncProvider.PARAM_UNCHANGED_SINCE]. */
+	private fun Uri.unchangedSince(time: Long): Uri = buildUpon()
+		.appendQueryParameter(SyncProvider.PARAM_UNCHANGED_SINCE, time.toString())
+		.build()
+
 	private fun Response.parseDtoOrNull(): SyncDto? = use {
 		when {
 			!isSuccessful -> throw IOException(body.string())
@@ -296,6 +428,10 @@ class SyncHelper @AssistedInject constructor(
 			else -> Json.decodeFromString<SyncDto>(body.string())
 		}
 	}
+
+	private data class RowKey(val id: Long, val secondId: Long)
+
+	private class RowTimes(val createdAt: Long, val deletedAt: Long)
 
 	@AssistedFactory
 	interface Factory {

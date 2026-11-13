@@ -2,12 +2,14 @@ package org.koitharu.kotatsu.favourites.domain
 
 import androidx.room.withTransaction
 import dagger.Reusable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.core.db.MangaDatabase
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITES
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITE_CATEGORIES
@@ -29,12 +31,14 @@ import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.levenshteinDistance
 import org.koitharu.kotatsu.search.domain.SearchKind
+import org.koitharu.kotatsu.sync.domain.SyncController
 import javax.inject.Inject
 
 @Reusable
 class FavouritesRepository @Inject constructor(
 	private val db: MangaDatabase,
 	private val localObserver: LocalFavoritesObserver,
+	private val syncController: SyncController,
 ) {
 
 	suspend fun getAllManga(): List<Manga> {
@@ -338,18 +342,25 @@ class FavouritesRepository @Inject constructor(
 	}
 
 	private suspend fun recoverToFavourites(ids: Collection<Long>) {
+		val syncedUntil = getSyncedUntil()
 		db.withTransaction {
 			for (id in ids) {
-				db.getFavouritesDao().recover(mangaId = id)
+				db.getFavouritesDao().recover(mangaId = id, syncedUntil = syncedUntil)
 			}
 		}
 	}
 
 	private suspend fun recoverToCategory(categoryId: Long, ids: Collection<Long>) {
+		val syncedUntil = getSyncedUntil()
 		db.withTransaction {
 			for (id in ids) {
-				db.getFavouritesDao().recover(mangaId = id, categoryId = categoryId)
+				db.getFavouritesDao().recover(mangaId = id, categoryId = categoryId, syncedUntil = syncedUntil)
 			}
 		}
+	}
+
+	/** Asks the system, so not on the main thread. */
+	private suspend fun getSyncedUntil(): Long = withContext(Dispatchers.Default) {
+		syncController.getFavouritesSyncedUntil()
 	}
 }

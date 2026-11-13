@@ -144,7 +144,7 @@ object HiddenImageMatcher {
 	 * Bumped whenever this finds something it would not have before, because answers saved for a page say
 	 * nothing about what a better matcher would find on it.
 	 */
-	const val VERSION = 14
+	const val VERSION = 16
 
 	/** A cell this far from an image's background has some of the image in it. */
 	private const val CONTENT_DISTANCE = 24

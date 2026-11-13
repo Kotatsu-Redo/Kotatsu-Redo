@@ -65,8 +65,23 @@ class AppShortcutManager @Inject constructor(
 	}
 	private var shortcutsUpdateJob: Job? = null
 
+	/**
+	 * Whether the launcher takes pinned shortcuts. Asking is a call to the system's shortcut service, which is
+	 * slow to answer while it is busy, as it is right after the shortcuts here are updated on leaving the reader.
+	 * Asked from the main thread each time a menu opened, that froze the screen, so it is asked once, off it.
+	 * Most launchers do, which is what is assumed until the answer is in.
+	 */
+	@Volatile
+	var isPinShortcutSupported: Boolean = true
+		private set
+
 	init {
 		settings.subscribe(this)
+		processLifecycleScope.launch(Dispatchers.Default) {
+			isPinShortcutSupported = runCatchingCancellable {
+				ShortcutManagerCompat.isRequestPinShortcutSupported(context)
+			}.getOrDefault(false)
+		}
 	}
 
 	override fun onInvalidated(tables: Set<String>) {

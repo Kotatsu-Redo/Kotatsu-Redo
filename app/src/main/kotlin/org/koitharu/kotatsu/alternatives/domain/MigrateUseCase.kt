@@ -92,8 +92,7 @@ constructor(
 			val newHistory =
 				if (oldHistory != null) {
 					val newHistory = makeNewHistory(oldDetails, newDetails, oldHistory)
-					historyDao.delete(oldDetails.id)
-					historyDao.upsert(newHistory)
+					database.replaceHistory(oldDetails.id, newHistory)
 					newHistory
 				} else {
 					null
@@ -227,5 +226,23 @@ constructor(
 
 	private companion object {
 		const val TAG = "SourceReplacement"
+	}
+}
+
+/**
+ * Puts [newHistory] in place of the history of [oldMangaId], and with it the time and pages counted while reading.
+ *
+ * Those are kept under the id of the manga and hang on its history. Left where they were they stopped showing
+ * the moment the old history was removed, and were deleted for good when it was cleaned up later: someone who
+ * moved a manga to another source lost everything they had read of it from their statistics.
+ *
+ * To be called inside a transaction.
+ */
+internal suspend fun MangaDatabase.replaceHistory(oldMangaId: Long, newHistory: HistoryEntity) {
+	val historyDao = getHistoryDao()
+	historyDao.delete(oldMangaId)
+	historyDao.upsert(newHistory)
+	if (oldMangaId != newHistory.mangaId) {
+		getStatsDao().moveAll(oldMangaId, newHistory.mangaId)
 	}
 }

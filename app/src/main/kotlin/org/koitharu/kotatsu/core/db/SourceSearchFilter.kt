@@ -1,7 +1,7 @@
 package org.koitharu.kotatsu.core.db
 
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import android.database.DatabaseUtils.sqlEscapeString
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 
 /**
  * Resolves search text to the source names stored in `manga.source`.
@@ -21,11 +21,11 @@ internal fun sourceNamesFor(query: String): List<String> {
 	if (q.length < MIN_QUERY_LENGTH) {
 		return emptyList()
 	}
-	val exact = MangaParserSource.entries.filter { it.title.equals(q, ignoreCase = true) }
+	val exact = ActiveParsers.sources.filter { it.title.equals(q, ignoreCase = true) }
 	if (exact.isNotEmpty()) {
 		return exact.map { it.name }
 	}
-	return MangaParserSource.entries
+	return ActiveParsers.sources
 		.filter { it.title.contains(q, ignoreCase = true) }
 		.take(MAX_SOURCES)
 		.map { it.name }

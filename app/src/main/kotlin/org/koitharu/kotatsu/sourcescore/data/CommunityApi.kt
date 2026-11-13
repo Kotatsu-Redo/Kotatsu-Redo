@@ -1,7 +1,11 @@
 package org.koitharu.kotatsu.sourcescore.data
 
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -12,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.koitharu.kotatsu.core.network.CommonHeaders
+import org.koitharu.kotatsu.core.util.ext.processLifecycleScope
 import org.koitharu.kotatsu.parsers.util.await
 import kotlin.concurrent.withLock
 import java.util.Locale
@@ -19,6 +24,12 @@ import java.util.TimeZone
 import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** How every call to the server is encoded and read. Public so that the wire format tests use the very same one. */
+val communityJson = Json {
+	ignoreUnknownKeys = true
+	encodeDefaults = true
+}
 
 @Serializable
 data class HelloRequest(
@@ -74,6 +85,26 @@ data class ResolvedDto(
 
 @Serializable
 data class ResolveResponse(val resolved: List<ResolvedDto> = emptyList())
+
+/**
+ * Tells the server a reader passed on a work, or took that back. Never a resolve: resolving a manga tells the
+ * server it was opened, which is the opposite of what this says.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class PassRequest(
+	/** Left out entirely when this device does not know the work yet. */
+	@EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("work_id") val workId: String? = null,
+	val source: String,
+	val key: String,
+	val passed: Boolean,
+)
+
+@Serializable
+data class PassResponse(
+	@SerialName("work_id") val workId: String? = null,
+	val recorded: Boolean = false,
+)
 
 @Serializable
 data class WorkSourceDto(
@@ -298,13 +329,22 @@ data class ScoresResponse(
 @Singleton
 class CommunityApi @Inject constructor(
 	private val settings: CommunitySettings,
-	@CommunityHttpClient private val okHttpClient: OkHttpClient,
+	@CommunityHttpClient okHttpClientLazy: Lazy<OkHttpClient>,
 ) {
 
-	private val json = Json {
-		ignoreUnknownKeys = true
-		encodeDefaults = true
+	/**
+	 * Not built along with this. This is handed to the first screen of the app as it opens, on the main thread,
+	 * and building the client there, with the cache, the cookies and the proxy under it, held that screen up
+	 * whenever nothing else had needed a client yet. A debug build refuses to do it at all, and closed.
+	 */
+	private val okHttpClient: OkHttpClient by lazy { okHttpClientLazy.get() }
+
+	init {
+		// Ahead of the first call, which may come from the main thread as well
+		processLifecycleScope.launch(Dispatchers.Default) { okHttpClient }
 	}
+
+	private val json = communityJson
 
 	/**
 	 * Reachability check for the settings screen.
@@ -366,6 +406,16 @@ class CommunityApi @Inject constructor(
 		val body = json.encodeToString(ResolveRequest(listOf(fingerprint)))
 		val response = authedClient.newCall(request("/v1/works/resolve").post(body.asJson()).build()).await()
 		return response.use { json.decodeFromString<ResolveResponse>(it.requireBody()) }.resolved.firstOrNull()
+	}
+
+	/**
+	 * Reports a pass, or with [passed] false the pass being taken back. Throws on refusal, as the other calls
+	 * do: a 404 means a server that does not know this call yet, a 429 that it wants this left for later.
+	 */
+	suspend fun reportPass(pass: PassRequest): PassResponse {
+		val body = json.encodeToString(pass)
+		val response = authedClient.newCall(request("/v1/works/pass").post(body.asJson()).build()).await()
+		return response.use { json.decodeFromString<PassResponse>(it.requireBody()) }
 	}
 
 	/**

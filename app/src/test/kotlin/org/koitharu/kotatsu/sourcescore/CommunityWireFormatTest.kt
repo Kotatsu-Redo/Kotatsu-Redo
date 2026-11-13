@@ -10,6 +10,9 @@ import org.koitharu.kotatsu.sourcescore.data.ApiErrorDto
 import org.koitharu.kotatsu.sourcescore.data.CommentDto
 import org.koitharu.kotatsu.sourcescore.data.CommentPageDto
 import org.koitharu.kotatsu.sourcescore.data.NotificationsResponse
+import org.koitharu.kotatsu.sourcescore.data.PassRequest
+import org.koitharu.kotatsu.sourcescore.data.PassResponse
+import org.koitharu.kotatsu.sourcescore.data.communityJson
 import org.koitharu.kotatsu.sourcescore.data.ScoresResponse
 import org.koitharu.kotatsu.sourcescore.data.SimilarWorksResponse
 import org.koitharu.kotatsu.sourcescore.data.VoteRequest
@@ -221,5 +224,30 @@ class CommunityWireFormatTest {
 		)
 
 		assertEquals("2026-09-15T12:00:00Z", response.generatedAt)
+	}
+
+	@Test
+	fun `a pass is encoded the way the server reads it`() {
+		// As CommunityApi encodes it: defaults written out, except the work id, which is left out when not known
+		val encoder = communityJson
+		assertEquals(
+			"""{"work_id":"309","source":"MANGADEX","key":"/title/abc","passed":true}""",
+			encoder.encodeToString(PassRequest(workId = "309", source = "MANGADEX", key = "/title/abc", passed = true)),
+		)
+		assertEquals(
+			"""{"source":"MANGADEX","key":"/title/abc","passed":false}""",
+			encoder.encodeToString(PassRequest(source = "MANGADEX", key = "/title/abc", passed = false)),
+		)
+	}
+
+	@Test
+	fun `the answer to a pass decodes, with or without a work`() {
+		val known = communityJson.decodeFromString<PassResponse>("""{"work_id":"309","recorded":true}""")
+		assertEquals("309", known.workId)
+		assertTrue(known.recorded)
+
+		val unknown = communityJson.decodeFromString<PassResponse>("""{"work_id":null,"recorded":false}""")
+		assertNull(unknown.workId)
+		assertFalse(unknown.recorded)
 	}
 }

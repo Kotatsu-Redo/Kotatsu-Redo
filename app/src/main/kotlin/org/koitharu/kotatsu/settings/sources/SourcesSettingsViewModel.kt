@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
+import org.koitharu.kotatsu.core.parser.bundle.ParsersUpdater
 import org.koitharu.kotatsu.core.ui.BaseViewModel
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import javax.inject.Inject
@@ -22,7 +23,12 @@ import javax.inject.Inject
 class SourcesSettingsViewModel @Inject constructor(
 	sourcesRepository: MangaSourcesRepository,
 	@ApplicationContext private val context: Context,
+	private val parsersUpdater: ParsersUpdater,
 ) : BaseViewModel() {
+
+	/** Whether this build, on this phone, takes newer parsers than its own at all. */
+	val isParsersUpdateSupported: Boolean
+		get() = parsersUpdater.isSupported
 
 	private val linksHandlerActivity = ComponentName(context, "org.koitharu.kotatsu.details.ui.DetailsByLinkActivity")
 

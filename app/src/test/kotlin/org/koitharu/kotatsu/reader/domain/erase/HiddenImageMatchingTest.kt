@@ -763,12 +763,149 @@ class HiddenImageMatchingTest {
 		assertEquals(null, visible.indexOfPosition(99L, 0))
 	}
 
+	/** Right-to-left readers show the list back to front. Opening a chapter there went to its last page. */
 	@Test
-	fun `with no edges to go by the borders start around the whole page`() {
+	fun `a saved position is found by its number whichever way round the list is`() {
+		fun page(id: Long, index: Int, chapter: Long) = ReaderPage(id, "", null, chapter, index, UnknownMangaSource)
+		val pages = listOf(page(1, 0, 10), page(2, 1, 10), page(3, 2, 10), page(4, 3, 10), page(5, 0, 20), page(6, 1, 20))
+		val reversed = pages.reversed()
+
+		// A new manga starts on its first page, which is the last item of the list
+		assertEquals(5, reversed.indexOfPosition(10L, 0))
+		assertEquals(3, reversed.indexOfPosition(10L, 2))
+		assertEquals(1, reversed.indexOfPosition(20L, 0))
+		// Hidden since: on to the next page still there, by number
+		val visible = withoutHidden(pages, setOf(2L)).reversed()
+		assertEquals(3L, visible[visible.indexOfPosition(10L, 1)!!].id)
+		// Nothing after it left: the last one before it
+		assertEquals(3L, withoutHidden(pages, setOf(4L)).reversed().let { it[it.indexOfPosition(10L, 3)!!].id })
+		assertEquals(null, reversed.indexOfPosition(99L, 0))
+	}
+
+	@Test
+	fun `with no edges to go by the borders start around the whole page, if it is about a screen of it`() {
+		val pixels = IntArray(96 * 280)
+		drawArt(pixels, 96, 0, 280, 5)
+		val proposal = EraseProposer.propose(lumaOf(pixels, 96), SourceRegion(30 * 8, 140 * 8, 50 * 8, 145 * 8), 2f)
+		assertEquals(SourceRegion(0, 0, 96 * 8, 280 * 8), proposal.region)
+	}
+
+	/** They used to start around all of it, top and bottom screens away from what was rubbed. */
+	@Test
+	fun `on screens of art with no edges the borders start around what was rubbed`() {
 		val pixels = IntArray(96 * 1400)
 		drawArt(pixels, 96, 0, 1400, 5)
-		val proposal = EraseProposer.propose(lumaOf(pixels, 96), SourceRegion(30 * 8, 700 * 8, 50 * 8, 705 * 8), 2f)
-		assertEquals(SourceRegion(0, 0, 96 * 8, 1400 * 8), proposal.region)
+		val stroke = SourceRegion(30 * 8, 700 * 8, 50 * 8, 705 * 8)
+		val around = checkNotNull(EraseProposer.propose(lumaOf(pixels, 96), stroke, 2f).aroundStroke)
+		// A screen is 192 rows here, and no side may go further than half of one
+		assertTrue("starts too far up: $around", around.top >= (700 - 96) * 8)
+		assertTrue("ends too far down: $around", around.bottom <= (705 + 96) * 8)
+		assertTrue("left out what was rubbed: $around", around.top <= stroke.top && around.bottom >= stroke.bottom)
+		assertTrue("left out what was rubbed: $around", around.left <= stroke.left && around.right >= stroke.right)
+	}
+
+	/** A watermark in the corner of a panel: the panel is between gutters, and used to be what got the borders. */
+	@Test
+	fun `a small rub in a panel starts the borders around the rub, not the panel`() {
+		val pixels = IntArray(96 * 800) { 255 }
+		drawArt(pixels, 96, 100, 400, 4) // a panel of a screen and a half, with gutters either side
+		drawArt(pixels, 96, 480, 800, 2)
+		val stroke = SourceRegion(10 * 8, 380 * 8, 40 * 8, 384 * 8)
+		val proposal = EraseProposer.propose(lumaOf(pixels, 96), stroke, 2f)
+		assertEquals(100 * 8f, proposal.objectRegion.top.toFloat(), 8f)
+		val around = checkNotNull(proposal.aroundStroke)
+		assertTrue("took most of the panel: $around", around.height <= 60 * 8)
+		assertTrue("left out what was rubbed: $around", around.top <= stroke.top && around.bottom >= stroke.bottom)
+	}
+
+	@Test
+	fun `a rub across a banner still means the banner`() {
+		val proposal = EraseProposer.propose(gutteredStrip(), SourceRegion(20 * 8, 360 * 8, 80 * 8, 380 * 8), 2f)
+		assertEquals(null, proposal.aroundStroke)
+	}
+
+	@Test
+	fun `rubbing up and down most of a panel means the panel`() {
+		val pixels = IntArray(96 * 800) { 255 }
+		drawArt(pixels, 96, 100, 400, 4)
+		drawArt(pixels, 96, 480, 800, 2)
+		val proposal = EraseProposer.propose(lumaOf(pixels, 96), SourceRegion(30 * 8, 180 * 8, 60 * 8, 320 * 8), 2f)
+		assertEquals(null, proposal.aroundStroke)
+	}
+
+	/** A long strip with a logo on a plate somewhere in the art: no gutter runs the width of the page. */
+	@Test
+	fun `a logo on a plain patch in the middle of a long page of art is found by its own edges`() {
+		val pixels = IntArray(96 * 1400)
+		drawArt(pixels, 96, 0, 1400, 5)
+		for (y in 600 until 700) {
+			for (x in 10 until 86) pixels[y * 96 + x] = 255
+		}
+		val logo = IntArray(36 * 40).also { drawArt(it, 36, 0, 40, 7) }
+		for (y in 0 until 40) {
+			for (x in 0 until 36) pixels[(630 + y) * 96 + 30 + x] = logo[y * 36 + x]
+		}
+		val around = checkNotNull(EraseProposer.propose(lumaOf(pixels, 96), SourceRegion(36 * 8, 645 * 8, 60 * 8, 650 * 8), 2f).aroundStroke)
+		assertEquals(30 * 8f, around.left.toFloat(), 16f)
+		assertEquals(66 * 8f, around.right.toFloat(), 16f)
+		assertEquals(630 * 8f, around.top.toFloat(), 16f)
+		assertEquals(670 * 8f, around.bottom.toFloat(), 16f)
+	}
+
+	private fun pageWithNarrowAd(): PageLuma {
+		val pixels = IntArray(96 * 800) { 255 }
+		drawArt(pixels, 96, 0, 300, 1)
+		val ad = IntArray(56 * 60).also { drawArt(it, 56, 0, 60, 7) }
+		for (y in 0 until 60) {
+			for (x in 0 until 56) pixels[(340 + y) * 96 + 20 + x] = ad[y * 56 + x]
+		}
+		drawArt(pixels, 96, 440, 800, 2)
+		return lumaOf(pixels, 96)
+	}
+
+	/** The borders used to be drawn around the blank too: on white above, below and out to both edges of the page. */
+	@Test
+	fun `the borders start on the image itself, and the blank around it still goes with it`() {
+		val proposal = EraseProposer.propose(pageWithNarrowAd(), SourceRegion(30 * 8, 360 * 8, 70 * 8, 380 * 8), 2f)
+		assertEquals(20 * 8f, proposal.objectRegion.left.toFloat(), 8f)
+		assertEquals(76 * 8f, proposal.objectRegion.right.toFloat(), 8f)
+		assertEquals(340 * 8f, proposal.objectRegion.top.toFloat(), 8f)
+		assertEquals(400 * 8f, proposal.objectRegion.bottom.toFloat(), 8f)
+		assertEquals(0, proposal.region.left)
+		assertEquals(96 * 8, proposal.region.right)
+		assertTrue(proposal.region.top < proposal.objectRegion.top && proposal.region.bottom > proposal.objectRegion.bottom)
+	}
+
+	@Test
+	fun `borders set by hand around an image take the blank around it too`() {
+		val region = EraseProposer.withBlankAround(pageWithNarrowAd(), SourceRegion(20 * 8, 340 * 8, 76 * 8, 400 * 8))
+		assertEquals(0, region.left)
+		assertEquals(96 * 8, region.right)
+		assertEquals((340 - 8) * 8f, region.top.toFloat(), 8f)
+		assertEquals((400 + 8) * 8f, region.bottom.toFloat(), 8f)
+	}
+
+	@Test
+	fun `borders set by hand next to something else stay exactly where they were set`() {
+		val pixels = IntArray(96 * 800) { 255 }
+		val side = IntArray(40 * 800).also { drawArt(it, 40, 0, 800, 3) } // art down the left of the page
+		for (y in 0 until 800) {
+			for (x in 0 until 40) pixels[y * 96 + x] = side[y * 40 + x]
+		}
+		val ad = IntArray(30 * 60).also { drawArt(it, 30, 0, 60, 7) }
+		for (y in 0 until 60) {
+			for (x in 0 until 30) pixels[(340 + y) * 96 + 56 + x] = ad[y * 30 + x]
+		}
+		val set = SourceRegion(56 * 8, 340 * 8, 86 * 8, 400 * 8)
+		assertEquals(set, EraseProposer.withBlankAround(lumaOf(pixels, 96), set))
+	}
+
+	@Test
+	fun `borders set by hand in the middle of art stay exactly where they were set`() {
+		val pixels = IntArray(96 * 800)
+		drawArt(pixels, 96, 0, 800, 21)
+		val set = SourceRegion(20 * 8, 340 * 8, 70 * 8, 400 * 8)
+		assertEquals(set, EraseProposer.withBlankAround(lumaOf(pixels, 96), set))
 	}
 
 	// region masks

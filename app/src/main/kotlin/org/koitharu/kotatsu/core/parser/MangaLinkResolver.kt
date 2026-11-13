@@ -58,7 +58,7 @@ class MangaLinkResolver @Inject constructor(
 		dataRepository.findMangaByPublicUrl(uri)?.let {
 			return it
 		}
-		return context.newLinkResolver(uri).getManga()
+		return context.resolveLink(uri)
 	}
 
 	private suspend fun MangaRepository.findExact(url: String?, title: String?): Manga? {

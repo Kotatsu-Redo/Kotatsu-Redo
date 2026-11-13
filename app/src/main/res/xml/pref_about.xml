@@ -18,6 +18,12 @@
 		android:title="@string/allow_unstable_updates" />
 
 	<Preference
+		android:icon="@drawable/ic_manga_source"
+		android:key="parsers_version"
+		android:persistent="false"
+		android:title="@string/sources_version" />
+
+	<Preference
 		android:fragment="org.koitharu.kotatsu.settings.about.changelog.ChangelogFragment"
 		android:icon="@drawable/ic_new"
 		android:key="changelog"

@@ -51,12 +51,18 @@ object DiscoverRanking {
 
 	private const val RANK_DAMPING = 30.0
 
-	/** How far their taste can move a title within a list, and how far what the community is rating can. */
-	private const val TASTE_WEIGHT = 0.4
+	/**
+	 * How far their taste can move a title within a list, and how far what the community is rating can.
+	 * Affinity is averaged by the root of the tag count, which is smaller than the plain sum it was by more the more tags
+	 * a title has. At 0.7 a title with three tags is moved as far as it was at 0.4, one with a single tag somewhat
+	 * further and one with five somewhat less: over one to five tags it comes to the same on average.
+	 */
+	private const val TASTE_WEIGHT = 0.7
 	private const val PERSONAL_WEIGHT = 0.6
 	private const val TASTE_FLOOR = 1.0
 	private const val CHART_WEIGHT = 0.5
-	private const val DISMISSAL_WEIGHT = 0.03
+	private const val DISMISSAL_STRENGTH = 0.5
+	private const val DISMISSAL_SOFTNESS = 5.0
 
 	/** A third of a row stays put, and the rest comes from three rows' worth of what is on the list. */
 	private const val ROTATE_FIXED_DIVISOR = 3
@@ -67,20 +73,24 @@ object DiscoverRanking {
 		"adaptation", "web comic", "webcomic", "webtoon", "webtoons", "long strip", "full color", "full colour",
 		"official colored", "manga", "manhwa", "manhua", "comic", "comics", "oneshot", "one shot", "4 koma", "4-koma",
 		"doujinshi", "anthology", "award winning", "ongoing", "completed", "shounen", "shonen", "shoujo", "shojo",
-		"seinen", "josei", "sexual violence", "gore",
+		"seinen", "josei", "sexual violence", "gore", "based on a web novel", "based on a novel", "web novel",
+		"colored", "coloured",
 	)
 
-	/** Different sources' spelling of one genre, once a demographic marker like `shounen(b)` is gone. */
+	/** [NOISE_TAGS] with spaces and hyphens gone, so that `longstrip` and `web-comic` are caught as well. */
+	private val NOISE_COMPACT = NOISE_TAGS.mapTo(HashSet()) { it.replace(" ", "").replace("-", "") }
+
+	/** Different sources' spelling of one genre, by [plainTag], once a demographic marker like `shounen(b)` is gone. */
 	private val TAG_ALIASES = mapOf(
 		"school" to "school life",
 		"sci fi" to "sci-fi",
 		"science fiction" to "sci-fi",
 		"scifi" to "sci-fi",
-		"slice-of-life" to "slice of life",
 		"martial art" to "martial arts",
 		"super power" to "superpower",
+		"superpowers" to "superpower",
 		"reincarnated" to "reincarnation",
-		"rom-com" to "romance",
+		"rom com" to "romance",
 	)
 
 	/** How little of a library a genre can be and still be something the reader keeps coming back to. */
@@ -180,7 +190,7 @@ object DiscoverRanking {
 		entries.keys.removeAll(adult)
 		if (taste.isNotEmpty() || chart.isNotEmpty()) {
 			entries.forEach { (key, entry) ->
-				entry.score *= 1.0 + TASTE_WEIGHT * affinity(entry.manga, taste).coerceAtLeast(-TASTE_FLOOR)
+				entry.score *= 1.0 + TASTE_WEIGHT * affinity(entry.manga, taste).coerceIn(-TASTE_FLOOR, 1.0)
 				chart[key]?.let { rank -> entry.score *= 1.0 + CHART_WEIGHT * RANK_DAMPING / (RANK_DAMPING + rank) }
 			}
 		}
@@ -218,20 +228,30 @@ object DiscoverRanking {
 	}
 
 	/**
-	 * A reader's taste less what they said they are not interested in. Each one counts for little, as passing on
-	 * one title says more about it than about its genres, but several in one genre do add up.
+	 * A reader's taste less what they said they are not interested in, set against what they do read.
 	 *
-	 * @param dismissed the tags of each
+	 * Passing on one title says more about that title than about its genres, so a genre is only counted against
+	 * as far as the passes lean on it harder than the reader's own library does: one pass in a genre they love
+	 * barely moves it, while a genre they pass on far more often than they read goes clearly negative. The more
+	 * is passed on the more this counts, but never past half of how far the passes lean.
+	 *
+	 * @param dismissed the tags of each title passed on
 	 */
 	fun applyDismissals(taste: Map<String, Double>, dismissed: Collection<List<String>>): Map<String, Double> {
 		if (dismissed.isEmpty()) {
 			return taste
 		}
-		val result = HashMap(taste)
+		val count = dismissed.size
+		val shares = HashMap<String, Int>()
 		dismissed.forEach { tags ->
-			tags.mapNotNullTo(HashSet()) { canonicalTag(it) }.forEach { tag ->
-				result[tag] = (result[tag] ?: 0.0) - DISMISSAL_WEIGHT
-			}
+			tags.mapNotNullTo(HashSet()) { canonicalTag(it) }.forEach { shares.merge(it, 1, Int::plus) }
+		}
+		val strength = DISMISSAL_STRENGTH * count / (count + DISMISSAL_SOFTNESS)
+		val result = HashMap(taste)
+		shares.forEach { (tag, passed) ->
+			val liked = taste[tag] ?: 0.0
+			val penalty = strength * maxOf(0.0, passed.toDouble() / count - liked)
+			result[tag] = liked - penalty
 		}
 		return result
 	}
@@ -249,16 +269,23 @@ object DiscoverRanking {
 		if (tags.isEmpty()) {
 			return score
 		}
-		val echo = tags.sumOf { taste[it] ?: 0.0 } / sqrt(tags.size.toDouble())
+		val echo = echoOf(tags, taste)
 		return score * (1.0 + PERSONAL_WEIGHT * echo.coerceIn(-1.0, 1.0))
 	}
 
-	/** How much of the reader's taste a manga's tags echo. [taste] maps lower-case tags to weights. */
-	fun affinity(manga: Manga, taste: Map<String, Double>): Double {
-		if (taste.isEmpty()) {
+	/**
+	 * How much of the reader's taste a manga's tags echo. [taste] maps lower-case tags to weights. Averaged by the
+	 * root of the tag count: as a plain sum, titles never opened (13 tags on average) beat titles read (6 tags)
+	 * in 82% of pairs, only because their source lists more tags.
+	 */
+	fun affinity(manga: Manga, taste: Map<String, Double>): Double =
+		echoOf(manga.tags.mapNotNullTo(HashSet()) { canonicalTag(it.title) }, taste)
+
+	private fun echoOf(tags: Set<String>, taste: Map<String, Double>): Double {
+		if (tags.isEmpty() || taste.isEmpty()) {
 			return 0.0
 		}
-		return manga.tags.mapNotNullTo(HashSet()) { canonicalTag(it.title) }.sumOf { taste[it] ?: 0.0 }
+		return tags.sumOf { taste[it] ?: 0.0 } / sqrt(tags.size.toDouble())
 	}
 
 	/**
@@ -317,13 +344,31 @@ object DiscoverRanking {
 	}
 
 	/** Says what a manga is published as, and nothing about what it is like. */
-	fun isNoiseTag(title: String): Boolean = title.trim().lowercase().substringBefore('(').trim() in NOISE_TAGS
+	fun isNoiseTag(title: String): Boolean = isNoise(plainTag(title))
+
+	private fun isNoise(plain: String): Boolean = plain in NOISE_TAGS || plain.replace(" ", "") in NOISE_COMPACT
+
+	/** A tag in lower case, without a marker in brackets, and with `-`, `_` and runs of spaces read as one space. */
+	private fun plainTag(title: String): String {
+		val cut = title.trim().lowercase().substringBefore('(')
+		val out = StringBuilder(cut.length)
+		for (char in cut) {
+			val c = if (char == '-' || char == '_') ' ' else char
+			if (c.isWhitespace()) {
+				if (out.isNotEmpty() && out.last() != ' ') out.append(' ')
+			} else {
+				out.append(c)
+			}
+		}
+		return out.toString().trim()
+	}
 
 	/** One genre however a source spells it, or null if a tag says nothing about what a manga is like. */
 	fun canonicalTag(title: String): String? {
-		val plain = title.trim().lowercase().substringBefore('(').trim()
+		val plain = plainTag(title)
+		if (isNoise(plain)) return null
 		val tag = TAG_ALIASES[plain] ?: plain
-		return tag.takeUnless { it.isEmpty() || it in NOISE_TAGS || isAdultTag(it) }
+		return tag.takeUnless { it.isEmpty() || isAdultTag(it) }
 	}
 
 	/** How a genre reads as a heading: `slice of life` is Slice of Life. */
@@ -361,6 +406,33 @@ object DiscoverRanking {
 		for (rank in 0 until longest) {
 			lists.forEach { list -> list.getOrNull(rank)?.let(::add) }
 		}
+	}
+
+	/**
+	 * What goes in the row of recommendations: what the suggestions worker stored, first, and whenever that is
+	 * short of a row, what else is on the screen, closest to the reader's taste first.
+	 *
+	 * It used to be one or the other, the rest only when nothing at all was stored. A filter leaves few of the
+	 * stored ones, though: they were picked with no type or genre in mind, and a type can only be told from a tag
+	 * or from a source that carries nothing else. One stored manhwa then made a row of one cover, right above
+	 * rows full of manhwa.
+	 *
+	 * @param stored what the worker stored that can still be shown, best first
+	 * @param rows what each row below holds, already asked for with the filter
+	 * @param others what else the screen has, such as the new finds
+	 * @param size how many covers make a row
+	 */
+	fun recommendedRow(
+		stored: List<Manga>,
+		rows: List<List<Manga>>,
+		others: List<Manga>,
+		taste: Map<String, Double>,
+		size: Int,
+	): List<Manga> {
+		if (stored.size >= size) {
+			return stored
+		}
+		return stored + closestToTaste(rows.flatten() + others, taste, size * 2) + interleave(rows)
 	}
 
 	/**

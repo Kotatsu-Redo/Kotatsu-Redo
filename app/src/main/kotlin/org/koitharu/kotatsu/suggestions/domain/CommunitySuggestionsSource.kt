@@ -11,6 +11,7 @@ import org.koitharu.kotatsu.core.model.isLocal
 import org.koitharu.kotatsu.core.model.isNsfw
 import org.koitharu.kotatsu.core.parser.MangaLinkResolver
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
+import org.koitharu.kotatsu.discover.data.DismissedIndex
 import org.koitharu.kotatsu.discover.domain.DiscoverRanking
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.parsers.exception.NotFoundException
@@ -65,6 +66,7 @@ class CommunitySuggestionsSource @Inject constructor(
 		blacklist: TagsBlacklist,
 		excludeNsfw: Boolean,
 		taste: Map<String, Double> = emptyMap(),
+		dismissed: DismissedIndex = DismissedIndex.EMPTY,
 		isKnown: (SimilarWorkDto) -> Boolean = { false },
 	): List<MangaSuggestion> {
 		if (seed.isEmpty()) {
@@ -92,7 +94,7 @@ class CommunitySuggestionsSource @Inject constructor(
 		val ranked = candidates.values
 			.filter { candidate -> candidate.dto.sources.none { (it.source to it.key) in seen } }
 			// Before anything is fetched: the rest of their library is no suggestion either, and each one costs a request
-			.filterNot { isKnown(it.dto) }
+			.filterNot { isKnown(it.dto) || dismissed.matches(it.dto) }
 			.filter { candidate -> candidate.dto.sources.any { it.source in enabledSources } }
 			.filter { it.dto.workId !in droppedWorks }
 			.map { candidate ->
@@ -123,6 +125,8 @@ class CommunitySuggestionsSource @Inject constructor(
 		}
 		return resolved
 			.filter { it.manga !in blacklist }
+			// The server may know a work by an address or a name the reader passed on under another
+			.filterNot { dismissed.matches(it.manga) }
 			.filter { !excludeNsfw || !it.manga.isNsfw() }
 			.distinctBy { it.manga.id }
 			.take(limit)
@@ -144,6 +148,7 @@ class CommunitySuggestionsSource @Inject constructor(
 		excludeNsfw: Boolean,
 		maxFetches: Int = limit,
 		taste: Map<String, Double> = emptyMap(),
+		dismissed: DismissedIndex = DismissedIndex.EMPTY,
 		isKnown: (SimilarWorkDto) -> Boolean = { false },
 	): List<Manga> {
 		// Each result costs one details fetch on its source, and this runs when a details screen
@@ -161,7 +166,7 @@ class CommunitySuggestionsSource @Inject constructor(
 			.getOrNull()
 			.orEmpty()
 			.filter { !excludeNsfw || !it.nsfw }
-			.filterNot(isKnown)
+			.filterNot { isKnown(it) || dismissed.matches(it) }
 			// Before the picking: only so many get picked, and one nobody could open would take up a place
 			.filter { work -> work.sources.any { it.source in enabledSources } }
 		val picked = SuggestionRanking.diversify(
@@ -176,18 +181,22 @@ class CommunitySuggestionsSource @Inject constructor(
 
 		return findManga(picked.map { it.dto }, enabledSources, maxFetches, RELATED_PARALLELISM, seed.source.name)
 			.filterNotNull()
-			.filter { it.id != seed.id }
+			.filter { it.id != seed.id && !dismissed.matches(it) }
 			.distinctBy { it.id }
 	}
 
 	/** The first [limit] works from a chart that the reader can open, as manga. Never anything adult. */
-	suspend fun resolveChart(works: List<SimilarWorkDto>, limit: Int): Map<String, Manga> {
+	suspend fun resolveChart(
+		works: List<SimilarWorkDto>,
+		limit: Int,
+		dismissed: DismissedIndex = DismissedIndex.EMPTY,
+	): Map<String, Manga> {
 		val enabledSources = enabledSources(excludeNsfw = true)
 		if (enabledSources.isEmpty()) {
 			return emptyMap()
 		}
 		val picked = works.asSequence()
-			.filter { work -> !work.nsfw && work.sources.any { it.source in enabledSources } }
+			.filter { work -> !work.nsfw && !dismissed.matches(work) && work.sources.any { it.source in enabledSources } }
 			.take(limit)
 			.toList()
 		val manga = findManga(picked, enabledSources, limit, MAX_PARALLELISM)
@@ -304,6 +313,11 @@ class CommunitySuggestionsSource @Inject constructor(
 		fetch = { dto, address -> linkResolver.resolveExact(address.source, address.key, dto.title) },
 		isOnlyThisPageMissing = { it is NotFoundException },
 	)
+
+	/** A work the server names, by its title, its work id, or any address it has seen it at. */
+	private fun DismissedIndex.matches(work: SimilarWorkDto): Boolean =
+		matches(work.title, emptyList(), null, null, work.workId) ||
+			work.sources.any { matches(work.title, emptyList(), it.source, it.key, work.workId) }
 
 	private data class Lookup(val workId: String, val similar: List<SimilarWorkDto>)
 

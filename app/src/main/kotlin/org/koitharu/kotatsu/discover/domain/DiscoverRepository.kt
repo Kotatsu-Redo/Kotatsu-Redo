@@ -25,7 +25,7 @@ import org.koitharu.kotatsu.history.data.HistoryRepository
 import org.koitharu.kotatsu.parsers.model.ContentType
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.parsers.model.SortOrder
@@ -282,7 +282,7 @@ class DiscoverRepository @Inject constructor(
 			.getOrDefault(emptyList())
 		return list.applyReaderFilters().asSequence()
 			.filter { DiscoverRanking.matchesGenre(it, filter.genre) }
-			.filter { DiscoverRanking.matchesType(it, filter.type, (it.source as? MangaParserSource)?.contentType) }
+			.filter { DiscoverRanking.matchesType(it, filter.type, (it.source as? ParserMangaSource)?.contentType) }
 			.take(MAX_FOR_YOU)
 			.toList()
 	}
@@ -529,7 +529,7 @@ class DiscoverRepository @Inject constructor(
 	 * parsers' default, which also covers mixed catalogues, so that alone counts as an answer for manga.
 	 */
 	private fun MangaSource.servesOnly(type: ContentType): Boolean {
-		val own = (this as? MangaParserSource)?.contentType ?: return false
+		val own = (this as? ParserMangaSource)?.contentType ?: return false
 		return own == type
 	}
 
@@ -544,10 +544,14 @@ class DiscoverRepository @Inject constructor(
 			.also { sources = if (it.isEmpty()) null else Timed(it) }
 	}
 
-	/** The reader's taste with what they said they are not interested in counted against it. */
+	/**
+	 * The reader's taste with what they said they are not interested in counted against it. Only the taste: the lists
+	 * themselves are kept as they came, and what was passed on is left out on the way to the screen, so that taking a
+	 * pass back brings the title back at once.
+	 */
 	private suspend fun currentTaste(): Map<String, Double> {
 		val taste = runCatchingCancellable { profiles.get().taste }.getOrDefault(emptyMap())
-		return DiscoverRanking.applyDismissals(taste, dismissals.get().values)
+		return DiscoverRanking.applyDismissals(taste, dismissals.get().tagLists)
 	}
 
 	private suspend fun knownTitles(): Set<String> =

@@ -19,11 +19,14 @@ class DynamicItemSizeResolver(
 	private val lifecycleOwner: LifecycleOwner,
 	private val settings: AppSettings,
 	private val adjustWidth: Boolean,
+	/** The setting the grid takes its size from, and how to read it: the library's unless told otherwise. */
+	private val sizeKey: String = AppSettings.KEY_GRID_SIZE,
+	private val sizeOf: (AppSettings) -> Int = { it.gridSize },
 ) : ItemSizeResolver {
 
 	private val gridWidth = resources.getDimension(R.dimen.preferred_grid_width)
 	private val scaleFactor: Float
-		get() = settings.gridSize / 100f
+		get() = sizeOf(settings) / 100f
 
 	override val cellWidth: Int
 		get() = (gridWidth * scaleFactor).roundToInt()
@@ -53,7 +56,7 @@ class DynamicItemSizeResolver(
 		private var prevTextAppearance = 0
 
 		override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-			if (key == AppSettings.KEY_GRID_SIZE) {
+			if (key == sizeKey) {
 				update()
 			}
 		}

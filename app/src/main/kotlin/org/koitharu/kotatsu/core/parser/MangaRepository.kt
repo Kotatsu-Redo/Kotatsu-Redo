@@ -9,6 +9,9 @@ import org.koitharu.kotatsu.core.model.LocalMangaSource
 import org.koitharu.kotatsu.core.model.MangaSourceInfo
 import org.koitharu.kotatsu.core.model.TestMangaSource
 import org.koitharu.kotatsu.core.model.UnknownMangaSource
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
+import org.koitharu.kotatsu.core.parser.bundle.LiveMangaParser
+import org.koitharu.kotatsu.core.parser.bundle.ParsersUpdater
 import org.koitharu.kotatsu.core.parser.external.ExternalMangaRepository
 import org.koitharu.kotatsu.core.parser.external.ExternalMangaSource
 import org.koitharu.kotatsu.local.data.LocalMangaRepository
@@ -19,7 +22,7 @@ import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaListFilterCapabilities
 import org.koitharu.kotatsu.parsers.model.MangaListFilterOptions
 import org.koitharu.kotatsu.parsers.model.MangaPage
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.SortOrder
 import java.lang.ref.WeakReference
@@ -60,6 +63,7 @@ interface MangaRepository {
 		private val loaderContext: MangaLoaderContext,
 		private val contentCache: MemoryContentCache,
 		private val mirrorSwitcher: MirrorSwitcher,
+		private val parsersUpdater: ParsersUpdater,
 	) {
 
 		private val cache = ArrayMap<MangaSource, WeakReference<MangaRepository>>()
@@ -85,11 +89,17 @@ interface MangaRepository {
 		}
 
 		private fun createRepository(source: MangaSource): MangaRepository? = when (source) {
-			is MangaParserSource -> ParserMangaRepository(
-				parser = loaderContext.newParserInstance(source),
-				cache = contentCache,
-				mirrorSwitcher = mirrorSwitcher,
-			)
+			is ParserMangaSource -> if (ActiveParsers.findSource(source.name) != null) {
+				ParserMangaRepository(
+					parser = LiveMangaParser(source.name, loaderContext, parsersUpdater),
+					cache = contentCache,
+					mirrorSwitcher = mirrorSwitcher,
+				)
+			} else {
+				// A source of parsers that are not in use any more, held on to by whoever asks. Not kept: the next
+				// parsers may have it again
+				null
+			}
 
 			TestMangaSource -> TestMangaRepository(
 				loaderContext = loaderContext,

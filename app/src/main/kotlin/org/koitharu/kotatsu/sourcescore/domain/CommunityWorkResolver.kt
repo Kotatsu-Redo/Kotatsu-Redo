@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koitharu.kotatsu.core.util.ext.processLifecycleScope
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.sourcescore.data.CommunityApi
 import org.koitharu.kotatsu.sourcescore.data.CommunityDatabase
@@ -46,15 +46,9 @@ class CommunityWorkResolver @Inject constructor(
 		if (!settings.isEnabled) return null
 		// Local files and the unknown/test placeholders have no site behind them: the key is a path on
 		// this device and the title a folder name, so there is no community work to find.
-		val parserSource = manga.source as? MangaParserSource ?: return null
-		val sourceKey = manga.url.ifEmpty { return null }
-		val source = manga.source.name
-		if (
-			source.length !in 1..MAX_SOURCE_LENGTH ||
-			!SOURCE_PATTERN.matches(source) ||
-			sourceKey.length !in 1..MAX_SOURCE_KEY_LENGTH ||
-			sourceKey.any(Char::isISOControl)
-		) {
+		val parserSource = manga.source as? ParserMangaSource ?: return null
+		if (manga.url.isEmpty()) return null
+		val (source, sourceKey) = workKeyOf(manga.source.name, manga.url) ?: run {
 			Log.w(TAG, "Skipping a work fingerprint that exceeds the server's source/key limits")
 			return null
 		}
@@ -85,7 +79,7 @@ class CommunityWorkResolver @Inject constructor(
 	 * An entry is only resolved once, so one resolved before covers were part of the question would otherwise
 	 * never mention its cover. Goes out once for each, the next time it is opened, and nobody waits for it.
 	 */
-	private fun reportCoverIfNew(manga: Manga, parserSource: MangaParserSource, ref: WorkRefEntity, title: String) {
+	private fun reportCoverIfNew(manga: Manga, parserSource: ParserMangaSource, ref: WorkRefEntity, title: String) {
 		if (ref.resolvedAt >= settings.coverReportingSince || manga.wireCoverUrl() == null) {
 			return
 		}
@@ -107,7 +101,7 @@ class CommunityWorkResolver @Inject constructor(
 
 	private suspend fun resolveRemote(
 		manga: Manga,
-		parserSource: MangaParserSource,
+		parserSource: ParserMangaSource,
 		source: String,
 		sourceKey: String,
 		title: String,
@@ -186,17 +180,34 @@ class CommunityWorkResolver @Inject constructor(
 		.take(MAX_TITLE_LENGTH)
 		.takeIf(String::isNotEmpty)
 
-	private companion object {
-		const val CHAPTER_SCALE = 100
-		const val MAX_SOURCE_LENGTH = 64
-		const val MAX_SOURCE_KEY_LENGTH = 512
-		const val MAX_TITLE_LENGTH = 500
-		const val MAX_ALT_TITLES = 32
+	companion object {
+
+		/**
+		 * The source and key a manga is known to the server by, or null if the server would refuse them. Every call
+		 * that names a manga uses this, so that they all name it the same way.
+		 */
+		fun workKeyOf(source: String, key: String): Pair<String, String>? {
+			if (
+				source.length !in 1..MAX_SOURCE_LENGTH ||
+				!SOURCE_PATTERN.matches(source) ||
+				key.length !in 1..MAX_SOURCE_KEY_LENGTH ||
+				key.any(Char::isISOControl)
+			) {
+				return null
+			}
+			return source to key
+		}
+
+		private const val CHAPTER_SCALE = 100
+		private const val MAX_SOURCE_LENGTH = 64
+		private const val MAX_SOURCE_KEY_LENGTH = 512
+		private const val MAX_TITLE_LENGTH = 500
+		private const val MAX_ALT_TITLES = 32
 
 		/** Bounded well under the server's own cap: a work with fifty labels has ten real genres. */
-		const val MAX_GENRES = 20
-		const val MAX_GENRE_LABEL = 60
-		const val MAX_COVER_URL = 1024
-		val SOURCE_PATTERN = Regex("[A-Za-z0-9_.-]+")
+		private const val MAX_GENRES = 20
+		private const val MAX_GENRE_LABEL = 60
+		private const val MAX_COVER_URL = 1024
+		private val SOURCE_PATTERN = Regex("[A-Za-z0-9_.-]+")
 	}
 }

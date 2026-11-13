@@ -11,7 +11,7 @@ import org.koitharu.kotatsu.core.model.unwrap
 import org.koitharu.kotatsu.core.parser.external.ExternalMangaSource
 import org.koitharu.kotatsu.core.parser.favicon.faviconUri
 import org.koitharu.kotatsu.parsers.model.ContentType as MangaContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
 
@@ -142,7 +142,7 @@ sealed interface ListFilterOption {
 
 		override val titleText: CharSequence?
 			get() = when (val source = mangaSource.unwrap()) {
-				is MangaParserSource -> source.title
+				is ParserMangaSource -> source.title
 				else -> null
 			}
 

@@ -1207,6 +1207,8 @@ Optional — skip it and you appear as anon.</string>
 	<string name="not_interested">Not interested</string>
 	<string name="removed_from_suggestions">Won\'t be suggested again</string>
 	<string name="show_dismissed">Show what I passed on again</string>
+	<string name="not_interested_tip">Tap the thumbs-down on a cover to say you are not interested, or press and hold it. It will not be suggested again, and similar titles count for less.</string>
+	<string name="dismissed_titles">Titles I am not interested in</string>
 	<string name="settings_group_reading">Reading</string>
 	<string name="settings_group_finding">Finding manga</string>
 	<string name="settings_group_data">Your data</string>
@@ -1238,4 +1240,11 @@ Optional — skip it and you appear as anon.</string>
 	<string name="tracker_stale_line">%1$s (%2$s)</string>
 	<string name="tracker_stale_channel">Sources that may be down</string>
 	<string name="tracker_stale_channel_description">At most once a week, when manga that usually update regularly have had no new chapter for 4 weeks</string>
+	<string name="sources_auto_update">Update sources automatically</string>
+	<string name="sources_auto_update_summary">Get repaired and new manga sources as soon as they are published, without updating the app</string>
+	<string name="sources_version">Manga sources</string>
+	<string name="sources_version_built_in">%1$s, as they came with the app</string>
+	<string name="sources_version_downloaded">%1$s, updated since the app was installed</string>
+	<string name="sources_up_to_date">Manga sources are up to date</string>
+	<string name="sources_updated">Manga sources updated</string>
 </resources>

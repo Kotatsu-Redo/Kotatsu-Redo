@@ -19,12 +19,12 @@ import org.koitharu.kotatsu.core.db.MangaQueryBuilder
 import org.koitharu.kotatsu.core.db.sourceCondition
 import org.koitharu.kotatsu.core.db.TABLE_FAVOURITES
 import org.koitharu.kotatsu.core.db.entity.MangaWithTags
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import org.koitharu.kotatsu.favourites.domain.model.Cover
 import org.koitharu.kotatsu.list.domain.ListFilterOption
 import org.koitharu.kotatsu.search.domain.ScreenFilterLog
 import org.koitharu.kotatsu.list.domain.ListSortOrder
 import org.koitharu.kotatsu.list.domain.ReadingProgress.Companion.PROGRESS_COMPLETED
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 
 @Dao
 abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
@@ -235,15 +235,24 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 		deletedAt = System.currentTimeMillis(),
 	)
 
-	suspend fun recover(mangaId: Long) = setDeletedAt(
+	/**
+	 * Puts back what was removed. A removal that a sync may already have sent is put back as added just now: with its
+	 * old date the removal would be the later of the two wherever they meet, and the manga would go again.
+	 *
+	 * @param syncedUntil removals up to this time may have been sent, zero if none can have been
+	 */
+	suspend fun recover(mangaId: Long, syncedUntil: Long) = recoverImpl(
 		mangaId = mangaId,
-		deletedAt = 0L,
+		syncedUntil = syncedUntil,
+		now = System.currentTimeMillis(),
 	)
 
-	suspend fun recover(categoryId: Long, mangaId: Long) = setDeletedAt(
+	/** See [recover]. */
+	suspend fun recover(categoryId: Long, mangaId: Long, syncedUntil: Long) = recoverImpl(
 		categoryId = categoryId,
 		mangaId = mangaId,
-		deletedAt = 0L,
+		syncedUntil = syncedUntil,
+		now = System.currentTimeMillis(),
 	)
 
 	@Query("DELETE FROM favourites WHERE deleted_at != 0 AND deleted_at < :maxDeletionTime")
@@ -269,6 +278,20 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 
 	@Query("UPDATE favourites SET deleted_at = :deletedAt WHERE category_id = :categoryId AND deleted_at = 0")
 	protected abstract suspend fun setDeletedAtAll(categoryId: Long, deletedAt: Long)
+
+	@Query(
+		"UPDATE favourites SET " +
+			"created_at = CASE WHEN deleted_at != 0 AND deleted_at <= :syncedUntil THEN :now ELSE created_at END, " +
+			"deleted_at = 0 WHERE manga_id = :mangaId",
+	)
+	protected abstract suspend fun recoverImpl(mangaId: Long, syncedUntil: Long, now: Long)
+
+	@Query(
+		"UPDATE favourites SET " +
+			"created_at = CASE WHEN deleted_at != 0 AND deleted_at <= :syncedUntil THEN :now ELSE created_at END, " +
+			"deleted_at = 0 WHERE manga_id = :mangaId AND category_id = :categoryId",
+	)
+	protected abstract suspend fun recoverImpl(categoryId: Long, mangaId: Long, syncedUntil: Long, now: Long)
 
 	@Query("UPDATE favourites SET pinned = :isPinned WHERE manga_id = :mangaId AND category_id = :categoryId AND deleted_at = 0")
 	abstract suspend fun setPinned(mangaId: Long, categoryId: Long, isPinned: Boolean)
@@ -328,7 +351,7 @@ abstract class FavouritesDao : MangaQueryBuilder.ConditionCallback {
 	}
 
 	private fun contentTypeCondition(option: ListFilterOption.ContentType): String {
-		val sources = MangaParserSource.entries
+		val sources = ActiveParsers.sources
 			.asSequence()
 			.filter { it.contentType == option.contentType }
 			.joinToString(

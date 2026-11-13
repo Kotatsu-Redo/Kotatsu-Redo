@@ -222,6 +222,20 @@ internal object SuggestionRanking {
 	 * seen it with. Mild and logarithmic: a close match that is also popular still shows, but
 	 * popularity alone no longer lifts a looser match above a closer, less known one.
 	 */
+	/**
+	 * Scores brought into the 0..1 a suggestion is stored with, without losing their order.
+	 *
+	 * Moving a score towards the reader's taste can take it past 1, and it used to be cut off there: most of a
+	 * list then sat at exactly 1 and came out in whatever order the sources had answered. Dividing all of them by
+	 * the highest keeps who is ahead of whom. Scores already within 1 are left as they are, and one that is not a
+	 * number counts as nothing.
+	 */
+	fun rescale(scores: List<Double>): List<Float> {
+		val clean = scores.map { if (it.isNaN() || it < 0.0) 0.0 else it }
+		val highest = clean.maxOrNull()?.takeIf { it > 1.0 } ?: 1.0
+		return clean.map { (it / highest).toFloat().coerceIn(0f, 1f) }
+	}
+
 	fun dampPopularity(score: Double, readers: Int): Double =
 		score / (1.0 + POPULARITY_DAMPING * ln(1.0 + readers.coerceAtLeast(0)))
 }

@@ -33,6 +33,14 @@ abstract class StatsDao {
 	@Query("SELECT manga_id AS mangaId, SUM(pages) AS pages FROM stats GROUP BY manga_id")
 	abstract suspend fun findPagesPerManga(): List<MangaPagesRead>
 
+	/**
+	 * Hands everything read of one manga to another: for a manga moved to another source, which is the same
+	 * reading under a new id. The other has to be in the history already, as these rows hang on it. A session
+	 * the other already has from the very same moment stays as it is.
+	 */
+	@Query("UPDATE OR IGNORE stats SET manga_id = :toMangaId WHERE manga_id = :fromMangaId")
+	abstract suspend fun moveAll(fromMangaId: Long, toMangaId: Long)
+
 	@Query("DELETE FROM stats")
 	abstract suspend fun clear()
 

@@ -28,6 +28,7 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.ListMode
 import org.koitharu.kotatsu.core.prefs.TriStateOption
 import org.koitharu.kotatsu.core.ui.util.ReversibleAction
+import org.koitharu.kotatsu.core.ui.util.ReversibleHandle
 import org.koitharu.kotatsu.core.util.ext.call
 import org.koitharu.kotatsu.core.util.ext.computeSize
 import org.koitharu.kotatsu.details.data.MangaDetails
@@ -56,6 +57,9 @@ import org.koitharu.kotatsu.scrobbling.common.domain.Scrobbler
 import org.koitharu.kotatsu.scrobbling.common.domain.model.ScrobblingInfo
 import org.koitharu.kotatsu.scrobbling.common.domain.model.ScrobblingStatus
 import org.koitharu.kotatsu.stats.data.StatsRepository
+import org.koitharu.kotatsu.discover.data.DiscoverDismissals
+import org.koitharu.kotatsu.discover.data.DismissedIndex
+import org.koitharu.kotatsu.discover.domain.MangaDismisser
 import javax.inject.Inject
 
 @HiltViewModel
@@ -76,6 +80,8 @@ class DetailsViewModel @Inject constructor(
 	private val readingTimeUseCase: ReadingTimeUseCase,
 	private val pagePreloader: PagePreloader,
 	statsRepository: StatsRepository,
+	private val dismisser: MangaDismisser,
+	dismissals: DiscoverDismissals,
 ) : ChaptersPagesViewModel(
 	settings = settings,
 	interactor = interactor,
@@ -107,6 +113,10 @@ class DetailsViewModel @Inject constructor(
 	val isStatsAvailable = statsRepository.observeHasStats(mangaId)
 		.withErrorHandling()
 		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, false)
+
+	/** What the reader passed on, so that the menu does not offer it for what they already did. */
+	val dismissedIndex = dismissals.observe()
+		.stateIn(viewModelScope + Dispatchers.Default, SharingStarted.Eagerly, DismissedIndex.EMPTY)
 
 	val remoteManga = MutableStateFlow<Manga?>(null)
 
@@ -255,6 +265,15 @@ class DetailsViewModel @Inject constructor(
 			scrobbler.unregisterScrobbling(
 				mangaId = mangaId,
 			)
+		}
+	}
+
+	/** "Not interested", from the menu of a manga the reader has not saved or read. */
+	fun dismissFromSuggestions() {
+		val manga = getMangaOrNull() ?: return
+		launchJob(Dispatchers.Default) {
+			val key = dismisser.dismiss(manga)
+			onActionDone.call(ReversibleAction(R.string.removed_from_suggestions, ReversibleHandle { dismisser.undo(key) }))
 		}
 	}
 

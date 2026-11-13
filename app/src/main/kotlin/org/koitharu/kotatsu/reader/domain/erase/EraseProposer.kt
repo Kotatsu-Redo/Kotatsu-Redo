@@ -3,14 +3,16 @@ package org.koitharu.kotatsu.reader.domain.erase
 import kotlin.math.abs
 
 /**
- * The most probable thing a scrub meant: where the borders start.
+ * The most probable thing a scrub meant.
  *
- * @param region where the borders go: a little outside the object, into whatever blank space is around it
- * @param objectRegion the object itself, which is what it should be judged and recognised by
+ * @param region what goes if the borders are taken as offered: the object, and whatever blank space is around it
+ * @param objectRegion the object itself: where the borders start, and what it is judged and recognised by
  * @param isStandalone whether this is one separate image that the scrub stayed on: the first thing it takes
  *  to erase without asking. See [EraseProposer.isUnlikeTheRest] for the second
  * @param rest the other content on the page, for comparing with
  * @param snapX edges, in source pixels, that the borders should settle on when let go near them
+ * @param aroundStroke where the borders start instead when the object is far bigger than what was rubbed, which
+ *  is someone after a logo in a panel and not the panel. See [EraseProposer.regionAroundStroke]
  */
 class EraseProposal(
 	val region: SourceRegion,
@@ -19,6 +21,7 @@ class EraseProposal(
 	val rest: List<SourceRegion>,
 	val snapX: IntArray,
 	val snapY: IntArray,
+	val aroundStroke: SourceRegion? = null,
 )
 
 /**
@@ -58,6 +61,16 @@ object EraseProposer {
 	private const val OVERFIT_ONE_SIDE_DIVISOR = 32
 	private const val OVERFIT_SURROUNDED_DIVISOR = 12
 	private const val REMAINDER_MIN_SLACK_ROWS = 4
+
+	/** Of the stroke's own size: how far the borders start from it either way when nothing says where the object ends. */
+	private const val STROKE_GROW_DIVISOR = 2
+
+	/**
+	 * What makes an object far bigger than what was rubbed: a good part of a screen tall, and many times the
+	 * height of the stroke. A banner is neither, and rubbing up and down something tall is not the second.
+	 */
+	private const val PANEL_SCREENS = 0.4f
+	private const val MUCH_TALLER = 6
 
 	/** How far past a match to look for the rest of it: an eighth of its height, and a couple of rows at least. */
 	private const val LEFTOVER_SHARE_DIVISOR = 8
@@ -116,6 +129,19 @@ object EraseProposer {
 		val hasEdge = !(band.isPageStart && band.isPageEnd)
 		val isSaneSize = selectionHeight <= (column.end - column.start) * viewportAspect * MAX_SCREENS
 
+		// Screens of it mean the gutters were not found. A panel around a small rub means a logo or a watermark
+		// in that panel. Either way nobody rubbing one spot meant all of it, unless it turns out to be an insert
+		val screenRows = luma.width * viewportAspect
+		val isFarBigger = selectionHeight > screenRows * MAX_SCREENS ||
+			(!isWholePage && selectionHeight > screenRows * PANEL_SCREENS && selectionHeight >= (strokeBottom - strokeTop) * MUCH_TALLER)
+		val aroundStroke = if (isFarBigger) {
+			// Across the whole width: columns worked out for a band this size say little about what is near the stroke
+			val width = Span(0, luma.width, isPageStart = true, isPageEnd = true)
+			regionAroundStroke(luma, band, width, strokeLeft, strokeTop, strokeRight, strokeBottom, screenRows.toInt())
+		} else {
+			null
+		}
+
 		// Blank on both sides means nothing nearby can be caught by going further, so it does
 		val blankAbove = flatRowsFrom(luma, band.start - 1, -1, 0, luma.width)
 		val blankBelow = flatRowsFrom(luma, band.end, 1, 0, luma.width)
@@ -147,8 +173,163 @@ object EraseProposer {
 			rest = bands.filter { it !== band }.map {
 				SourceRegion(0, luma.sourceY(it.start), luma.sourceWidth, luma.sourceY(it.end))
 			},
-			snapX = (edges(columns, luma.width) { luma.sourceX(it) } + intArrayOf(region.left, region.right)).distinct().sorted().toIntArray(),
-			snapY = (edges(bands, luma.height) { luma.sourceY(it) } + intArrayOf(region.top, region.bottom)).distinct().sorted().toIntArray(),
+			snapX = (edges(columns, luma.width) { luma.sourceX(it) } + intArrayOf(region.left, region.right) +
+				(aroundStroke?.let { intArrayOf(it.left, it.right) } ?: IntArray(0))).distinct().sorted().toIntArray(),
+			snapY = (edges(bands, luma.height) { luma.sourceY(it) } + intArrayOf(region.top, region.bottom) +
+				(aroundStroke?.let { intArrayOf(it.top, it.bottom) } ?: IntArray(0))).distinct().sorted().toIntArray(),
+			aroundStroke = aroundStroke,
+		)
+	}
+
+	/**
+	 * Borders around what was rubbed, when the page gives no better idea of where the object ends.
+	 *
+	 * From the stroke each side goes on over content until blank space or a hard edge, as that is where a logo
+	 * on a plain background or a label pasted onto the art ends. A side that finds neither within half a screen
+	 * is in the middle of art, and stays near the stroke: the reader drags it from there, which beats starting
+	 * at the far ends of the panel, or screens away.
+	 */
+	internal fun regionAroundStroke(
+		luma: PageLuma,
+		band: Span,
+		column: Span,
+		strokeLeft: Int,
+		strokeTop: Int,
+		strokeRight: Int,
+		strokeBottom: Int,
+		screenRows: Int,
+	): SourceRegion {
+		val startLeft = strokeLeft.coerceIn(column.start, column.end - 1)
+		val startRight = strokeRight.coerceIn(startLeft + 1, column.end)
+		val startTop = strokeTop.coerceIn(band.start, band.end - 1)
+		val startBottom = strokeBottom.coerceIn(startTop + 1, band.end)
+		val reach = (screenRows / 2).coerceAtLeast(1)
+		val growX = ((startRight - startLeft) / STROKE_GROW_DIVISOR).coerceAtLeast(2)
+		val growY = ((startBottom - startTop) / STROKE_GROW_DIVISOR).coerceAtLeast(2)
+		var left = startLeft
+		var right = startRight
+		var top = startTop
+		var bottom = startBottom
+		// Smaller than a gutter: a logo's own lines are closer together than panels are, and it is its edge that is wanted
+		val gap = (luma.width / 32).coerceAtLeast(2)
+		// Twice: how far a side goes depends on the rows or columns the other sides have settled on
+		repeat(2) {
+			val rowBlank = { y: Int -> rowDeviation(luma, y, left, right) <= FLAT_ROW }
+			val rowCut = { y: Int -> isHardCut(luma, y, left, right) }
+			val newTop = growUntilEnd(startTop, -1, band.start, reach, gap, rowBlank, rowCut)
+			val newBottom = growUntilEnd(startBottom, 1, band.end, reach, gap, rowBlank, rowCut)
+			top = if (newTop == NOT_FOUND) (startTop - growY).coerceAtLeast(band.start) else newTop
+			bottom = if (newBottom == NOT_FOUND) (startBottom + growY).coerceAtMost(band.end) else newBottom
+			val columnBlank = { x: Int -> columnDeviation(luma, x, top, bottom) <= FLAT_ROW }
+			val columnCut = { x: Int -> isHardColumnCut(luma, x, top, bottom) }
+			val newLeft = growUntilEnd(startLeft, -1, column.start, reach, gap, columnBlank, columnCut)
+			val newRight = growUntilEnd(startRight, 1, column.end, reach, gap, columnBlank, columnCut)
+			left = if (newLeft == NOT_FOUND) (startLeft - growX).coerceAtLeast(column.start) else newLeft
+			right = if (newRight == NOT_FOUND) (startRight + growX).coerceAtMost(column.end) else newRight
+			// Art running from one edge of its column to the other, with no end above or below: no sides to find
+			if (left == column.start && right == column.end && (newTop == NOT_FOUND || newBottom == NOT_FOUND)) {
+				left = (startLeft - growX).coerceAtLeast(column.start)
+				right = (startRight + growX).coerceAtMost(column.end)
+			}
+		}
+		return SourceRegion(luma.sourceX(left), luma.sourceY(top), luma.sourceX(right), luma.sourceY(bottom))
+	}
+
+	/**
+	 * Where content stops, going one way from [start]: at blank space at least [gap] deep, at a hard edge, or at
+	 * [edge], which is as far as it may go. Less blank than that is a gap inside the object and is crossed.
+	 *
+	 * @param start for going up or left the first line that is in, and otherwise the first that is out
+	 * @param isCut whether there is a hard edge between a line and the one before it
+	 * @return [NOT_FOUND] if it goes on for [reach] lines with no end
+	 */
+	private inline fun growUntilEnd(
+		start: Int,
+		direction: Int,
+		edge: Int,
+		reach: Int,
+		gap: Int,
+		isBlank: (Int) -> Boolean,
+		isCut: (Int) -> Boolean,
+	): Int {
+		var at = start
+		var steps = 0
+		while (steps < reach) {
+			if (if (direction > 0) at >= edge else at <= edge) {
+				return at
+			}
+			if (isCut(at)) {
+				return at
+			}
+			val outside = if (direction > 0) at else at - 1
+			if (isBlank(outside)) {
+				var run = 0
+				var line = outside
+				while (run < gap && (if (direction > 0) line < edge else line >= edge) && isBlank(line)) {
+					run++
+					line += direction
+				}
+				val reachedEdge = if (direction > 0) line >= edge else line < edge
+				if (run >= gap || reachedEdge) {
+					return at
+				}
+				at += run * direction
+				steps += run
+			} else {
+				at += direction
+				steps++
+			}
+		}
+		return NOT_FOUND
+	}
+
+	private const val NOT_FOUND = Int.MIN_VALUE
+
+	/** [isHardCut] between two columns, over some rows only. */
+	private fun isHardColumnCut(luma: PageLuma, x: Int, top: Int, bottom: Int): Boolean {
+		if (x <= 0 || x >= luma.width || bottom <= top) {
+			return false
+		}
+		var changed = 0
+		for (y in top until bottom) {
+			if (abs(luma[x, y] - luma[x - 1, y]) > CUT_PIXEL_CHANGE) changed++
+		}
+		return changed * 100 >= (bottom - top) * CUT_SHARE_PERCENT
+	}
+
+	/**
+	 * A selection the reader set by hand, with the blank space around it: what [propose] adds to its own.
+	 *
+	 * Blank rows above and below go with it, a little way, and with nothing else on its rows it takes the
+	 * whole width. Otherwise an image narrower than the page is painted over and leaves a stripe where it
+	 * was, instead of the rows closing up. Only blank is ever added, never content.
+	 */
+	fun withBlankAround(luma: PageLuma, region: SourceRegion): SourceRegion {
+		val left = luma.scaleX(region.left)
+		val right = luma.scaleX(region.right).coerceAtLeast(left + 1).coerceAtMost(luma.width)
+		val top = luma.scaleY(region.top)
+		val bottom = luma.scaleY(region.bottom).coerceAtLeast(top + 1).coerceAtMost(luma.height)
+		if (left >= right || top >= bottom) {
+			return region
+		}
+		for (x in 0 until luma.width) {
+			if ((x < left || x >= right) && columnDeviation(luma, x, top, bottom) > FLAT_ROW) {
+				return region // something else is on these rows, and stays
+			}
+		}
+		val blankAbove = flatRowsFrom(luma, top - 1, -1, 0, luma.width)
+		val blankBelow = flatRowsFrom(luma, bottom, 1, 0, luma.width)
+		val isSurrounded = (blankAbove > 0 || top == 0) && (blankBelow > 0 || bottom == luma.height)
+		val rowPad = if (isSurrounded) {
+			(luma.width / OVERFIT_SURROUNDED_DIVISOR).coerceAtLeast(3)
+		} else {
+			(luma.width / OVERFIT_ONE_SIDE_DIVISOR).coerceAtLeast(2)
+		}
+		return SourceRegion(
+			left = 0,
+			top = minOf(region.top, luma.sourceY(top - minOf(rowPad, blankAbove))),
+			right = luma.sourceWidth,
+			bottom = maxOf(region.bottom, luma.sourceY(bottom + minOf(rowPad, blankBelow))),
 		)
 	}
 
@@ -388,7 +569,7 @@ object EraseProposer {
 		return best
 	}
 
-	private class Span(val start: Int, val end: Int, val isPageStart: Boolean, val isPageEnd: Boolean)
+	internal class Span(val start: Int, val end: Int, val isPageStart: Boolean, val isPageEnd: Boolean)
 
 	private fun findRowBands(luma: PageLuma, minGap: Int): List<Span> {
 		val height = luma.height
@@ -500,14 +681,17 @@ object EraseProposer {
 	 * do: art has rows where half of them jump a long way, but only a cut between two images moves all of
 	 * them at once.
 	 */
-	private fun isHardCut(luma: PageLuma, y: Int): Boolean {
+	private fun isHardCut(luma: PageLuma, y: Int, left: Int = 0, right: Int = luma.width): Boolean {
+		if (y <= 0 || y >= luma.height || right <= left) {
+			return false
+		}
 		var changed = 0
-		for (x in 0 until luma.width) {
+		for (x in left until right) {
 			if (abs(luma[x, y] - luma[x, y - 1]) > CUT_PIXEL_CHANGE) {
 				changed++
 			}
 		}
-		return changed * 100 >= luma.width * CUT_SHARE_PERCENT
+		return changed * 100 >= (right - left) * CUT_SHARE_PERCENT
 	}
 
 	private fun overlap(aStart: Int, aEnd: Int, bStart: Int, bEnd: Int): Int =

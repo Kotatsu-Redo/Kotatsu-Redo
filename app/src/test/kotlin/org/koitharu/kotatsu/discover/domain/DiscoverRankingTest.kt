@@ -193,6 +193,52 @@ class DiscoverRankingTest {
 	}
 
 	@Test
+	fun `a row the stored suggestions leave short is filled with what else is closest to the taste`() {
+		// One stored manhwa under the Manhwa filter used to make a row of one cover
+		val rows = listOf(
+			listOf(manga("Row A1", "Romance"), manga("Row A2", "Action")),
+			listOf(manga("Row B1", "Fantasy")),
+		)
+		val row = DiscoverRanking.recommendedRow(
+			stored = listOf(manga("Stored", "Action")),
+			rows = rows,
+			others = listOf(manga("Find", "Action")),
+			taste = mapOf("action" to 0.6, "fantasy" to 0.3),
+			size = 4,
+		)
+		// What was stored stays first, then the closest to the taste, then the rows in turn for what no taste tells
+		assertEquals(
+			listOf("Stored", "Row A2", "Find", "Row B1", "Row A1"),
+			row.map { it.title }.distinct(),
+		)
+	}
+
+	@Test
+	fun `a row the stored suggestions fill is left to them`() {
+		val stored = listOf(manga("One", "Action"), manga("Two", "Drama"))
+		val row = DiscoverRanking.recommendedRow(
+			stored = stored,
+			rows = listOf(listOf(manga("Row", "Action"))),
+			others = emptyList(),
+			taste = mapOf("action" to 1.0),
+			size = 2,
+		)
+		assertEquals(listOf("One", "Two"), row.map { it.title })
+	}
+
+	@Test
+	fun `with nothing stored the row is what is closest to the taste, then the rows in turn`() {
+		val row = DiscoverRanking.recommendedRow(
+			stored = emptyList(),
+			rows = listOf(listOf(manga("Plain"), manga("Liked", "Comedy")), listOf(manga("Other"))),
+			others = emptyList(),
+			taste = mapOf("comedy" to 1.0),
+			size = 3,
+		)
+		assertEquals(listOf("Liked", "Plain", "Other"), row.map { it.title }.distinct())
+	}
+
+	@Test
 	fun `publishing tags are noise and adult ones are not what that means`() {
 		assertTrue(DiscoverRanking.isNoiseTag("Adaptation"))
 		assertTrue(DiscoverRanking.isNoiseTag("Shounen(B)"))
@@ -242,6 +288,46 @@ class DiscoverRankingTest {
 			taste = mapOf("horror" to -1.0),
 		)
 		assertEquals("Neutral", ranked.first().title)
+	}
+
+	@Test
+	fun `one pass in a genre the reader loves barely moves it`() {
+		val taste = DiscoverRanking.applyDismissals(mapOf("romance" to 0.9), listOf(listOf("Romance")))
+		assertEquals(0.9, taste.getValue("romance"), 0.02)
+		assertTrue(taste.getValue("romance") < 0.9)
+	}
+
+	@Test
+	fun `a genre passed on over and over by a reader who never reads it goes clearly negative, but only so far`() {
+		val twenty = List(20) { listOf("Harem") }
+		val taste = DiscoverRanking.applyDismissals(mapOf("romance" to 0.5), twenty)
+		assertTrue(taste.getValue("harem") < -0.2)
+		assertTrue(taste.getValue("harem") >= -0.5)
+		assertEquals(0.5, taste.getValue("romance"), 0.0)
+		val many = DiscoverRanking.applyDismissals(emptyMap(), List(5000) { listOf("Harem") })
+		assertTrue(many.getValue("harem") >= -0.5)
+	}
+
+	@Test
+	fun `nothing passed on leaves the taste as it was`() {
+		val taste = mapOf("romance" to 0.5)
+		assertEquals(taste, DiscoverRanking.applyDismissals(taste, emptyList()))
+	}
+
+	@Test
+	fun `passing on more of a genre than the reader reads of it counts, and reading plenty of it cancels that`() {
+		val passes = List(10) { listOf("Horror") }
+		val reads = DiscoverRanking.applyDismissals(mapOf("horror" to 1.0), passes).getValue("horror")
+		val doesNotRead = DiscoverRanking.applyDismissals(mapOf("horror" to 0.05), passes).getValue("horror")
+		assertEquals(1.0, reads, 0.0)
+		assertTrue(doesNotRead < 0.05)
+	}
+
+	@Test
+	fun `titles with no usable tag still count as passes`() {
+		val taste = DiscoverRanking.applyDismissals(emptyMap(), List(9) { listOf("Webtoon") } + listOf(listOf("Horror")))
+		// One of ten carries it: a tenth of the way, and softened by how few passes there are
+		assertEquals(-0.5 * (10 / 15.0) * 0.1, taste.getValue("horror"), 1e-9)
 	}
 
 	@Test
@@ -323,6 +409,62 @@ class DiscoverRankingTest {
 		assertTrue(DiscoverRanking.isAdult(manga("x", "18+")))
 		assertFalse(DiscoverRanking.isAdult(manga("x", "Romance", "Mature Protagonist")))
 		assertFalse(DiscoverRanking.isAdult(manga("x")))
+	}
+
+	@Test
+	fun `hyphen, underscore and space spellings of one genre are one genre`() {
+		for (tag in listOf("martial-arts", "martial_arts", "Martial  Arts", " MARTIAL arts (x)")) {
+			assertEquals(tag, "martial arts", DiscoverRanking.canonicalTag(tag))
+		}
+		assertEquals("time travel", DiscoverRanking.canonicalTag("Time-Travel"))
+		assertEquals("slice of life", DiscoverRanking.canonicalTag("slice-of-life"))
+		for (tag in listOf("sci-fi", "sci fi", "scifi", "science fiction", "Sci_Fi", "Science-Fiction")) {
+			assertEquals(tag, "sci-fi", DiscoverRanking.canonicalTag(tag))
+		}
+		assertEquals("superpower", DiscoverRanking.canonicalTag("Superpowers"))
+		assertEquals("romance", DiscoverRanking.canonicalTag("Rom-Com"))
+	}
+
+	@Test
+	fun `a publishing word run together or hyphenated is still noise`() {
+		for (tag in listOf("longstrip", "full-color", "webcomic", "web-comic", "fullcolor", "One-Shot", "4-koma", "Based on a Web Novel", "Colored")) {
+			assertNull(tag, DiscoverRanking.canonicalTag(tag))
+			assertTrue(tag, DiscoverRanking.isNoiseTag(tag))
+		}
+		assertFalse(DiscoverRanking.isNoiseTag("Martial-Arts"))
+	}
+
+	@Test
+	fun `a title is not scored higher for listing more tags`() {
+		// The ten others are in the taste a little, as the tags of a real library are: summed, they used to put Many first
+		val taste = mapOf("action" to 0.3, "romance" to 0.3, "comedy" to 0.3) + (0 until 10).associate { "other $it" to 0.02 }
+		val few = manga("Few", "Action", "Romance", "Comedy")
+		val many = manga("Many", "Action", "Romance", "Comedy", *Array(10) { "Other $it" })
+		assertTrue(DiscoverRanking.affinity(few, taste) > DiscoverRanking.affinity(many, taste))
+		assertEquals(listOf("Few", "Many"), DiscoverRanking.closestToTaste(listOf(many, few), taste, 5).map { it.title })
+	}
+
+	@Test
+	fun `taste still moves a matching title up, and more tags do not move it further`() {
+		val taste = mapOf("action" to 0.5, "romance" to 0.5, "comedy" to 0.5, "drama" to 0.5, "horror" to 0.5) +
+			(0 until 15).associate { "other $it" to 0.02 }
+		val five = manga("Five", "Action", "Romance", "Comedy", "Drama", "Horror")
+		val twenty = manga("Twenty", "Action", "Romance", "Comedy", "Drama", "Horror", *Array(15) { "Other $it" })
+		val plain = manga("Plain", "Cooking")
+		val match = manga("Match", "Action")
+		val fusedPlain = DiscoverRanking.fuse(listOf(RankedList(listOf(plain), 1.0), RankedList(listOf(match), 1.0)), taste)
+		assertEquals("Match", fusedPlain.first().title)
+		val fused = DiscoverRanking.fuse(listOf(RankedList(listOf(twenty), 1.0), RankedList(listOf(five), 1.0)), taste)
+		assertEquals(listOf("Five", "Twenty"), fused.map { it.title })
+	}
+
+	@Test
+	fun `personalize averages by the root of the tag count`() {
+		val taste = mapOf("romance" to 0.5, "comedy" to 0.3)
+		// (0.5 + 0.3) / sqrt(4) = 0.4
+		assertEquals(2.0 * (1.0 + 0.6 * 0.4), DiscoverRanking.personalize(2.0, listOf("Romance", "Comedy", "Action", "Cooking"), taste), 1e-9)
+		assertEquals(2.0, DiscoverRanking.personalize(2.0, listOf("Manga"), taste), 0.0)
+		assertEquals(2.0, DiscoverRanking.personalize(2.0, listOf("Romance"), emptyMap()), 0.0)
 	}
 
 	/** A response captured from the server's own route test, so the two sides cannot drift unnoticed. */

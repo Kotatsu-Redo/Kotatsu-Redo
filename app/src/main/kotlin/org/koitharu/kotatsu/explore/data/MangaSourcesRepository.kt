@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.core.LocalizedAppContext
@@ -25,22 +26,21 @@ import org.koitharu.kotatsu.core.db.entity.MangaSourceEntity
 import org.koitharu.kotatsu.core.model.MangaSourceInfo
 import org.koitharu.kotatsu.core.model.getTitle
 import org.koitharu.kotatsu.core.model.isNsfw
+import org.koitharu.kotatsu.core.parser.bundle.ActiveParsers
 import org.koitharu.kotatsu.core.parser.external.ExternalMangaSource
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.prefs.observeAsFlow
 import org.koitharu.kotatsu.core.ui.util.ReversibleHandle
 import org.koitharu.kotatsu.core.util.ext.flattenLatest
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
 import org.koitharu.kotatsu.parsers.util.mapNotNullToSet
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import org.koitharu.kotatsu.parsers.util.mapToSet
 import org.koitharu.kotatsu.sourcescore.domain.SourceRanker
-import java.util.Collections
-import java.util.EnumSet
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,15 +57,14 @@ class MangaSourcesRepository @Inject constructor(
 	private val sourceRanker: SourceRanker? = null,
 ) {
 
-	private val isNewSourcesAssimilated = AtomicBoolean(false)
+	/** The [ActiveParsers.generation] whose sources the table has been brought up to. */
+	private val assimilatedGeneration = AtomicInteger(-1)
 	private val dao: MangaSourcesDao
 		get() = db.getSourcesDao()
 
-	val allMangaSources: Set<MangaParserSource> = Collections.unmodifiableSet(
-		EnumSet.noneOf<MangaParserSource>(MangaParserSource::class.java).also {
-            MangaParserSource.entries.filterNotTo(it, MangaParserSource::isBroken)
-        }
-	)
+	/** The sources of the parsers in use. Not a list to keep: newer parsers can come with others, at any time. */
+	val allMangaSources: Set<ParserMangaSource>
+		get() = ActiveParsers.workingSources
 
 	suspend fun getEnabledSources(): List<MangaSource> {
 		assimilateNewSources()
@@ -98,7 +97,7 @@ class MangaSourcesRepository @Inject constructor(
 		if (settings.isAllSourcesEnabled) {
 			return emptySet()
 		}
-		val result = EnumSet.copyOf(allMangaSources)
+		val result = LinkedHashSet<MangaSource>(allMangaSources)
 		val enabled = dao.findAllEnabledNames()
 		for (name in enabled) {
 			val source = name.toMangaSourceOrNull() ?: continue
@@ -115,7 +114,7 @@ class MangaSourcesRepository @Inject constructor(
 		query: String?,
 		locale: String?,
 		sortOrder: SourcesSortOrder?,
-	): List<MangaParserSource> {
+	): List<ParserMangaSource> {
 		assimilateNewSources()
 		val entities = dao.findAll().toMutableList()
 		if (isDisabledOnly && !settings.isAllSourcesEnabled) {
@@ -128,7 +127,7 @@ class MangaSourcesRepository @Inject constructor(
 			skipNsfwSources = settings.isNsfwContentDisabled,
 			sortOrder = sortOrder,
 		).run {
-			mapNotNullTo(ArrayList(size)) { it.mangaSource as? MangaParserSource }
+			mapNotNullTo(ArrayList(size)) { it.mangaSource as? ParserMangaSource }
 		}
 		if (locale != null) {
 			sources.retainAll { it.locale == locale }
@@ -157,7 +156,8 @@ class MangaSourcesRepository @Inject constructor(
 			observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
 				dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
 			},
-		) { skipNsfw, sources ->
+			observeParsers(),
+		) { skipNsfw, sources, _ ->
 			sources.count {
 				it.source.toMangaSourceOrNull()?.let { s -> !skipNsfw || !s.isNsfw() } == true
 			}
@@ -170,7 +170,8 @@ class MangaSourcesRepository @Inject constructor(
 			observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
 				dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
 			},
-		) { skipNsfw, enabledSources ->
+			observeParsers(),
+		) { skipNsfw, enabledSources, _ ->
 			val enabled = enabledSources.mapToSet { it.source }
 			allMangaSources.count { x ->
 				x.name !in enabled && (!skipNsfw || !x.isNsfw())
@@ -182,7 +183,8 @@ class MangaSourcesRepository @Inject constructor(
 		observeIsNsfwDisabled(),
 		observeAllEnabled(),
 		observeSortOrder(),
-	) { skipNsfw, allEnabled, order ->
+		observeParsers(),
+	) { skipNsfw, allEnabled, order, _ ->
 		// Re-emits when a score download lands, so the order and the flames update without waiting
 		// for the sources table to change. Local stats are left out on purpose: they change on every
 		// search, and the list reshuffling under the user's finger would be worse than slightly stale.
@@ -198,7 +200,10 @@ class MangaSourcesRepository @Inject constructor(
 			list
 		}
 
-	fun observeAll(): Flow<List<Pair<MangaSource, Boolean>>> = dao.observeAll().map { entities ->
+	fun observeAll(): Flow<List<Pair<MangaSource, Boolean>>> = combine(
+		dao.observeAll(),
+		observeParsers(),
+	) { entities, _ ->
 		val result = ArrayList<Pair<MangaSource, Boolean>>(entities.size)
 		for (entity in entities) {
 			val source = entity.source.toMangaSourceOrNull() ?: continue
@@ -240,7 +245,7 @@ class MangaSourcesRepository @Inject constructor(
 		}
 	}
 
-	fun observeHasNewSources(): Flow<Boolean> = observeIsNsfwDisabled().map { skipNsfw ->
+	fun observeHasNewSources(): Flow<Boolean> = combine(observeIsNsfwDisabled(), observeParsers()) { skipNsfw, _ ->
 		val sources = dao.findAllFromVersion(BuildConfig.VERSION_CODE).toSources(skipNsfw, null)
 		sources.isNotEmpty() && sources.size != allMangaSources.size
 	}.onStart { assimilateNewSources() }
@@ -248,26 +253,54 @@ class MangaSourcesRepository @Inject constructor(
 	fun observeHasNewSourcesForBadge(): Flow<Boolean> = combine(
 		settings.observeAsFlow(AppSettings.KEY_SOURCES_VERSION) { sourcesVersion },
 		observeIsNsfwDisabled(),
-	) { version, skipNsfw ->
+		settings.observeAsFlow(AppSettings.KEY_SOURCES_NEW_DOWNLOADED) { hasNewDownloadedSources },
+		observeParsers(),
+	) { version, skipNsfw, hasDownloaded, _ ->
 		if (version < BuildConfig.VERSION_CODE) {
 			val sources = dao.findAllFromVersion(version).toSources(skipNsfw, null)
 			sources.isNotEmpty()
 		} else {
-			false
+			hasDownloaded
 		}
 	}.onStart { assimilateNewSources() }
 
 	fun clearNewSourcesBadge() {
 		settings.sourcesVersion = BuildConfig.VERSION_CODE
+		settings.hasNewDownloadedSources = false
 	}
 
+	/**
+	 * The parsers in use, once the sources they came with are in the table: something to put next to whatever lists
+	 * sources, so that it is listed again when newer parsers are downloaded, with what they add and without what they
+	 * drop.
+	 */
+	private fun observeParsers(): Flow<Int> = ActiveParsers.observe().onEach { assimilateNewSources() }
+
+	/**
+	 * Gives a row of the table to every source that has none yet. Once for each set of parsers that comes into use:
+	 * the one the app starts with, and any it downloads while running.
+	 */
 	private suspend fun assimilateNewSources(): Boolean {
-		if (isNewSourcesAssimilated.getAndSet(true)) {
+		val generation = ActiveParsers.generation
+		if (assimilatedGeneration.get() == generation) {
 			return false
 		}
+		// Nothing is held while this is done, some callers being inside a transaction of the database: two of them
+		// at once do the same thing twice, the rows going in only where there are none
+		val isChanged = insertNewSources()
+		// Only now: a failure above, or the caller going away, leaves it to be done by whoever asks next
+		assimilatedGeneration.set(generation)
+		return isChanged
+	}
+
+	private suspend fun insertNewSources(): Boolean {
 		val new = getNewSources()
 		if (new.isEmpty()) {
 			return false
+		}
+		if (!ActiveParsers.isBuiltIn && settings.sourcesVersion >= BuildConfig.VERSION_CODE) {
+			// Sources that came with no update of the app, after the ones of this version were looked at
+			settings.hasNewDownloadedSources = true
 		}
 		var maxSortKey = dao.getMaxSortKey()
 		val isAllEnabled = settings.isAllSourcesEnabled
@@ -317,7 +350,7 @@ class MangaSourcesRepository @Inject constructor(
 
 	private suspend fun getNewSources(): MutableSet<out MangaSource> {
 		val entities = dao.findAll()
-		val result = EnumSet.copyOf(allMangaSources)
+		val result = LinkedHashSet<MangaSource>(allMangaSources)
 		for (e in entities) {
 			result.remove(e.source.toMangaSourceOrNull() ?: continue)
 		}
@@ -457,5 +490,5 @@ class MangaSourcesRepository @Inject constructor(
 		isAllSourcesEnabled
 	}
 
-	private fun String.toMangaSourceOrNull(): MangaParserSource? = MangaParserSource.entries.find { it.name == this }
+	private fun String.toMangaSourceOrNull(): ParserMangaSource? = ActiveParsers.findSource(this)
 }

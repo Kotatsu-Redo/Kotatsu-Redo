@@ -22,6 +22,7 @@ import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.parser.CachingMangaRepository
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
+import org.koitharu.kotatsu.core.parser.bundle.ParsersUpdater
 import org.koitharu.kotatsu.core.ui.model.MangaOverride
 import org.koitharu.kotatsu.core.util.ext.sanitize
 import org.koitharu.kotatsu.details.data.MangaDetails
@@ -42,9 +43,12 @@ class DetailsLoadUseCase @Inject constructor(
     private val recoverUseCase: RecoverMangaUseCase,
     private val imageGetter: Html.ImageGetter,
     private val networkState: NetworkState,
+    private val parsersUpdater: ParsersUpdater,
 ) {
 
     operator fun invoke(intent: MangaIntent, force: Boolean): Flow<MangaDetails> = flow {
+        // A manga being opened, to look at or to read, is one of the moments newer parsers are looked for
+        parsersUpdater.onMangaOpened()
         val manga = requireNotNull(mangaDataRepository.resolveIntent(intent, withChapters = true)) {
             "Cannot resolve intent $intent"
         }

@@ -3,12 +3,12 @@ package org.koitharu.kotatsu.settings.sources.catalog
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import org.koitharu.kotatsu.list.ui.model.ListModel
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 
 sealed interface SourceCatalogItem : ListModel {
 
 	data class Source(
-		val source: MangaParserSource,
+		val source: ParserMangaSource,
 		val isInPreset: Boolean = false,
 		/** Really popular: flame-marked and listed first - see SourceRank.hotSources. */
 		val isHot: Boolean = false,

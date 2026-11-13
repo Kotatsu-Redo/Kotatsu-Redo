@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark disc behind a glyph on a cover: 24dp drawn, inside a 36dp touch target. -->
+<inset
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:inset="6dp">
+
+	<shape android:shape="oval">
+		<solid android:color="#99000000" />
+	</shape>
+
+</inset>

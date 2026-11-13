@@ -37,12 +37,19 @@
 		android:title="@string/enable_all_sources" />
 
 	<SwitchPreferenceCompat
+		android:defaultValue="true"
+		android:icon="@drawable/ic_app_update"
+		android:key="parsers_auto_update"
+		android:summary="@string/sources_auto_update_summary"
+		android:title="@string/sources_auto_update"
+		app:allowDividerAbove="true" />
+
+	<SwitchPreferenceCompat
 		android:defaultValue="false"
 		android:icon="@drawable/ic_replace"
 		android:key="mirror_switching"
 		android:summary="@string/mirror_switching_summary"
-		android:title="@string/mirror_switching"
-		app:allowDividerAbove="true" />
+		android:title="@string/mirror_switching" />
 
 	<SwitchPreferenceCompat
 		android:icon="@drawable/ic_open_external"

@@ -63,7 +63,7 @@ abstract class SyncProvider : ContentProvider() {
 		}
 		val db = database.openHelper.writableDatabase
 		if (db.insert(table, SQLiteDatabase.CONFLICT_IGNORE, values) < 0) {
-			db.update(table, values)
+			db.update(table, values, uri.getQueryParameter(PARAM_UNCHANGED_SINCE)?.toLongOrNull())
 		}
 		return uri
 	}
@@ -100,7 +100,17 @@ abstract class SyncProvider : ContentProvider() {
 		}
 	}
 
-	private fun SupportSQLiteDatabase.update(table: String, values: ContentValues) {
+	/**
+	 * Replaces a row with the copy a sync brought back, unless it has changed here since that sync read it.
+	 *
+	 * A sync sends everything, waits for the server, and writes back what the server answers, which for a big
+	 * library takes a while. Whatever was removed or read further in the meantime was overwritten with the older
+	 * copy: a manga taken out of history right after reading it came back a moment later, and so did a favourite.
+	 * The row that changed here is the newer one, and goes up with the next sync.
+	 *
+	 * @param unchangedSince when the sync read its rows, or null to replace the row whatever its state
+	 */
+	private fun SupportSQLiteDatabase.update(table: String, values: ContentValues, unchangedSince: Long?) {
 		val keys = when (table) {
 			TABLE_TAGS -> listOf("tag_id")
 			TABLE_MANGA_TAGS -> listOf("tag_id", "manga_id")
@@ -110,9 +120,24 @@ abstract class SyncProvider : ContentProvider() {
 			TABLE_HISTORY -> listOf("manga_id")
 			else -> throw IllegalArgumentException("Update for $table is not supported")
 		}
-		val whereClause = keys.joinToString(" AND ") { "`$it` = ?" }
-		val whereArgs = Array<Any>(keys.size) { i -> values.get("`${keys[i]}`") ?: values.get(keys[i]) }
+		// The columns that say when a row was last touched here
+		val changeColumns = when {
+			unchangedSince == null -> emptyList()
+			table == TABLE_HISTORY -> listOf("updated_at", "deleted_at")
+			table == TABLE_FAVOURITES || table == TABLE_FAVOURITE_CATEGORIES -> listOf("created_at", "deleted_at")
+			else -> emptyList()
+		}
+		val whereClause = keys.joinToString(" AND ") { "`$it` = ?" } + changeColumns.joinToString("") { " AND `$it` < ?" }
+		val whereArgs = Array<Any>(keys.size + changeColumns.size) { i ->
+			if (i < keys.size) values.get("`${keys[i]}`") ?: values.get(keys[i]) else checkNotNull(unchangedSince)
+		}
 		this.update(table, SQLiteDatabase.CONFLICT_IGNORE, values, whereClause, whereArgs)
+	}
+
+	companion object {
+
+		/** On the address of an insert: the time before which a row must have last changed to be replaced. */
+		const val PARAM_UNCHANGED_SINCE = "unchanged_since"
 	}
 
 	@EntryPoint

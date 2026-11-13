@@ -1,10 +1,12 @@
 package org.koitharu.kotatsu.core.ui.widgets
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.IdRes
@@ -110,6 +112,14 @@ class FloatingBottomNavigationView @JvmOverloads constructor(
 
 	override val maxItemCountOverride: Int
 		get() = MAX_RENDERED_ITEMS
+
+	/**
+	 * Beside the pill there is only the list showing through, so a tap there is for the list. The pill and its buttons take
+	 * their own touches, as Compose surfaces do.
+	 */
+	@SuppressLint("ClickableViewAccessibility")
+	override fun onTouchEvent(event: MotionEvent): Boolean =
+		if (useLegacyNavigation) super.onTouchEvent(event) else false
 
 	override fun setSelectedItemId(@IdRes itemId: Int) {
 		super.setSelectedItemId(itemId)

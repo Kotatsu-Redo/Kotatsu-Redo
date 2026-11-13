@@ -31,6 +31,8 @@ class SourcesSettingsFragment : BasePreferenceFragment(R.string.remote_sources),
 			entries = SourcesSortOrder.entries.map { context.getString(it.titleResId) }.toTypedArray()
 			setDefaultValueCompat(SourcesSortOrder.SCORE.name)
 		}
+		// Nothing to switch where no parsers are ever downloaded
+		findPreference<Preference>(AppSettings.KEY_PARSERS_AUTO_UPDATE)?.isVisible = viewModel.isParsersUpdateSupported
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

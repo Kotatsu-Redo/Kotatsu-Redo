@@ -70,6 +70,7 @@ import org.koitharu.kotatsu.core.util.ext.trySetForeground
 import org.koitharu.kotatsu.discover.domain.DiscoverRanking
 import org.koitharu.kotatsu.discover.domain.ReaderProfiles
 import org.koitharu.kotatsu.discover.data.DiscoverDismissals
+import org.koitharu.kotatsu.discover.data.DismissedIndex
 import org.koitharu.kotatsu.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.favourites.domain.FavouritesRepository
 import org.koitharu.kotatsu.history.data.HistoryRepository
@@ -203,9 +204,8 @@ class SuggestionsWorker @AssistedInject constructor(
 	private suspend fun doWorkImpl(): Int {
 		val profile = runCatchingCancellable { readerProfiles.get() }.onFailure { it.printStackTraceDebug() }.getOrNull()
 		// "Not interested" said on the Explore screen goes for this list too
-		val dismissed = runCatchingCancellable { dismissals.get() }.onFailure { it.printStackTraceDebug() }.getOrDefault(emptyMap())
-		val taste = DiscoverRanking.applyDismissals(profile?.taste.orEmpty(), dismissed.values)
-		fun isDismissed(title: String) = DiscoverRanking.titleKey(title) in dismissed
+		val dismissed = runCatchingCancellable { dismissals.get() }.onFailure { it.printStackTraceDebug() }.getOrDefault(DismissedIndex.EMPTY)
+		val taste = DiscoverRanking.applyDismissals(profile?.taste.orEmpty(), dismissed.tagLists)
 		val history = historyRepository.getListWithProgress(0, MAX_SEED_POOL)
 		val favourites = favouritesRepository.getLastManga(20)
 		val favouriteIds = favourites.mapTo(HashSet()) { it.id }
@@ -237,19 +237,23 @@ class SuggestionsWorker @AssistedInject constructor(
 		// It is asked first, and everything below remains exactly as it was for when it cannot
 		// answer: community features off, no network, a library nobody else has opened.
 		val remote = runCatchingCancellable {
-			communitySuggestions.getSuggestions(seed, dropped, MAX_RESULTS, tagsBlacklist, excludeNsfw, taste) { work ->
-				isDismissed(work.title) || profile?.knows(work.title, work.sources.map { it.source to it.key }) == true
+			communitySuggestions.getSuggestions(seed, dropped, MAX_RESULTS, tagsBlacklist, excludeNsfw, taste, dismissed) { work ->
+				profile?.knows(work.title, work.sources.map { it.source to it.key }) == true
 			}
 		}.onFailure { it.printStackTraceDebug() }.getOrDefault(emptyList())
 			// The server only knows its own name for a work and the addresses it has seen
-			.filterNot { profile?.knows(it.manga) == true || isDismissed(it.manga.title) }
+			.filterNot { profile?.knows(it.manga) == true || dismissed.matches(it.manga) }
 
 		val suggestions = if (remote.size >= MIN_REMOTE_RESULTS) {
 			remote
 		} else {
-			localSuggestions(seed, sources, tagsBlacklist)
-				.filterNot { profile?.knows(it.manga) == true || isDismissed(it.manga.title) }
-				.map { it.copy(relevance = DiscoverRanking.personalize(it.relevance.toDouble(), it.manga.tags.map { tag -> tag.title }, taste).toFloat().coerceIn(0f, 1f)) }
+			val local = localSuggestions(seed, sources, tagsBlacklist)
+				.filterNot { profile?.knows(it.manga) == true || dismissed.matches(it.manga) }
+			// Not cut off at 1: that left most of the list tied at the top, in no order at all
+			val relevances = SuggestionRanking.rescale(
+				local.map { DiscoverRanking.personalize(it.relevance.toDouble(), it.manga.tags.map { tag -> tag.title }, taste) },
+			)
+			local.mapIndexed { index, suggestion -> suggestion.copy(relevance = relevances[index]) }
 				.sortedByDescending { it.relevance }
 		}
 		return publish(suggestions, tagsBlacklist)

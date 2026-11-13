@@ -11,6 +11,7 @@ import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.ui.BaseListAdapter
 import org.koitharu.kotatsu.core.ui.list.OnListItemClickListener
+import org.koitharu.kotatsu.core.util.ext.setTooltipCompat
 import org.koitharu.kotatsu.databinding.ItemDiscoverRankedBinding
 import org.koitharu.kotatsu.databinding.ItemListGroupBinding
 import org.koitharu.kotatsu.list.ui.adapter.ListItemType
@@ -27,6 +28,7 @@ private const val ROW_PREFETCH = 4
 fun discoverRankedAD(
 	onClick: (Manga) -> Unit,
 	onLongClick: (Manga, View) -> Unit,
+	onDismissClick: (Manga) -> Unit,
 ) = adapterDelegateViewBinding<DiscoverRankedManga, ListModel, ItemDiscoverRankedBinding>(
 	{ inflater, parent -> ItemDiscoverRankedBinding.inflate(inflater, parent, false) },
 ) {
@@ -35,6 +37,8 @@ fun discoverRankedAD(
 		onLongClick(item.manga, view)
 		true
 	}
+	binding.buttonDismiss.setTooltipCompat(R.string.not_interested)
+	binding.buttonDismiss.setOnClickListener { onDismissClick(item.manga) }
 	bind {
 		binding.textViewRank.text = item.rank.toString()
 		binding.textViewTitle.text = item.manga.title
@@ -49,11 +53,12 @@ fun discoverRowAD(
 	coverPool: RecyclerView.RecycledViewPool,
 	onOpenSuggestions: () -> Unit,
 	clickListener: OnListItemClickListener<MangaListModel>,
+	onDismissClick: (MangaListModel, View) -> Unit,
 ) = adapterDelegateViewBinding<DiscoverRowItem, ListModel, ItemListGroupBinding>(
 	{ inflater, parent -> ItemListGroupBinding.inflate(inflater, parent, false) },
 ) {
 	val adapter = BaseListAdapter<ListModel>()
-		.addDelegate(ListItemType.MANGA_GRID, mangaGridItemAD(sizeResolver, clickListener))
+		.addDelegate(ListItemType.MANGA_GRID, mangaGridItemAD(sizeResolver, clickListener, onDismissClick))
 		.addDelegate(ListItemType.FOOTER_LOADING, discoverPlaceholderAD())
 	binding.recyclerView.adapter = adapter
 	// Every row shows the same size of cover, so what one has scrolled off is what the next needs

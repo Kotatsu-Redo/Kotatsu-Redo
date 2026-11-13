@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.koitharu.kotatsu.core.exceptions.CloudFlareException
 import org.koitharu.kotatsu.core.model.unwrap
 import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.sourcescore.data.CommunityDatabase
 import java.util.concurrent.ConcurrentHashMap
@@ -61,8 +61,8 @@ class SourceProbeRecorder @Inject constructor(
 		if (op == ProbeOp.PAGES && Random.nextInt(PAGES_SAMPLE_RATE) != 0) return
 		// Only parser sources describe a website. The local library and external plugins went through
 		// the same search path and were uploaded as if "LOCAL" were a source anyone else could use.
-		// unwrap(): search hands over MangaSourceInfo wrappers, which are never MangaParserSource themselves.
-		if (source.unwrap() !is MangaParserSource) return
+		// unwrap(): search hands over MangaSourceInfo wrappers, which are never ParserMangaSource themselves.
+		if (source.unwrap() !is ParserMangaSource) return
 
 		val now = System.currentTimeMillis()
 		if (isSuccess) {

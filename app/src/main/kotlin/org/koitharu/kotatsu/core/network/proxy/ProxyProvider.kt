@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import okhttp3.Authenticator
 import okhttp3.Credentials
+import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
@@ -46,6 +47,14 @@ class ProxyProvider @Inject constructor(
 	}
 
 	val authenticator = ProxyAuthenticator()
+
+	/** Fails a request, once, while a proxy is chosen but has no usable address. See [getProxy]. */
+	val configInterceptor = Interceptor { chain ->
+		if (isProxyEnabled() && !isConfigValid()) {
+			throw ProxyConfigException()
+		}
+		chain.proceed(chain.request())
+	}
 
 	init {
 		ProxySelector.setDefault(selector)
@@ -101,6 +110,15 @@ class ProxyProvider @Inject constructor(
 
 	private fun isProxyEnabled() = settings.proxyType != Proxy.Type.DIRECT
 
+	private fun isConfigValid(): Boolean = !settings.proxyAddress.isNullOrEmpty() && settings.proxyPort in 0..0xFFFF
+
+	/**
+	 * Never throws. The network client asks for a proxy on every attempt to connect, and one that fails to answer
+	 * makes it try again without end: each request then spun until the app ran out of memory. The settings screen
+	 * leads straight into that, as the address can only be typed in once a type has been picked.
+	 *
+	 * A proxy that is chosen but not filled in gets one that leads nowhere instead, so nothing goes around it.
+	 */
 	private fun getProxy(): Proxy {
 		val type = settings.proxyType
 		val address = settings.proxyAddress
@@ -109,7 +127,7 @@ class ProxyProvider @Inject constructor(
 			return Proxy.NO_PROXY
 		}
 		if (address.isNullOrEmpty() || port < 0 || port > 0xFFFF) {
-			throw ProxyConfigException()
+			return Proxy(type, InetSocketAddress.createUnresolved(NOWHERE_HOST, NOWHERE_PORT))
 		}
 		cachedProxy?.let {
 			val addr = it.address() as? InetSocketAddress
@@ -120,6 +138,13 @@ class ProxyProvider @Inject constructor(
 		val proxy = Proxy(type, InetSocketAddress(address, port))
 		cachedProxy = proxy
 		return proxy
+	}
+
+	private companion object {
+
+		/** Reserved for names that must never resolve. */
+		const val NOWHERE_HOST = "proxy-not-set.invalid"
+		const val NOWHERE_PORT = 9
 	}
 
 	inner class ProxyAuthenticator : Authenticator, JavaAuthenticator() {

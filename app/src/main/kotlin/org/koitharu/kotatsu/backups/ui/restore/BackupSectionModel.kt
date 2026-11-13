@@ -28,6 +28,7 @@ data class BackupSectionModel(
 			BackupSection.SAVED_FILTERS -> R.string.saved_filters
 			BackupSection.IDENTITY -> R.string.community
 			BackupSection.HIDDEN_IMAGES -> R.string.hidden_images
+			BackupSection.DISMISSED -> R.string.dismissed_titles
 		}
 
 	override fun areItemsTheSame(other: ListModel): Boolean {

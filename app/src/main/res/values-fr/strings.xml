@@ -963,6 +963,8 @@
 	<string name="not_interested">Pas intéressé</string>
 	<string name="removed_from_suggestions">Ne sera plus suggéré</string>
 	<string name="show_dismissed">Réafficher ce que j\'ai écarté</string>
+	<string name="not_interested_tip">Touchez le pouce vers le bas sur une couverture pour dire que ça ne vous intéresse pas, ou appuyez longuement dessus. Elle ne sera plus suggérée, et les titres semblables compteront moins.</string>
+	<string name="dismissed_titles">Titres qui ne m\'intéressent pas</string>
 	<string name="settings_group_reading">Lecture</string>
 	<string name="settings_group_finding">Trouver des mangas</string>
 	<string name="settings_group_data">Vos données</string>
@@ -985,4 +987,11 @@
 	<string name="sync_frequency">Fréquence de synchronisation</string>
 	<string name="hide_nsfw_from_discord">Masquer le contenu NSFW sur Discord</string>
 	<string name="discord_share_reading">Afficher ma lecture sur Discord</string>
+	<string name="sources_auto_update">Mettre à jour les sources automatiquement</string>
+	<string name="sources_auto_update_summary">Recevoir les sources réparées et les nouvelles sources dès leur publication, sans mettre à jour l\'application</string>
+	<string name="sources_version">Sources de mangas</string>
+	<string name="sources_version_built_in">%1$s, telles que fournies avec l\'application</string>
+	<string name="sources_version_downloaded">%1$s, mises à jour depuis l\'installation de l\'application</string>
+	<string name="sources_up_to_date">Les sources de mangas sont à jour</string>
+	<string name="sources_updated">Sources de mangas mises à jour</string>
 </resources>

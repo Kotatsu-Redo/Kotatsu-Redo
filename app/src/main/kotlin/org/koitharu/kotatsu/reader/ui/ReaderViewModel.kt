@@ -566,7 +566,12 @@ class ReaderViewModel @Inject constructor(
         val prevJob = loadingJob
         loadingJob = launchLoadingJob(Dispatchers.Default) {
             prevJob?.join()
-            chaptersLoader.loadPrevNextChapter(mangaDetails.requireValue(), currentId, isNext)
+            chaptersLoader.loadPrevNextChapter(
+                manga = mangaDetails.requireValue(),
+                currentId = currentId,
+                isNext = isNext,
+                readingChapterId = readingState.value?.chapterId,
+            )
             publishPages(null)
         }
     }

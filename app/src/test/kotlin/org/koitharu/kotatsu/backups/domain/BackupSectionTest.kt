@@ -1,6 +1,9 @@
 package org.koitharu.kotatsu.backups.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.koitharu.kotatsu.R
+import org.koitharu.kotatsu.backups.ui.restore.BackupSectionModel
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -72,5 +75,25 @@ class BackupSectionTest {
 	@Test
 	fun `a folder that happens to be named like a section is not one`() {
 		assertEquals(setOf(BackupSection.INDEX), sectionsOf(listOf("history/", "index")))
+	}
+
+	@Test
+	fun `what was passed on is its own section, found by its name`() {
+		assertEquals("dismissed", BackupSection.DISMISSED.entryName)
+		assertEquals(
+			setOf(BackupSection.INDEX, BackupSection.DISMISSED),
+			sectionsOf(listOf("index", "dismissed")),
+		)
+		assertEquals(setOf(BackupSection.DISMISSED), sectionsOf(listOf("backup/Dismissed.json")))
+	}
+
+	@Test
+	fun `every section can be told apart by name and has its own label to pick it by`() {
+		assertEquals(BackupSection.entries.size, BackupSection.entries.map { it.entryName }.toSet().size)
+		val labelled = BackupSection.entries.filter { it != BackupSection.INDEX }
+		val labels = labelled.map { BackupSectionModel(it, isChecked = true, isEnabled = true).titleResId }
+		assertTrue(labels.all { it != 0 })
+		assertEquals("two sections share a label", labelled.size, labels.toSet().size)
+		assertEquals(R.string.dismissed_titles, BackupSectionModel(BackupSection.DISMISSED, true, true).titleResId)
 	}
 }

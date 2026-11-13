@@ -50,7 +50,7 @@ import org.koitharu.kotatsu.list.ui.model.toErrorState
 import org.koitharu.kotatsu.local.data.LocalStorageChanges
 import org.koitharu.kotatsu.local.domain.model.LocalManga
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.sizeOrZero
 import javax.inject.Inject
 
@@ -136,7 +136,7 @@ open class RemoteListViewModel @Inject constructor(
 			sourcesRepository.trackUsage(source)
 		}
 
-        if (source is MangaParserSource && source.isBroken) {
+        if (source is ParserMangaSource && source.isBroken) {
             // Just notify one. Will show reason in future
             onSourceBroken.call(Unit)
         }
