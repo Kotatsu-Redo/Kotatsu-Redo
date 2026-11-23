@@ -1525,6 +1525,10 @@
 				<data android:host="zenithscans.com" />
 				<data android:host="mangaworld.ac" />
 				<data android:host="mangaworldadult.net" />
+				<data android:host="mangaworld.me" />
+				<data android:host="www.mangaworld.me" />
+				<data android:host="mangaworldadult.org" />
+				<data android:host="www.mangaworldadult.org" />
 				<data android:host="onma.me" />
 				<data android:host="bananascans.com" />
 				<data android:host="readcomicsonline.ru" />
