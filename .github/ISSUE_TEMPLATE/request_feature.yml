@@ -20,5 +20,5 @@ body:
           label: Acknowledgements
           description: Read this carefully, we will close and ignore your issue if you skimmed through this.
           options:
-              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/KotatsuApp/Kotatsu/issues) before creating a new one.
+              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/Kotatsu-Redo/Kotatsu-Redo/issues) before creating a new one.
                 required: true

@@ -60,7 +60,7 @@ body:
       attributes:
           label: Acknowledgements
           options:
-              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/KotatsuApp/Kotatsu/issues) before creating a new one.
+              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/Kotatsu-Redo/Kotatsu-Redo/issues) before creating a new one.
                 required: true
-              - label: This is not an issue with a specific manga source. Otherwise, you have to open an issue in the [parsers repository](https://github.com/KotatsuApp/kotatsu-parsers/issues/new/choose).
+              - label: This is not an issue with a specific manga source. Otherwise, you have to open an issue in the [parsers repository](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo/issues/new/choose).
                 required: true
